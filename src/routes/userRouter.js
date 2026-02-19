@@ -1,12 +1,19 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../middleware/jwtMiddleware.js");
 
-const { logon, register, chat } = require("../controllers/userController.js");
+const {
+  login,
+  register,
+  chat,
+  logout,
+} = require("../controllers/userController.js");
 
-router.get("/logon", logon);
-
+router.post("/login", login);
 router.post("/register", register);
 
 router.post("/chat", chat);
+
+router.post("/logout", authMiddleware, logout);
 
 module.exports = router;
