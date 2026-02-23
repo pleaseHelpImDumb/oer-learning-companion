@@ -7,12 +7,15 @@ const {
   register,
   chat,
   logout,
+  forgotPassword,
 } = require("../controllers/userController.js");
 
 router.post("/login", login);
 router.post("/register", register);
 
-router.post("/chat", chat);
+//router.post("/chat", chat);
+
+router.post("/forgot-password", forgotPassword);
 
 router.post("/logout", authMiddleware, logout);
 

@@ -16,10 +16,14 @@ const prisma = new PrismaClient(opts);
 
 // Password hashing
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 // Security
 const jwt = require("jsonwebtoken");
 const { generateCSRFToken } = require("../utils/csrf");
+
+// Emailer for Forgot Password
+const { sendPasswordResetEmail } = require("../utils/emailService");
 
 // Functions
 // LOGIN
@@ -147,13 +151,56 @@ const register = async (req, res, next) => {
     next(err);
   }
 };
-
+// LOGOUT (Clear Cookie)
 const logout = (req, res) => {
   res.clearCookie("jwt");
   res.json({ message: "Logged out" });
 };
 
-// THIS DOES NOT BELONG HERE AND IS ONLY TO TEST AI RESPONSR
+const forgotPassword = async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { email } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!user) {
+      return res.json({
+        message: "If that email exists, a reset link has been sent",
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await sendPasswordResetEmail(user.email, resetUrl);
+
+    console.log(`Reset token for ${email}: ${resetToken}`); // For testing
+
+    res.json({
+      message: "If that email exists, a reset link has been sent",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// THIS DOES NOT BELONG HERE AND IS ONLY TO TEST AI RESPONSE
 require("dotenv").config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -174,4 +221,4 @@ const chat = async (req, res, next) => {
 };
 // -----------------------------------------------
 
-module.exports = { login, register, chat, logout };
+module.exports = { login, register, forgotPassword, logout };
