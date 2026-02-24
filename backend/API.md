@@ -1,3 +1,4 @@
+
 # OER Learning Companion - API Documentation
 
 ## Base URL
@@ -28,11 +29,37 @@ X-CSRF-TOKEN: <your_csrf_token>
 
 ## Endpoints
 
+### Health Check
+
+Check if the API server is running.
+
+**Endpoint:** `GET /health`
+
+**Authentication Required:** No
+
+**Request Body:** None
+
+**Success Response (200 OK):**
+
+```json
+{
+  "status": "ok"
+}
+```
+
+**Example Request:**
+
+```bash
+curl http://localhost:3000/health
+```
+
+---
+
 ### 1. Register
 
 Creates a new user account.
 
-**Endpoint:** `POST /api/auth/register`
+**Endpoint:** `POST /users/register`
 
 **Authentication Required:** No
 
@@ -79,7 +106,7 @@ Creates a new user account.
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/register \
+curl -X POST http://localhost:3000/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -94,7 +121,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 
 Authenticates a user and creates a session.
 
-**Endpoint:** `POST /api/auth/login`
+**Endpoint:** `POST /users/login`
 
 **Authentication Required:** No
 
@@ -139,7 +166,7 @@ Authenticates a user and creates a session.
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3000/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "identity": "john@example.com",
@@ -153,7 +180,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 Logs out the current user by clearing the session cookie.
 
-**Endpoint:** `POST /api/auth/logout`
+**Endpoint:** `POST /users/logout`
 
 **Authentication Required:** Yes (JWT cookie + CSRF token)
 
@@ -185,7 +212,7 @@ X-CSRF-TOKEN: <your_csrf_token>
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/logout \
+curl -X POST http://localhost:3000/users/logout \
   -H "X-CSRF-TOKEN: your_csrf_token_here" \
   --cookie "jwt=your_jwt_token_here"
 ```
@@ -196,7 +223,7 @@ curl -X POST http://localhost:3000/api/auth/logout \
 
 Initiates password reset process by sending a reset link to the user's email.
 
-**Endpoint:** `POST /api/auth/forgot-password`
+**Endpoint:** `POST /users/forgot-password`
 
 **Authentication Required:** No
 
@@ -236,7 +263,7 @@ Initiates password reset process by sending a reset link to the user's email.
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/forgot-password \
+curl -X POST http://localhost:3000/users/forgot-password \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com"
@@ -386,10 +413,11 @@ NODE_ENV=development
 ### Test Flow:
 
 ```
-1. POST /api/auth/register → Get csrfToken
-2. POST /api/auth/logout (with CSRF header) → Success
-3. POST /api/auth/login → Get new csrfToken
-4. POST /api/auth/forgot-password → Check email
+1. GET /health → Check server is running
+2. POST /users/register → Get csrfToken
+3. POST /users/logout (with CSRF header) → Success
+4. POST /users/login → Get new csrfToken
+5. POST /users/forgot-password → Check email
 ```
 
 ---
@@ -415,7 +443,7 @@ NODE_ENV=development
 ## Support
 
 For questions or issues:
+- Backend Developer: [Your Name]
 - Repository: https://github.com/pleaseHelpImDumb/oer-learning-companion
 
 Last Updated: February 18, 2025
-Generated with Claude Sonnet 4.5
