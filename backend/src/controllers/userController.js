@@ -2,7 +2,12 @@ const { StatusCodes } = require("http-status-codes"); // Status codes
 
 // Validation
 const Joi = require("joi");
-const { registerSchema, loginSchema } = require("../validation/userSchema");
+const {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} = require("../validation/userSchema");
 
 // Database
 const { PrismaClient } = require("@prisma/client");
@@ -25,7 +30,8 @@ const { generateCSRFToken } = require("../utils/csrf");
 // Emailer for Forgot Password
 const { sendPasswordResetEmail } = require("../utils/emailService");
 
-// Functions
+// FUNCTIONS ************************************************************************************************
+
 // LOGIN
 const login = async (req, res, next) => {
   try {
@@ -157,11 +163,20 @@ const logout = (req, res) => {
   res.json({ message: "Logged out" });
 };
 
+// FORGOT-PASSWORD (Sends Email if Email exists)
 const forgotPassword = async (req, res, next) => {
   try {
+    // validate
     console.log(req.body);
-    const { email } = req.body;
+    const { error, value } = forgotPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
+    const { email } = value;
 
+    // find user
     const user = await prisma.user.findUnique({
       where: { email: email },
     });
@@ -172,8 +187,8 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
+    // generate token and hashed version
     const resetToken = crypto.randomBytes(32).toString("hex");
-
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -194,6 +209,54 @@ const forgotPassword = async (req, res, next) => {
 
     res.json({
       message: "If that email exists, a reset link has been sent",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+// RESET-PASSWORD (If tokens and dates are good, update password with new hashed password)
+const resetPassword = async (req, res, next) => {
+  try {
+    // validate
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
+    const { token, newPassword } = value;
+
+    // get hashed token
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // find user w/ hashed token && before expired dated
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+    if (!user) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: "Invalid or expired reset token",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // we found user, hashed password, and can now UPDATE
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    res.json({
+      message: "Password reset successful. You can now log in.",
     });
   } catch (err) {
     next(err);
@@ -221,4 +284,4 @@ const chat = async (req, res, next) => {
 };
 // -----------------------------------------------
 
-module.exports = { login, register, forgotPassword, logout };
+module.exports = { login, register, forgotPassword, resetPassword, logout };

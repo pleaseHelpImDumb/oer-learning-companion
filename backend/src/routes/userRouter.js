@@ -8,6 +8,7 @@ const {
   chat,
   logout,
   forgotPassword,
+  resetPassword,
 } = require("../controllers/userController.js");
 
 router.post("/login", login);
@@ -16,6 +17,7 @@ router.post("/register", register);
 //router.post("/chat", chat);
 
 router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 router.post("/logout", authMiddleware, logout);
 
