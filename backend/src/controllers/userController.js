@@ -2,7 +2,12 @@ const { StatusCodes } = require("http-status-codes"); // Status codes
 
 // Validation
 const Joi = require("joi");
-const { registerSchema, loginSchema } = require("../validation/userSchema");
+const {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} = require("../validation/userSchema");
 
 // Database
 const { PrismaClient } = require("@prisma/client");
@@ -16,12 +21,17 @@ const prisma = new PrismaClient(opts);
 
 // Password hashing
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 // Security
 const jwt = require("jsonwebtoken");
 const { generateCSRFToken } = require("../utils/csrf");
 
-// Functions
+// Emailer for Forgot Password
+const { sendPasswordResetEmail } = require("../utils/emailService");
+
+// FUNCTIONS ************************************************************************************************
+
 // LOGIN
 const login = async (req, res, next) => {
   try {
@@ -147,13 +157,113 @@ const register = async (req, res, next) => {
     next(err);
   }
 };
-
+// LOGOUT (Clear Cookie)
 const logout = (req, res) => {
   res.clearCookie("jwt");
   res.json({ message: "Logged out" });
 };
 
-// THIS DOES NOT BELONG HERE AND IS ONLY TO TEST AI RESPONSR
+// FORGOT-PASSWORD (Sends Email if Email exists)
+const forgotPassword = async (req, res, next) => {
+  try {
+    // validate
+    console.log(req.body);
+    const { error, value } = forgotPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
+    const { email } = value;
+
+    // find user
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!user) {
+      return res.json({
+        message: "If that email exists, a reset link has been sent",
+      });
+    }
+
+    // generate token and hashed version
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await sendPasswordResetEmail(user.email, resetUrl);
+
+    console.log(`Reset token for ${email}: ${resetToken}`); // For testing
+
+    res.json({
+      message: "If that email exists, a reset link has been sent",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+// RESET-PASSWORD (If tokens and dates are good, update password with new hashed password)
+const resetPassword = async (req, res, next) => {
+  try {
+    // validate
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
+    const { token, newPassword } = value;
+
+    // get hashed token
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // find user w/ hashed token && before expired dated
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+    if (!user) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: "Invalid or expired reset token",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // we found user, hashed password, and can now UPDATE
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    res.json({
+      message: "Password reset successful. You can now log in.",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// THIS DOES NOT BELONG HERE AND IS ONLY TO TEST AI RESPONSE
 require("dotenv").config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -174,4 +284,4 @@ const chat = async (req, res, next) => {
 };
 // -----------------------------------------------
 
-module.exports = { login, register, chat, logout };
+module.exports = { login, register, forgotPassword, resetPassword, logout };
