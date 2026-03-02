@@ -15,7 +15,7 @@ export default function Home() {
       <div className="bg-white pl-[2%] pr-[2%] pt-[1%] rounded-xl shadow-lg">
         <div className="flex flex-row">
         <div>
-            <Link href="login">
+            <Link href="/">
             <p className="text-[#808080]">&lt; back</p>
             </Link>
         </div>

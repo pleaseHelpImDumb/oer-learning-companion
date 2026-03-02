@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 type StudyTimerProps = {
   /** total duration in seconds */
   durationSec?: number;
@@ -104,83 +106,74 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="p-[1%] border-b-1 bg-[#235937]">
-        <div className="flex flex-row">
-            <p className="text-2xl font-bold text-[#ffd36b] w-[4%]">Timer</p>
-              <p className="text-white text-2xl font-bold pl-[42%]">Minutes</p>
-        </div>
-        </div>
-    <div className="w-full h-full flex flex-col items-center justify-center py-10 bg-[#000000]">
-      <div className="relative flex items-center justify-center">
-        {/* Ring */}
-        <svg width={size} height={size} className="rotate-[-90deg]">
-          {/* Track */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="rgba(255,255,255,0.10)"
-            strokeWidth={stroke}
-          />
-          {/* Progress */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="#F6D24A"
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            className="transition-[stroke-dashoffset] duration-150 ease-linear"
-          />
-        </svg>
-
+    <div className="relative flex min-h-screen w-full items-center justify-center font-sans">
+        <Image
+                src="/login_background.jpg"
+                alt="Background"
+                fill
+                className="object-cover -z-10"
+              />
+    <div className="flex flex-col h-full w-[80%] justify-center items-center bg-[#1f2a3a] py-[8%] rounded-2xl">
+    <div className="w-[80%] h-full flex flex-col items-center justify-center py-[10%]  rounded-xl">
+      <div className="relative flex items-center justify-center w-full h-full">
         {/* Center content (not rotated) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
+        <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0 h-full w-full">
           {endRef.current ? (
-            <p className="text-white/70 text-sm mb-3">
+            <p className="text-white/50 text-sm w-full h-full flex justify-center items-center ">
               Ends at: <span className="text-white/90">{formatEndTime(endRef.current)}</span>
             </p>
           ) : (
-            <p className="text-white/50 text-sm mb-3">Set duration: {Math.round(totalMs / 60000)} min</p>
+            <p className="text-white/50 text-sm w-full h-full flex justify-center items-center pb-[2%]">Here you can set the default break duration.</p>
           )}
-
+      <select
+        defaultValue="breaks"
+        className="
+          appearance-none
+          bg-[#10161f] text-white font-semibold
+          border border-white/40 rounded-md
+          px-6 py-3 pr-12
+          text-lg
+          focus:outline-none focus:ring-2 focus:ring-white/30
+          flex 
+          flex-col 
+          items-center
+            "
+          >
+        <option value="breaks">Breaks</option>
+        <option value="short">Short break</option>
+        <option value="long">Long break</option>
+        <option value="none">No breaks</option>
+      </select>
           {/* Digital display */}
-          <div className="font-ds-digital tracking-wider text-white text-6xl md:text-7xl select-none">
+          <div className="font-ds-digital tracking-wider text-white text-6xl md:text-7xl select-none pb-[2%]">
             {display}
           </div>
 
           {/* Buttons */}
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex gap-3 w-full h-full flex justify-center items-center">
             {!isRunning ? (
               <button
                 onClick={start}
-                className="px-5 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow"
+                className="px-[15%] py-[2%] rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow flex justify-center items-center"
               >
-                Start Studying
+                Start Break
               </button>
             ) : (
               <button
                 onClick={pause}
-                className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold"
+                className="px-[15%] py-[2%] rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow flex justify-center items-center"
               >
                 Pause
               </button>
             )}
-
-            <button
-              onClick={reset}
-              className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold"
-            >
-              Reset
-            </button>
           </div>
         </div>
       </div>
+    </div>
+    <div className="flex flex-col text-white justify-center items-center pt-[1%]">
+            <a>Take this opportunity to move and stretch.</a>
+            <a>Even something simple can help relieve stress.</a>
+          </div>
     </div>
     </div>
   );
