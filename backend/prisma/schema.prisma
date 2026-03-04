@@ -8,13 +8,71 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String   // hashed with bcrypt
-  name      String
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String // hashed with bcrypt
+  tokenBalance Int @default(0)
+  name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   resetPasswordToken     String?  @unique
   resetPasswordExpires   DateTime?
+
+  // For Backwards Reference
+  studySessions StudySession[]
+  userTracks UserTrack[]
+  userBadges UserBadge[]
+}
+
+model hobbyTrack {
+  id Int @id @default(autoincrement())
+  name String @unique
+  description String
+
+  userTracks UserTrack[]
+}
+
+model UserTrack {
+  id Int @id @default(autoincrement())
+  userId Int
+  trackId Int
+
+  // Foreign Keys
+  user User @relation(fields: [userId], references: [id])
+  track hobbyTrack @relation(fields:[trackId], references: [id])
+  
+  @@unique([userId, trackId])
+}
+
+model Badge {
+  id Int @id @default(autoincrement())
+  description String
+  category String
+
+  userBadges UserBadge[]
+}
+
+model UserBadge {
+  id Int @id @default(autoincrement())
+  userId Int
+  badgeId Int
+  unlockedAt DateTime @default(now())
+
+  // Foreign Keys
+  user User @relation(fields:[userId], references: [id])
+  badge Badge @relation(fields:[badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+model StudySession {
+  id Int @id @default(autoincrement())
+  userId Int
+  durationMinutes Int
+  completed Boolean
+  completedAt DateTime
+  createdAt DateTime @default(now())
+
+  // Foreign Keys
+  user User @relation(fields:[userId], references:[id])
 }
