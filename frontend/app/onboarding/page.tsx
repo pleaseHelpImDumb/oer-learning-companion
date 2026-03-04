@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 export default function Home() {
   const [on, setOn] = useState(true);
+  
   return (
     <div className="flex min-h-screen items-center justify-center font-sans">
       <main className="flex w-full h-[100%] flex-col items-center justify-between px-16 sm:items-start">
@@ -97,7 +98,7 @@ export default function Home() {
           </div>
         </div>
 
-        <p>OR</p>
+        <p className="pt-[7%]">OR</p>
 
         <div>
           <p className="pt-4 flex ">Select a quote.</p>
@@ -135,9 +136,65 @@ export default function Home() {
         <span className="onoffswitch-switch" />
       </label>
     </div>
-          </div>
+    </div>
           
         </div> 
+        <div className="flex flex-col">
+          <a>Select your avatar.<span className="text-[#ff0000]">*</span></a>
+
+<div className="grid grid-cols-6 gap-5 pt-[2%] w-full">
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 1" src="/assets/profiles/profile1.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 2" src="/assets/profiles/profile2.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 3" src="/assets/profiles/profile3.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 4" src="/assets/profiles/profile4.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 5" src="/assets/profiles/profile5.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-7 border-transparent rounded-full hover:border-[#235937]">
+    <Image alt="Profile Option 6" src="/assets/profiles/profile6.png" width={120} height={120}/>
+  </button>
+</div>
+
+<div className="grid grid-cols-6 gap-5 pt-[2%] w-full">
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Sports Track" src="/assets/tracks/default/sports.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Gaming Track" src="/assets/tracks/default/games.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Art Track" src="/assets/tracks/default/art.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Pets Track" src="/assets/tracks/default/pets.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Space Track" src="/assets/tracks/default/space.png" width={120} height={120}/>
+  </button>
+
+  <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
+    <Image alt="Music Track" src="/assets/tracks/default/music.png" width={120} height={120}/>
+  </button>
+</div>
+
+        </div>
         <div className="w-full pt-6">
           <Link href="dashboard" className="block w-full">
             <button className="w-full rounded-lg py-6 text-white bg-[#235937] text-4xl font-semibold">

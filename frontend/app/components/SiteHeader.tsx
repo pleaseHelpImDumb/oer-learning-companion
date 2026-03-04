@@ -1,14 +1,34 @@
 import Image from "next/image";
 import Link from "next/link";
+
 export default function SiteHeader() {
   return (
-    <header className="w-full h-[20%] bg-[#fdf5e7] border-b border-black pb-[2%]">
-        <h1 className="flex justify-center text-[#235937] font-semibold">
+    <header className="w-full h-[20%] bg-[#0E0C32] border-b border-black">
+      <div className="grid grid-cols-3 items-center h-full px-4">
+
+        {/* Left */}
+        <div>
+          <a className="text-white font-semibold">
             OER Learning Companion
-        </h1>
-        <h1 className="pl-[2%] font-semibold text-7x">
-          SUNY Oswego Study-Guide
-        </h1>
+          </a>
+        </div>
+
+        {/* Middle (optional content later) */}
+        <div></div>
+
+        {/* Right */}
+        <div className="flex justify-end">
+          <Link href="/settings">
+            <Image
+              src="/assets/profiles/profile0.png"
+              alt="Profile Icon"
+              width={40}
+              height={40}
+            />
+          </Link>
+        </div>
+
+      </div>
     </header>
   );
 }
