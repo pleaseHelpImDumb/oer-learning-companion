@@ -10,3 +10,10 @@ frontend/coverage/
 # logs / env
 frontend/*.log
 frontend/.env*
+# Next.js / Node (frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.cache/
+frontend/.vercel/
