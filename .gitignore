@@ -1,0 +1,12 @@
+# Next.js / Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.cache/
+frontend/.vercel/
+frontend/coverage/
+
+# logs / env
+frontend/*.log
+frontend/.env*
