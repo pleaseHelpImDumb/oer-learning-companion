@@ -31,7 +31,7 @@ export default function Home() {
             />
         </div>
         <div className="flex justify-center w-full pt-6 pb-[2%]">
-        <Link href="login">
+        <Link href="onboarding">
             <button className="rounded-lg px-8 py-3 text-white bg-[#235937]">
             Submit
             </button>

@@ -13,6 +13,21 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  module.exports = {
+    content: [
+      "./app/**/*.{js,ts,jsx,tsx}",
+      "./pages/**/*.{js,ts,jsx,tsx}",
+      "./components/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+      extend: {
+        fontFamily: {
+          digital: ["var(--font-ds-digital)"],
+        },
+      },
+    },
+    plugins: [],
+  }
 ]);
 
 export default eslintConfig;

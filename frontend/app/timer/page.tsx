@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
 type StudyTimerProps = {
   /** total duration in seconds */
   durationSec?: number;
@@ -105,6 +104,13 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
   const dashOffset = circumference * (1 - progress);
 
   return (
+    <div className="flex flex-col h-full w-full">
+      <div className="p-[1%] border-b-1 bg-[#235937]">
+        <div className="flex flex-row">
+            <p className="text-2xl font-bold text-[#ffd36b] w-[4%]">Timer</p>
+              <p className="text-white text-2xl font-bold pl-[42%]">Minutes</p>
+        </div>
+        </div>
     <div className="w-full h-full flex flex-col items-center justify-center py-10 bg-[#000000]">
       <div className="relative flex items-center justify-center">
         {/* Ring */}
@@ -144,7 +150,7 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
           )}
 
           {/* Digital display */}
-          <div className="font-mono tracking-wider text-white text-6xl md:text-7xl select-none">
+          <div className="font-ds-digital tracking-wider text-white text-6xl md:text-7xl select-none">
             {display}
           </div>
 
@@ -175,6 +181,7 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
