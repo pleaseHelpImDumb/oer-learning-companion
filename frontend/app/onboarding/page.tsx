@@ -6,9 +6,10 @@ export default function Home() {
   const [on, setOn] = useState(true);
   
   return (
-    <div className="flex min-h-screen items-center justify-center font-sans">
+    <div className="flex min-h-screen items-center justify-center font-sans h-full">
       <main className="flex w-full h-[100%] flex-col items-center justify-between px-16 sm:items-start">
-        <div className="bg-[#ffd36b] rounded-sm w-full h-[100%] pl-7 pt-6 ">
+        <div className="pb-[3%]"></div>
+        <div className="bg-[#ffd36b] rounded-sm w-full pl-7 pt-6 ">
           <b>
             ⓘ Welcome! This page helps you personalize your learning companion.
           </b>
@@ -53,7 +54,7 @@ export default function Home() {
         </div>
 
         <div className="pt-3">
-          <label className="block mb-1">
+          <label className="block mb-1" htmlFor="inputMins">
             Select a Check-in Interval.<span className="text-[#ff0000]">*</span>
           </label>
 
@@ -62,6 +63,7 @@ export default function Home() {
 
             {/* minutes input */}
             <input
+              id="inputMins"
               type="number"
               min="1"
               step="1"
@@ -88,7 +90,7 @@ export default function Home() {
         <div className="flex gap-6">
 
         <div>
-          <p className="pt-4 flex ">Type in your favorite quote.</p>
+          <label className="pt-4 flex " htmlFor="enterQuote">Type in your favorite quote.</label>
             <div className="">
             <input
               id="enterQuote"
@@ -101,7 +103,7 @@ export default function Home() {
         <p className="pt-[7%]">OR</p>
 
         <div>
-          <p className="pt-4 flex ">Select a quote.</p>
+          <label className="pt-4 flex" htmlFor="selectQuote">Select a quote.</label>
         <div className="">
             <input
               id="selectQuote"
@@ -113,10 +115,10 @@ export default function Home() {
         </div>   
 
         <div>
-          <p className="pt-4 flex ">Select a nickname.<span className="text-[#ff0000]">*</span></p>
+          <label className="pt-4 flex" htmlFor="nickname">Select a nickname.<span className="text-[#ff0000]">*</span></label>
             <div className="flex">
             <input
-              id="enterQuote"
+              id="nickname"
               className="w-80 bg-white border border-black rounded p-2"
               placeholder="Please enter your campus (optional)."
             />
@@ -140,6 +142,7 @@ export default function Home() {
           
         </div> 
         <div className="flex flex-col">
+          <div className="pt-[1%]"></div>
           <a>Select your avatar.<span className="text-[#ff0000]">*</span></a>
 
 <div className="grid grid-cols-6 gap-5 pt-[2%] w-full">
@@ -168,6 +171,8 @@ export default function Home() {
   </button>
 </div>
 
+          <div className="pt-[1%]"></div>
+<a>How do you like to have fun?<span className="text-[#ff0000]">*</span></a>
 <div className="grid grid-cols-6 gap-5 pt-[2%] w-full">
   <button className="flex justify-center border-3 border-transparent rounded bg-transparent hover:bg-[#90D5FF] focus:border-red-500">
     <Image alt="Sports Track" src="/assets/tracks/default/sports.png" width={120} height={120}/>

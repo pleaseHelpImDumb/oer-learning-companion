@@ -17,7 +17,7 @@ export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
   const actions = [
     { label: "Help", onClick: onHelp }, // ✅ CHANGE THIS (no router.push)
     { label: "Break", onClick: () => router.push("/break") },
-    { label: "Silly Activity", onClick: () => console.log("Silly Activity") },
+    { label: "Silly Activity", onClick: () => router.push("/activity") },
     { label: "Just Breathe", onClick: () => setBreathe(prev => !prev) }
   ] as const;
   

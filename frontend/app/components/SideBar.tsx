@@ -10,7 +10,7 @@ const icons = [
   { src: "/dashboard.png", alt: "Home", href: "/dashboard" },
   { src: "/timer.png", alt: "Timer", href: "/timer" },
   { src: "/pencil.png", alt: "stuck", href: "/stuck" },
-  { src: "/mask.png", alt: "Focus", href: "/focus" },
+  { src: "/mask.png", alt: "Focus", href: "/activity" },
   { src: "/sleep.png", alt: "breaks", href: "/break" },
   { src: "/profits.png", alt: "sessionsummary", href: "/summary" },
   { src: "/question.png", alt: "Help", href: "/help" },
@@ -31,8 +31,8 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
   const [aiHelpOpen, setAiHelpOpen] = useState(false); // ✅ NEW
   const { openAssistant } = useStuckAssistant();
   const asideClass = snapped
-    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] border-b border-black grid grid-cols-11"
-    : "z-30 h-[100dvh] w-14 sm:w-16 bg-[#235937] border-r border-black grid grid-rows-11";
+    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] border-b border-black grid grid-cols-11 sticky"
+    : "z-30 w-14 sm:w-16 bg-[#235937] border-r border-black grid grid-rows-11 sticky";
 
   const cellClass =
     "relative w-full h-full flex items-center justify-center hover:bg-[#1c4a2d] transition-colors";

@@ -1,38 +1,53 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import background from "assets/login_background.jpg";
+import { usePathname } from "next/navigation";
 export default function Home() {
+  const pathname = usePathname();
   return (
     <div className="relative flex flex-col justify-center font-sans">
         <div className="p-[1%] border-b-1 bg-[#235937]">
             <p className="font-8xl font-bold text-white">Settings</p>
         </div>
 
-        <div className="border-black border-b-1 flex flex-row gap-20 items-center">
-          <div>
-            <Link href="/settings">
-            <button className="border-5 py-3 border-transparent hover:border-b-[#235937] w-30">
-              <p className="font-8xl font-bold">General</p>
-            </button>
-            </Link>
-          </div>
-          <div className="flex flex-col justify-center self-stretch">
-                <div className="w-px h-[70%] bg-gray-400 rounded-full"></div>
-            </div>
-          <Link href="/sesshistory">
-          <button className="border-5 py-3 border-transparent hover:border-b-[#235937] w-57">
-            <p className="font-8xl font-bold">Session History</p>
-          </button>
-          </Link>
-          <div className="flex flex-col justify-center self-stretch">
-                <div className="w-px h-[70%] bg-gray-400 rounded-full"></div>
-            </div>
-          <Link href="/badgecollection">
-          <button className="border-5 py-3 border-transparent hover:border-b-[#235937] w-65">
-            <p className="font-8xl font-bold">Badge Collection</p>
-          </button>
-          </Link>
-        </div>
+<div className="border-b border-black flex">
+  <div className="flex items-center">
+
+    <Link href="/settings" className="flex-1 text-center px-10">
+      <button
+        className={`w-full py-3 border-7 border-transparent hover:border-b-[#235937]
+        ${pathname === "/settings" ? "border-[#235937]" : ""}`}
+      >
+        <p className="font-bold text-xl p-2 border-1 border-red-500">General</p>
+      </button>
+    </Link>
+
+    <div className="w-px h-6 bg-gray-400"></div>
+
+    <Link href="/sesshistory" className="flex-1 text-center px-10 min-w-70">
+      <button
+        className={`w-full py-3 border-7 border-transparent hover:border-b-[#235937]
+        ${pathname === "/sesshistory" ? "border-[#235937]" : ""}`}
+      >
+        <p className="font-bold text-xl p-2 border-1 border-transparent">Session History</p>
+      </button>
+    </Link>
+
+    <div className="w-px h-6 bg-gray-400"></div>
+
+    <Link href="/badgecollection" className="flex-1 text-center px-10 min-w-72">
+      <button
+        className={`w-full py-3 border-7 border-transparent hover:border-b-[#235937]
+        ${pathname === "/badgecollection" ? "border-[#235937]" : ""}`}
+      >
+        <p className="font-bold text-xl p-2 border-1 border-transparent">Badge Collection</p>
+      </button>
+    </Link>
+
+  </div>
+</div>
 
         <div className="px-[2%] py-[1%]">
             <div className="flex flex-row gap-10">
