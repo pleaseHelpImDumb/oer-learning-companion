@@ -2,12 +2,13 @@ import { Board, Cell, N, Piece, Player } from "./movementTypes";
 
 let nextId = 1;
 
-function makePiece(owner: Player, kind: Piece["kind"] = "man"): Piece {
+export function makePiece(owner: Player, kind: Piece["kind"] = "man"): Piece {
   return {
     id: String(nextId++),
     owner,
     kind,
-    hp: kind === "heavy" ? 2 : 1,
+    hp: kind === "heavy" ? 2 : 
+        kind === "block" ? 5 : 1,
     isKinged: false,
   };
 }
@@ -39,6 +40,7 @@ export function makeInitialBoard(): Board {
   b[5][0] = makePiece("R", "knight");
   b[7][2] = makePiece("R", "cat");
   b[5][4] = makePiece("R", "beetle");
+  b[5][6] = makePiece("R", "picasso");
   return b;
 }
 

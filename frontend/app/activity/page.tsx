@@ -8,6 +8,9 @@ import pebbleSprite from "./assets/misc/pebble.png";
 import crackedPebbleSprite from "./assets/misc/crackedPebble.png";
 import catSprite from "./assets/pets/cat.png";
 import beetleSprite from "./assets/music/beetle.png";
+import blockSprite from "./assets/misc/block.png";
+import picassoSprite from "./assets/art/Picasso.png";
+
 
 import kingkingSprite from "./assets/kings/kingking.png";
 import catkingSprite from "./assets/kings/catking.png";
@@ -30,6 +33,8 @@ import {
   pebble,
   cat,
   beetle,
+  block,
+  picasso,
 } from "./movementTypes";
 
 function getPieceClass(cell: NonNullable<Board[number][number]>) {
@@ -46,8 +51,12 @@ function getPieceClass(cell: NonNullable<Board[number][number]>) {
       return `${pebble}`;
     case "cat":
       return `${cat}`;
+    case "picasso":
+      return `${picasso}`;
     case "beetle":
       return `${beetle}`;
+    case "block":
+      return `${block}`;
     case "man":
     default:
       return `${basePiece} ${kingBorder} ${
@@ -84,6 +93,10 @@ function getPieceSprite(cell: NonNullable<Board[number][number]>) {
       return catSprite;
     case "beetle":
       return beetleSprite;
+    case "block":
+      return blockSprite;
+    case "picasso":
+      return picassoSprite;
     case "heavy":
       return cell.hp > 1 ? pebbleSprite : crackedPebbleSprite;
     case "man":
@@ -124,11 +137,23 @@ function getPieceInfo(cell: NonNullable<Board[number][number]>) {
         description:
           "At the end of each player turn, the cat wanders to a random legal tile. It may immediately move away from where you place it.",
       };
+    case "block":
+      return {
+        name: "Block",
+        description:
+          "Does nothing.",
+      };
     case "beetle":
       return {
         name: "Beetle",
         description:
           "May jump forward 2 spaces. Landing on an enemy piece takes it. May also move like a regular piece.",
+      };
+    case "picasso":
+      return {
+        name: "Pablo Picasso",
+        description:
+          "Instead of jumping, he places cubes. Your team may jump over them, but the enemy cannot.",
       };
     default:
       return {
@@ -176,6 +201,18 @@ function getPieceDescription(cell: NonNullable<Board[number][number]>) {
         description:
           "What's the buzz with the boogy-bug?",
       };
+    case "block":
+      return {
+        name: "Block",
+        description:
+          "Talk about art block!",
+      };
+    case "picasso":
+      return {
+        name: "Pablo Picasso",
+        description:
+          "The king of cubism",
+      };
     default:
       return {
         name: "Unknown Piece",
@@ -194,6 +231,7 @@ function canDoubleCapture(cell: NonNullable<Board[number][number]>) {
     case "cat":
     case "man":
     case "heavy":
+    case "picasso":
     default:
       return true;
   }

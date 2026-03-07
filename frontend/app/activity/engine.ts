@@ -1,6 +1,5 @@
 import { Board, Move, N, Piece, Pos, inBounds } from "./movementTypes";
-import { cloneBoard } from "./board";
-
+import { cloneBoard, makePiece } from "./board";
 function getDirs(piece: Piece): Array<[number, number]> {
   const isKingLike = piece.kind === "king" || piece.isKinged;
 
@@ -225,6 +224,24 @@ function genKingMoves(board: Board, from: Pos, piece: Piece, onlyCaptures = fals
   return moves;
 }
 
+function genPicassoMoves(board: Board, from: Pos, piece: Piece, onlyCaptures = false): Move[] {
+  const moves: Move[] = [];
+
+  if (onlyCaptures) return moves;
+
+  const dr = piece.owner === "R" ? -1 : 1;
+  const r1 = from.r + dr;
+  const c1 = from.c;
+
+  if (!inBounds(r1, c1)) return moves;
+
+  moves.push({
+    to: { r: r1, c: c1 },
+  });
+
+  return moves;
+}
+
 export function genMoves(
   board: Board,
   from: Pos,
@@ -247,6 +264,13 @@ export function genMoves(
     case "beetle":
       moves.push(...genCheckerMoves(board, from, piece, onlyCaptures));
       moves.push(...genBeetleMoves(board, from, piece, onlyCaptures));
+      break;
+
+    case "picasso":
+      moves.push(...genCheckerMoves(board, from, piece, onlyCaptures));
+      moves.push(...genPicassoMoves(board, from, piece, onlyCaptures));
+
+    case "block":
       break;
 
     default:
@@ -279,6 +303,12 @@ export function applyMove(
   const b = cloneBoard(board);
   const piece = b[from.r][from.c];
   if (!piece) return { next: board, landed: from };
+
+  // Picasso special: do not move Picasso, place a black block instead
+if (piece.kind === "picasso") {
+  b[mv.to.r][mv.to.c] = makePiece("B", "block");
+  return { next: b, landed: from };
+}
 
   b[from.r][from.c] = null;
 
