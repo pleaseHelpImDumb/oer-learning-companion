@@ -41,6 +41,7 @@ export function makeInitialBoard(): Board {
   b[7][2] = makePiece("R", "cat");
   b[5][4] = makePiece("R", "beetle");
   b[5][6] = makePiece("R", "picasso");
+  b[6][1] = makePiece("R", "alien");
   return b;
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { register } from "module";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,7 +14,8 @@ export default function Home() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  async function registerUser() {
+  async function registerUser(e: React.FormEvent) {
+    e.preventDefault();
     if (!API_BASE_URL) {
       alert("API base URL is not configured");
       return;
@@ -48,7 +50,7 @@ export default function Home() {
       console.log("Registered:", data);
 
       // only redirect on successful create
-      window.location.href = "/login";
+      window.location.href = "/";
     } catch (error) {
       console.error("Registration error:", error);
       alert("Something went wrong while creating your account.");
@@ -77,7 +79,8 @@ export default function Home() {
               Registration
             </p>
 
-            <div className="flex flex-row gap-6">
+            <form onSubmit={registerUser}>
+<div className="flex flex-row gap-6">
               <div className="flex flex-col">
                 <label htmlFor="firstName" className="mb-1">First Name</label>
                 <input
@@ -135,16 +138,16 @@ export default function Home() {
                 />
               </div>
             </div>
-
             <div className="flex items-center justify-center pt-[3%]">
               <button
-                type="button"
+                type="submit"
                 className="rounded-lg px-8 py-3 text-white bg-[#235937]"
                 onClick={registerUser}
               >
                 Submit
               </button>
             </div>
+            </form>
 
             <div className="pb-[3%]" />
           </div>

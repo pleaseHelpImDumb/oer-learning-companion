@@ -10,7 +10,7 @@ import catSprite from "./assets/pets/cat.png";
 import beetleSprite from "./assets/music/beetle.png";
 import blockSprite from "./assets/misc/block.png";
 import picassoSprite from "./assets/art/Picasso.png";
-
+import alienSprite from "./assets/misc/alien.png";
 
 import kingkingSprite from "./assets/kings/kingking.png";
 import catkingSprite from "./assets/kings/catking.png";
@@ -35,6 +35,7 @@ import {
   beetle,
   block,
   picasso,
+  alien,
 } from "./movementTypes";
 
 function getPieceClass(cell: NonNullable<Board[number][number]>) {
@@ -57,6 +58,8 @@ function getPieceClass(cell: NonNullable<Board[number][number]>) {
       return `${beetle}`;
     case "block":
       return `${block}`;
+    case "alien":
+      return `${alien}`;
     case "man":
     default:
       return `${basePiece} ${kingBorder} ${
@@ -97,6 +100,8 @@ function getPieceSprite(cell: NonNullable<Board[number][number]>) {
       return blockSprite;
     case "picasso":
       return picassoSprite;
+    case "alien":
+        return alienSprite;
     case "heavy":
       return cell.hp > 1 ? pebbleSprite : crackedPebbleSprite;
     case "man":
@@ -152,6 +157,12 @@ function getPieceInfo(cell: NonNullable<Board[number][number]>) {
     case "picasso":
       return {
         name: "Pablo Picasso",
+        description:
+          "Instead of jumping, he places cubes. Your team may jump over them, but the enemy cannot.",
+      };
+    case "alien":
+      return {
+        name: "Alien",
         description:
           "Instead of jumping, he places cubes. Your team may jump over them, but the enemy cannot.",
       };
@@ -211,7 +222,13 @@ function getPieceDescription(cell: NonNullable<Board[number][number]>) {
       return {
         name: "Pablo Picasso",
         description:
-          "The king of cubism",
+          "The king of cubism.",
+      };
+    case "alien":
+      return {
+        name: "Alien",
+        description:
+          "Straight from the BleepBlorp system!",
       };
     default:
       return {
