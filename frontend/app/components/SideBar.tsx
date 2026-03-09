@@ -42,6 +42,7 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
       <aside className={asideClass} style={{ top: headerOffset }}>
         {icons.map((icon) => {
           const isStuck = icon.alt === "stuck";
+          const isAiHelp = icon.alt === "help"
           const isTop = icon.alt === "Top";
 
           if (isTop) {
@@ -89,6 +90,20 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
             );
           }
 
+          if (isAiHelp) {
+            return (
+              <button
+                key={icon.src}
+                type="button"
+                onClick={() => setAiHelpOpen(true)}
+                className={cellClass}
+                aria-label="Open AI Help window"
+              >
+                <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+              </button>
+            );
+          }
+
           return (
             <Link key={icon.src} href={icon.href} className={cellClass}>
               <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
@@ -103,7 +118,10 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
       onHelp={() => openAssistant()}  // ✅ global open
     />
 
-      <AIHelpModal open={aiHelpOpen} onClose={() => setAiHelpOpen(false)} />
+      <AIHelpModal 
+        open={aiHelpOpen} 
+        onClose={() => openAssistant()} 
+      />
     </>
   );
 }

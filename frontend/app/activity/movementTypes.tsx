@@ -5,7 +5,7 @@ export type Pos = {
   c: number;
 };
 
-export type PieceKind = "man" | "king" | "knight" | "heavy" | "cat" | "beetle" | "block" | "picasso" | "alien";
+export type PieceKind = "man" | "king" | "knight" | "heavy" | "cat" | "beetle" | "block" | "picasso" | "alien" | "basketball" | "soccerball";
 
 export type Piece = {
   id: string;
@@ -59,3 +59,9 @@ export const picasso =
 
 export const alien =
   "relative w-20 h-20 sm:w-21 sm:h-21 flex items-center justify-center overflow-hidden border-transparent bg-transparent rounded-none";
+
+export const basketball =
+  "relative w-13 h-13 sm:w-14 sm:h-14 flex items-center justify-center overflow-hidden border-transparent bg-transparent rounded-none";
+
+export const soccerball =
+  "relative w-13 h-13 sm:w-14 sm:h-14 flex items-center justify-center overflow-hidden border-transparent bg-transparent rounded-none";

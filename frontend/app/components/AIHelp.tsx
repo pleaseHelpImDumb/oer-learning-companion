@@ -2,11 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
-
+type StuckModalProps = {
+    open: boolean;
+    onClose: () => void;
+    onHelp: () => void; // ✅ ADD THIS
+  };
 export default function StuckModal() {
   const router = useRouter();
   const { state, closeAssistant, setTab, setInput, send } = useStuckAssistant();
-
   if (!state.open) return null;
 
   const handleAction = (fn: () => void) => {

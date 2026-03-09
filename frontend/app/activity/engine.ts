@@ -138,6 +138,79 @@ function genKnightMoves(board: Board, from: Pos, piece: Piece, onlyCaptures = fa
   return moves;
 }
 
+function genSoccerballMoves(
+  board: Board,
+  from: Pos,
+  piece: Piece,
+  onlyCaptures = false
+): Move[] {
+  const moves: Move[] = [];
+
+  for (let dr = -7; dr <= 7; dr++) {
+    for (let dc = -7; dc <= 7; dc++) {
+      if (dr === 0 && dc === 0) continue;
+
+      const r = from.r + dr;
+      const c = from.c + dc;
+
+      if (!inBounds(r, c)) continue;
+
+      const target = board[r][c];
+
+      if (!target) {
+        if (!onlyCaptures) {
+          moves.push({ to: { r, c } });
+        }
+        continue;
+      }
+
+      // intentional friendly fire
+      moves.push({
+        to: { r, c },
+        captures: [{ r, c }, { r: from.r, c: from.c }],
+      });
+    }
+  }
+
+  return moves;
+}
+
+function genAlienMoves(board: Board, from: Pos, piece: Piece, onlyCaptures = false): Move[] {
+  const deltas = [
+    [0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
+    [0,-1],[0,-2],[0,-3],[0,-4],[0,-5],[0,-6],[0,-7],
+  ] as const;
+
+  const moves: Move[] = [];
+
+  for (const [dr, dc] of deltas) {
+    const r = from.r + dr;
+    const c = from.c + dc;
+
+    if (!inBounds(r, c)) continue;
+
+    const target = board[r][c];
+
+    // normal knight move to empty square
+    if (!target) {
+      if (!onlyCaptures) {
+        moves.push({ to: { r, c } });
+      }
+      continue;
+    }
+
+    // capture enemy on landing square
+    /*if (target.owner !== piece.owner) {
+      moves.push({
+        to: { r, c },
+        captures: [{ r, c }],
+      });
+    }*/
+  }
+
+  return moves;
+}
+
 function genBeetleMoves(board: Board, from: Pos, piece: Piece, onlyCaptures = false): Move[] {
   const deltas: Array<readonly [number, number]> = [];
 
@@ -271,6 +344,16 @@ export function genMoves(
       moves.push(...genPicassoMoves(board, from, piece, onlyCaptures));
 
     case "block":
+      break;
+    
+    case "alien":
+      moves.push(...genAlienMoves(board, from, piece, onlyCaptures));
+      moves.push(...genCheckerMoves(board, from, piece, onlyCaptures));
+      break;
+
+    case "soccerball":
+      moves.push(...genSoccerballMoves(board, from, piece, onlyCaptures));
+      moves.push(...genCheckerMoves(board, from, piece, onlyCaptures));
       break;
 
     default:

@@ -11,6 +11,9 @@ import beetleSprite from "./assets/music/beetle.png";
 import blockSprite from "./assets/misc/block.png";
 import picassoSprite from "./assets/art/Picasso.png";
 import alienSprite from "./assets/misc/alien.png";
+import basketballSprite from "./assets/sports/basketball.png";
+import soccerballSprite from "./assets/sports/soccerball.png";
+
 
 import kingkingSprite from "./assets/kings/kingking.png";
 import catkingSprite from "./assets/kings/catking.png";
@@ -36,6 +39,8 @@ import {
   block,
   picasso,
   alien,
+  basketball,
+  soccerball,
 } from "./movementTypes";
 
 function getPieceClass(cell: NonNullable<Board[number][number]>) {
@@ -60,6 +65,10 @@ function getPieceClass(cell: NonNullable<Board[number][number]>) {
       return `${block}`;
     case "alien":
       return `${alien}`;
+    case "basketball":
+      return `${basketball}`;
+    case "soccerball":
+      return `${soccerball}`;
     case "man":
     default:
       return `${basePiece} ${kingBorder} ${
@@ -100,6 +109,10 @@ function getPieceSprite(cell: NonNullable<Board[number][number]>) {
       return blockSprite;
     case "picasso":
       return picassoSprite;
+    case "basketball":
+      return basketballSprite;
+    case "soccerball":
+      return soccerballSprite;
     case "alien":
         return alienSprite;
     case "heavy":
@@ -164,7 +177,19 @@ function getPieceInfo(cell: NonNullable<Board[number][number]>) {
       return {
         name: "Alien",
         description:
-          "Instead of jumping, he places cubes. Your team may jump over them, but the enemy cannot.",
+          "The mothership may carry them anywhere horizontally",
+      };
+    case "basketball":
+      return {
+        name: "Basketball",
+        description:
+          "Gains vertical movement when dribbled. To dribble: move forwards, then backwards.",
+      };
+    case "soccerball":
+      return {
+        name: "Soccerball",
+        description:
+          "May move however it wishes. However, it will recieve a red card and be ejected if it moves anywhere illegal.",
       };
     default:
       return {
@@ -230,6 +255,18 @@ function getPieceDescription(cell: NonNullable<Board[number][number]>) {
         description:
           "Straight from the BleepBlorp system!",
       };
+    case "soccerball":
+      return {
+        name: "Soccerball",
+        description:
+          "Red cards all around!",
+      };
+    case "basketball":
+      return {
+        name: "Basketball",
+        description:
+          "WE are the goat.",
+      };
     default:
       return {
         name: "Unknown Piece",
@@ -243,12 +280,15 @@ function canDoubleCapture(cell: NonNullable<Board[number][number]>) {
     case "king":
     case "knight":
     case "beetle":
+    case "alien":
+    case "soccerball":
       return false;
 
     case "cat":
     case "man":
     case "heavy":
     case "picasso":
+    case "basketball":
     default:
       return true;
   }
