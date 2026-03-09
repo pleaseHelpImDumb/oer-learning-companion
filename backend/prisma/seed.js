@@ -44,12 +44,36 @@ async function main() {
 
   // Seed Hobby Tracks
   const tracks = [
-    { name: "Sports", description: "Sports-inspired theme" },
-    { name: "Gaming", description: "Gaming-inspired theme" },
-    { name: "Art", description: "Art-inspired theme" },
-    { name: "Pets", description: "Pet-inspired theme" },
-    { name: "Space", description: "Space exploration theme" },
-    { name: "Music", description: "Music-focused theme" },
+    {
+      name: "Sports",
+      description: "Sports-inspired theme",
+      iconUrl: `/assets/tracks/default/sports.png`,
+    },
+    {
+      name: "Gaming",
+      description: "Gaming-inspired theme",
+      iconUrl: `/assets/tracks/default/games.png`,
+    },
+    {
+      name: "Art",
+      description: "Art-inspired theme",
+      iconUrl: `/assets/tracks/default/art.png`,
+    },
+    {
+      name: "Pets",
+      description: "Pet-inspired theme",
+      iconUrl: `/assets/tracks/default/pets.png`,
+    },
+    {
+      name: "Space",
+      description: "Space exploration theme",
+      iconUrl: `/assets/tracks/default/space.png`,
+    },
+    {
+      name: "Music",
+      description: "Music-focused theme",
+      iconUrl: `/assets/tracks/default/music.png`,
+    },
   ];
 
   // Delete existing

@@ -5,19 +5,19 @@ const authMiddleware = require("../middleware/jwtMiddleware.js");
 const {
   login,
   register,
-  chat,
   logout,
   forgotPassword,
   resetPassword,
+  onboard,
 } = require("../controllers/userController.js");
 
 router.post("/login", login);
 router.post("/register", register);
 
-//router.post("/chat", chat);
-
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+router.post("/onboard", authMiddleware, onboard);
 
 router.post("/logout", authMiddleware, logout);
 

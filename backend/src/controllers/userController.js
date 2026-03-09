@@ -7,6 +7,7 @@ const {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  onboardSchema,
 } = require("../validation/userSchema");
 
 // Database
@@ -47,7 +48,7 @@ const login = async (req, res, next) => {
     // Find user by email OR name
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: identity }, { name: identity }],
+        OR: [{ email: identity }, { username: identity }],
       },
     });
     if (!user) {
@@ -108,7 +109,7 @@ const register = async (req, res, next) => {
       });
     }
 
-    const { name, email, password } = value;
+    const { name, email, password, username } = value;
 
     // Check if already registered?
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -120,7 +121,7 @@ const register = async (req, res, next) => {
     // If not, create the new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { name, email, password: hashedPassword, username },
     });
 
     // Security CSRF & JWT:
@@ -263,25 +264,90 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-// THIS DOES NOT BELONG HERE AND IS ONLY TO TEST AI RESPONSE
-require("dotenv").config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const chat = async (req, res, next) => {
+// ONBOARDING (Fills avatar, checkinInterval, favQuote)
+const onboard = async (req, res, next) => {
   try {
-    const { message } = req.body;
+    const { error, value } = onboardSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
 
-    const model = genAI.getGenerativeModel({ model: "gemma-3-12b-it" });
-    const result = await model.generateContent(message);
-    const aiResponse = result.response.text();
+    const { favQuote, avatarUrl, checkInIntervalMinutes, trackId, nickname } =
+      value;
+    const userId = req.user.id;
+    const track = await prisma.hobbyTrack.findUnique({
+      where: { id: trackId },
+    });
 
-    res.json({ response: aiResponse });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "AI request failed" });
+    if (!track) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Selected track not found",
+      });
+    }
+
+    // transcation to update USER and USERTRACK
+    const result = await prisma.$transaction(async (tx) => {
+      // user
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          favoriteQuote: favQuote || null,
+          avatarUrl: avatarUrl || null,
+          checkinIntervalMinutes: checkInIntervalMinutes,
+          onboardingCompleted: true,
+          nickname: nickname || null,
+        },
+      });
+
+      // usertrack
+      const userTrack = await tx.userTrack.create({
+        data: {
+          userId: userId,
+          trackId: trackId,
+        },
+        include: {
+          track: true,
+        },
+      });
+
+      return { updatedUser, userTrack };
+    });
+
+    res.json({
+      message: "Onboarding completed",
+      user: {
+        id: result.updatedUser.id,
+        name: result.updatedUser.name,
+        email: result.updatedUser.email,
+        nickname: result.updatedUser.nickname,
+        favQuote: result.updatedUser.favQuote,
+        avatarUrl: result.updatedUser.avatarUrl,
+        checkInIntervalMinutes: result.updatedUser.checkInIntervalMinutes,
+        onboardingCompleted: result.updatedUser.onboardingCompleted,
+      },
+      selectedTrack: {
+        id: result.userTrack.track.id,
+        name: result.userTrack.track.name,
+        description: result.userTrack.track.description,
+      },
+    });
+  } catch (err) {
+    if (err.code === "P2002") {
+      return res.status(StatusCodes.CONFLICT).json({
+        error: "You have already selected this track",
+      });
+    }
+    next(err);
   }
 };
-// -----------------------------------------------
 
-module.exports = { login, register, forgotPassword, resetPassword, logout };
+module.exports = {
+  login,
+  register,
+  forgotPassword,
+  resetPassword,
+  logout,
+  onboard,
+};
