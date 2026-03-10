@@ -95,10 +95,8 @@ export default function Home() {
           items-center
             "
           >
-        <option value="breaks">Breaks</option>
-        <option value="short">Short break</option>
-        <option value="long">Long break</option>
-        <option value="none">No breaks</option>
+        <option value="minutes">Minutes</option>
+        <option value="modules">Modules</option>
       </select>
       <p className="flex flex-col items-center text-white">Select:</p>
       <select
