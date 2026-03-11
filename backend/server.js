@@ -8,8 +8,10 @@ const PORT = process.env.PORT || 3000;
 // SECURITY
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const { xss } = require("express-xss-sanitizer");
 const rateLimiter = require("express-rate-limit");
+const authMiddleware = require("./src/middleware/jwtMiddleware.js");
 app.set("trust proxy", 1);
 // limit each IP to 100 requests per 15 minutes
 app.use(
@@ -21,6 +23,12 @@ app.use(
 app.use(helmet()); // Security headers
 app.use(cookieParser());
 app.use(xss()); // Sanitize user input
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +46,9 @@ app.get("/health", (req, res) => {
 // ROUTES / ROUTERS
 const userRouter = require("./src/routes/userRouter.js");
 app.use("/users", userRouter);
+
+const sessionRouter = require("./src/routes/sessionRouter.js");
+app.use("/sessions", authMiddleware, sessionRouter);
 
 // NOT FOUND
 app.use((req, res) => {

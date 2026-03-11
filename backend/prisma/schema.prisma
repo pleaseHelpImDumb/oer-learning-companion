@@ -9,45 +9,40 @@ datasource db {
 
 model User {
   id Int @id @default(autoincrement())
+  role Role @default(STUDENT)
   email String @unique
   password String // hashed with bcrypt
-  tokenBalance Int @default(0)
   username String
-  nickname String?
   avatarUrl String @default("assets/profiles/profile0.png")
-  checkinIntervalMinutes Int @default(5)
-  favoriteQuote String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  onboardingCompleted Boolean @default(false)
+
   resetPasswordToken     String?  @unique
   resetPasswordExpires   DateTime?
 
+  // Student
+  tokenBalance Int @default(0)
+  nickname String?
+  checkinIntervalMinutes Int @default(5)
+  favoriteQuote String?
+  onboardingCompleted Boolean @default(false)
+
+  trackId Int?
+  track HobbyTrack? @relation(fields:[trackId], references: [id])
+
   // For Backwards Reference
   studySessions StudySession[]
-  userTracks UserTrack[]
   userBadges UserBadge[]
 }
 
-model hobbyTrack {
+model HobbyTrack {
   id Int @id @default(autoincrement())
   name String @unique
   description String
   iconUrl String
 
-  userTracks UserTrack[]
-}
-
-model UserTrack {
-  id Int @id @default(autoincrement())
-  userId Int
-  trackId Int
-
-  // Foreign Keys
-  user User @relation(fields: [userId], references: [id])
-  track hobbyTrack @relation(fields:[trackId], references: [id])
-  
-  @@unique([userId, trackId])
+  users User[]
 }
 
 model Badge {
@@ -75,11 +70,25 @@ model UserBadge {
 model StudySession {
   id Int @id @default(autoincrement())
   userId Int
-  durationMinutes Int
-  completed Boolean
-  completedAt DateTime
-  createdAt DateTime @default(now())
+  
+  status SessionStatus @default(ACTIVE)
+  startTime DateTime @default(now())
+  endTime DateTime?
+  lastPauseTime DateTime?
+  totalPausedMinutes Int @default(0)
+  durationMinutes Int? //set on completed
 
   // Foreign Keys
   user User @relation(fields:[userId], references:[id])
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
 }

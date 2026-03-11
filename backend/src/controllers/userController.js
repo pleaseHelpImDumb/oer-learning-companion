@@ -109,7 +109,7 @@ const register = async (req, res, next) => {
       });
     }
 
-    const { name, email, password, username } = value;
+    const { username, email, password } = value;
 
     // Check if already registered?
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -121,7 +121,7 @@ const register = async (req, res, next) => {
     // If not, create the new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, username },
+      data: { username, email, password: hashedPassword },
     });
 
     // Security CSRF & JWT:
@@ -148,11 +148,11 @@ const register = async (req, res, next) => {
     res.status(StatusCodes.CREATED).json({
       user: {
         id: user.id,
-        name: user.name,
+        username: user.username,
         email: user.email,
       },
       csrfToken: csrfToken,
-      message: `Welcome, ${user.name}! Your account has been registered.`,
+      message: `Welcome, ${user.username}! Your account has been registered.`,
     });
   } catch (err) {
     next(err);
@@ -276,7 +276,7 @@ const onboard = async (req, res, next) => {
 
     const { favQuote, avatarUrl, checkInIntervalMinutes, trackId, nickname } =
       value;
-    const userId = req.user.id;
+    const userId = req.user.id; // get from auth middleware
     const track = await prisma.hobbyTrack.findUnique({
       where: { id: trackId },
     });
@@ -286,51 +286,35 @@ const onboard = async (req, res, next) => {
         error: "Selected track not found",
       });
     }
-
-    // transcation to update USER and USERTRACK
-    const result = await prisma.$transaction(async (tx) => {
-      // user
-      const updatedUser = await tx.user.update({
-        where: { id: userId },
-        data: {
-          favoriteQuote: favQuote || null,
-          avatarUrl: avatarUrl || null,
-          checkinIntervalMinutes: checkInIntervalMinutes,
-          onboardingCompleted: true,
-          nickname: nickname || null,
-        },
-      });
-
-      // usertrack
-      const userTrack = await tx.userTrack.create({
-        data: {
-          userId: userId,
-          trackId: trackId,
-        },
-        include: {
-          track: true,
-        },
-      });
-
-      return { updatedUser, userTrack };
+    // user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        favoriteQuote: favQuote,
+        avatarUrl: avatarUrl,
+        checkinIntervalMinutes: checkInIntervalMinutes,
+        onboardingCompleted: true,
+        nickname: nickname,
+        trackId: trackId,
+      },
     });
 
-    res.json({
+    return res.json({
       message: "Onboarding completed",
       user: {
-        id: result.updatedUser.id,
-        name: result.updatedUser.name,
-        email: result.updatedUser.email,
-        nickname: result.updatedUser.nickname,
-        favQuote: result.updatedUser.favQuote,
-        avatarUrl: result.updatedUser.avatarUrl,
-        checkInIntervalMinutes: result.updatedUser.checkInIntervalMinutes,
-        onboardingCompleted: result.updatedUser.onboardingCompleted,
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        nickname: updatedUser.nickname,
+        favQuote: updatedUser.favQuote,
+        avatarUrl: updatedUser.avatarUrl,
+        checkInIntervalMinutes: updatedUser.checkInIntervalMinutes,
+        onboardingCompleted: updatedUser.onboardingCompleted,
       },
       selectedTrack: {
-        id: result.userTrack.track.id,
-        name: result.userTrack.track.name,
-        description: result.userTrack.track.description,
+        id: track.id,
+        name: track.name,
+        description: track.description,
       },
     });
   } catch (err) {
