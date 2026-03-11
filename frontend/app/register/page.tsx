@@ -34,10 +34,10 @@ export default function Home() {
         },
         credentials: "include",
         body: JSON.stringify({
-          name: `${firstName} ${lastName}`,
+          username: `${firstName} ${lastName}`,
           email,
           password,
-        }),
+        }), 
       });
 
       const data = await res.json();
