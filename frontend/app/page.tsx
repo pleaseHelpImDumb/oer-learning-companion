@@ -38,6 +38,10 @@ async function loginUser(e: React.FormEvent) {
       return;
     }
 
+    if (data.csrfToken) {
+  localStorage.setItem("csrfToken", data.csrfToken);
+}
+
     console.log("Login success:", data);
     window.location.href = "/onboarding";
   } catch (err) {
