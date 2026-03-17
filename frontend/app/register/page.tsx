@@ -13,7 +13,7 @@ export default function Home() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+  
   async function registerUser(e: React.FormEvent) {
     e.preventDefault();
     if (!API_BASE_URL) {
