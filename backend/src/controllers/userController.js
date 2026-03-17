@@ -327,6 +327,54 @@ const onboard = async (req, res, next) => {
   }
 };
 
+// getCurrentUser (GET for basic user information)
+const getCurrentUser = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        nickname: true,
+        avatarUrl: true,
+        favoriteQuote: true,
+        checkinIntervalMinutes: true,
+        onboardingCompleted: true,
+        createdAt: true,
+        track: true,
+        tokenBalance: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "User not found",
+      });
+    }
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.nickname,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        favQuote: user.favQuote,
+        checkinIntervalMinutes: user.checkinIntervalMinutes,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt,
+        track: user.track,
+        tokenBalance: user.tokenBalance,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -334,4 +382,5 @@ module.exports = {
   resetPassword,
   logout,
   onboard,
+  getCurrentUser,
 };

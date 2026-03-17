@@ -9,16 +9,16 @@ const {
   forgotPassword,
   resetPassword,
   onboard,
+  getCurrentUser,
 } = require("../controllers/userController.js");
 
 router.post("/login", login);
 router.post("/register", register);
-
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
 router.post("/onboard", authMiddleware, onboard);
-
 router.post("/logout", authMiddleware, logout);
+router.get("/profile", authMiddleware, getCurrentUser);
 
 module.exports = router;

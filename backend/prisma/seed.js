@@ -45,31 +45,37 @@ async function main() {
   // Seed Hobby Tracks
   const tracks = [
     {
+      id: 1,
       name: "Sports",
       description: "Sports-inspired theme",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
     {
+      id: 2,
       name: "Gaming",
       description: "Gaming-inspired theme",
       iconUrl: `/assets/tracks/default/games.png`,
     },
     {
+      id: 3,
       name: "Art",
       description: "Art-inspired theme",
       iconUrl: `/assets/tracks/default/art.png`,
     },
     {
+      id: 4,
       name: "Pets",
       description: "Pet-inspired theme",
       iconUrl: `/assets/tracks/default/pets.png`,
     },
     {
+      id: 5,
       name: "Space",
       description: "Space exploration theme",
       iconUrl: `/assets/tracks/default/space.png`,
     },
     {
+      id: 6,
       name: "Music",
       description: "Music-focused theme",
       iconUrl: `/assets/tracks/default/music.png`,
