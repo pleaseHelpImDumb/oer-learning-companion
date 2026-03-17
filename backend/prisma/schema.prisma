@@ -91,4 +91,5 @@ enum SessionStatus {
   ACTIVE
   PAUSED
   COMPLETED
+  CANCELLED
 }
