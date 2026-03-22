@@ -16,50 +16,9 @@ export default function Home() {
   const renderCount = useRef(0);
   renderCount.current += 1;
 
-  function trace(label: string, value: any) {
-    console.groupCollapsed(`%c${label}`, "color: #7c3aed; font-weight: bold;");
-    console.log(value);
-    console.trace("trace origin");
-    console.groupEnd();
-  }
-
-  function traceQuotePaths(obj: any, label = "object") {
-    console.groupCollapsed(`%c[QUOTE PATHS] ${label}`, "color: #059669; font-weight: bold;");
-    console.log("full object:", obj);
-    console.log(`${label}.favoriteQuote ->`, obj?.favoriteQuote);
-    console.log(`${label}.favQuote ->`, obj?.favQuote);
-    console.log(`${label}.quote ->`, obj?.quote);
-    console.log(`${label}.user?.favoriteQuote ->`, obj?.user?.favoriteQuote);
-    console.log(`${label}.user?.favQuote ->`, obj?.user?.favQuote);
-    console.log(`${label}.user?.quote ->`, obj?.user?.quote);
-    console.groupEnd();
-  }
-
-  // render-time visibility
-  console.groupCollapsed(
-    `%c[RENDER ${renderCount.current}] Home render`,
-    "color: #2563eb; font-weight: bold;"
-  );
-  console.log("API_BASE_URL:", API_BASE_URL);
-  console.log("user state:", user);
-  console.log("quote state:", quote);
-  console.log("rendered user?.favoriteQuote:", user?.favoriteQuote);
-  console.log("rendered user?.favQuote:", user?.favQuote);
-  console.log("rendered quote:", quote);
-  console.groupEnd();
-
   useEffect(() => {
     async function loadUser() {
       const requestUrl = `${API_BASE_URL}/users/profile`;
-
-      console.groupCollapsed(
-        "%c[FETCH 1] starting /users/profile request",
-        "color: #dc2626; font-weight: bold;"
-      );
-      console.log("requestUrl:", requestUrl);
-      console.log("method:", "GET");
-      console.log("credentials:", "include");
-      console.groupEnd();
 
       try {
         const res = await fetch(requestUrl, {
@@ -70,37 +29,11 @@ export default function Home() {
           },
         });
 
-        console.groupCollapsed(
-          "%c[FETCH 2] response metadata received",
-          "color: #dc2626; font-weight: bold;"
-        );
-        console.log("status:", res.status);
-        console.log("ok:", res.ok);
-        console.log("statusText:", res.statusText);
-        console.log("url:", res.url);
-        console.log("headers content-type:", res.headers.get("content-type"));
-        console.groupEnd();
-
         // clone lets you inspect raw response text without losing json parsing
         const cloned = res.clone();
         const rawText = await cloned.text();
 
-        console.groupCollapsed(
-          "%c[FETCH 3] raw response text",
-          "color: #dc2626; font-weight: bold;"
-        );
-        console.log(rawText);
-        try {
-          console.log("rawText parsed manually:", JSON.parse(rawText));
-        } catch (e) {
-          console.log("rawText is not valid JSON");
-        }
-        console.groupEnd();
-
         const data = await res.json();
-
-        trace("[FETCH 4] parsed JSON data", data);
-        traceQuotePaths(data, "data");
 
         if (!res.ok) {
           console.error("[FETCH 5] request failed:", data?.error || "Could not fetch user info");
@@ -108,8 +41,6 @@ export default function Home() {
         }
 
         const fetchedUser = data?.user;
-        trace("[FETCH 6] extracted fetchedUser", fetchedUser);
-        traceQuotePaths(fetchedUser, "fetchedUser");
 
         const favoriteQuote =
           fetchedUser?.favoriteQuote ??
@@ -117,40 +48,10 @@ export default function Home() {
           fetchedUser?.quote ??
           null;
 
-        console.groupCollapsed(
-          "%c[FETCH 7] chosen quote field",
-          "color: #dc2626; font-weight: bold;"
-        );
-        console.log("fetchedUser.favoriteQuote:", fetchedUser?.favoriteQuote);
-        console.log("fetchedUser.favQuote:", fetchedUser?.favQuote);
-        console.log("fetchedUser.quote:", fetchedUser?.quote);
-        console.log("final chosen favoriteQuote:", favoriteQuote);
-        console.groupEnd();
-
-        console.groupCollapsed(
-          "%c[STATE 1] before state updates",
-          "color: #b45309; font-weight: bold;"
-        );
-        console.log("current user state:", user);
-        console.log("current quote state:", quote);
-        console.log("about to setUser(fetchedUser)");
-        console.log("about to setQuote(favoriteQuote)");
-        console.groupEnd();
-
         setUser(fetchedUser);
         setQuote(favoriteQuote);
 
-        console.groupCollapsed(
-          "%c[STATE 2] setState calls queued",
-          "color: #b45309; font-weight: bold;"
-        );
-        console.log("setUser queued with:", fetchedUser);
-        console.log("setQuote queued with:", favoriteQuote);
-        console.log("note: state will not reflect immediately until next render");
-        console.groupEnd();
-
         const rawUserBadges = fetchedUser?.userBadges;
-        trace("[BADGES 1] rawUserBadges", rawUserBadges);
 
         if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
           const sortedBadges = [...rawUserBadges].sort((a, b) => {
@@ -159,10 +60,7 @@ export default function Home() {
             return bTime - aTime;
           });
 
-          trace("[BADGES 2] sortedBadges", sortedBadges);
-
           const newestBadge = sortedBadges[0]?.badge;
-          trace("[BADGES 3] newestBadge", newestBadge);
 
           if (
             newestBadge &&
@@ -178,10 +76,8 @@ export default function Home() {
                   : "Latest Badge",
             };
 
-            trace("[BADGES 4] setLatestBadge", badgeToSet);
             setLatestBadge(badgeToSet);
           } else {
-            trace("[BADGES 4] setLatestBadge(null)", null);
             setLatestBadge(null);
           }
         } else {
@@ -194,35 +90,6 @@ export default function Home() {
 
     loadUser();
   }, [API_BASE_URL]);
-
-  useEffect(() => {
-    console.groupCollapsed(
-      "%c[STATE 3] user state committed",
-      "color: #b45309; font-weight: bold;"
-    );
-    console.log("user:", user);
-    console.log("user?.favoriteQuote:", user?.favoriteQuote);
-    console.log("user?.favQuote:", user?.favQuote);
-    console.groupEnd();
-  }, [user]);
-
-  useEffect(() => {
-    console.groupCollapsed(
-      "%c[STATE 4] quote state committed",
-      "color: #b45309; font-weight: bold;"
-    );
-    console.log("quote:", quote);
-    console.groupEnd();
-  }, [quote]);
-
-  useEffect(() => {
-    console.groupCollapsed(
-      "%c[STATE 5] latestBadge state committed",
-      "color: #b45309; font-weight: bold;"
-    );
-    console.log("latestBadge:", latestBadge);
-    console.groupEnd();
-  }, [latestBadge]);
 
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
