@@ -39,11 +39,32 @@ async function loginUser(e: React.FormEvent) {
     }
 
     if (data.csrfToken) {
-  localStorage.setItem("csrfToken", data.csrfToken);
-}
+      localStorage.setItem("csrfToken", data.csrfToken);
+    }
 
-    console.log("Login success:", data);
-    window.location.href = "/onboarding";
+    // second request: ask backend who is logged in
+    const userRes = await fetch(`${API_BASE_URL}/users/profile`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const userData = await userRes.json();
+
+    if (!userRes.ok) {
+      alert(userData.error || "Could not fetch user info");
+      return;
+    }
+
+    const isOnboarded = userData.user?.onboardingCompleted;
+
+    if (isOnboarded) {
+      window.location.href = "/dashboard";
+    } else {
+      window.location.href = "/onboarding";
+    }
   } catch (err) {
     console.error(err);
     alert("Something went wrong.");

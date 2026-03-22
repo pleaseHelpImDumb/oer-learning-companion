@@ -29,14 +29,13 @@ function formatEndTime(endTs: number) {
 
 export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }: StudyTimerProps) {
   const [isRunning, setIsRunning] = useState(autoStart);
-  const [remainingMs, setRemainingMs] = useState(durationSec * 1000);
-
+  const [selectedMinutes, setSelectedMinutes] = useState(durationSec / 60);
+  const [remainingMs, setRemainingMs] = useState(selectedMinutes * 60 * 1000);
   // store absolute end timestamp when running
   const endRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const totalMs = useMemo(() => durationSec * 1000, [durationSec]);
-
+  const totalMs = useMemo(() => selectedMinutes * 60 * 1000, [selectedMinutes]);
   // derived
   const remainingSec = remainingMs / 1000;
   const display = formatHMS(remainingSec);
@@ -117,33 +116,43 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
     <div className="w-[80%] h-full flex flex-col items-center justify-center py-[10%]  rounded-xl">
       <div className="relative flex items-center justify-center w-full h-full">
         {/* Center content (not rotated) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0 h-full w-full">
+        <div className="lg:absolute inset-0 flex flex-col items-center justify-center rotate-0 h-full w-full">
           {endRef.current ? (
-            <p className="text-white/50 text-sm w-full h-full flex justify-center items-center ">
+            <p className="text-white/50 text-sm w-full h-full flex justify-center items-center lg:pb-[2%]">
               Ends at: <span className="text-white/90">{formatEndTime(endRef.current)}</span>
             </p>
           ) : (
             <p className="text-white/50 text-sm w-full h-full flex justify-center items-center pb-[2%]">Here you can set the default break duration.</p>
           )}
-      <select
-        defaultValue="breaks"
-        className="
-          appearance-none
-          bg-[#10161f] text-white font-semibold
-          border border-white/40 rounded-md
-          px-6 py-3 pr-12
-          text-lg
-          focus:outline-none focus:ring-2 focus:ring-white/30
-          flex 
-          flex-col 
-          items-center
-            "
-          >
-        <option value="breaks">Breaks</option>
-        <option value="short">Short break</option>
-        <option value="long">Long break</option>
-        <option value="none">No breaks</option>
-      </select>
+<select
+  value={selectedMinutes}
+  onChange={(e) => {
+    const minutes = Number(e.target.value);
+    setSelectedMinutes(minutes);
+
+    // only reset the timer when changing duration
+    setIsRunning(false);
+    endRef.current = null;
+    setRemainingMs(minutes * 60 * 1000);
+  }}
+  className="
+    appearance-none
+    bg-[#10161f] text-white font-semibold
+    border border-white/40 rounded-md
+    px-6 py-3 pr-12
+    text-lg
+    focus:outline-none focus:ring-2 focus:ring-white/30
+  "
+>
+  {Array.from({ length: 45 }, (_, i) => {
+    const value = (i + 1) * 5;
+    return (
+      <option key={value} value={value}>
+        {value} mins
+      </option>
+    );
+  })}
+</select>
           {/* Digital display */}
           <div className="font-ds-digital tracking-wider text-white text-6xl md:text-7xl select-none pb-[2%]">
             {display}
@@ -170,7 +179,7 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
         </div>
       </div>
     </div>
-    <div className="flex flex-col text-white justify-center items-center pt-[1%]">
+    <div className="flex flex-col text-white justify-center items-center lg:pt-[1%]">
             <a>Take this opportunity to move and stretch.</a>
             <a>Even something simple can help relieve stress.</a>
           </div>
