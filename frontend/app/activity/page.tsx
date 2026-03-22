@@ -21,6 +21,10 @@ import crackedPebblekingSprite from "./assets/kings/crackedpebbleking.png";
 import pebblekingSprite from "./assets/kings/pebbleking.png";
 import knightkingSprite from "./assets/kings/knightking.png";
 import kingBeetleSprite from "./assets/kings/beetleking.png";
+import kingBasketballSprite from "./assets/kings/basketballKing.png";
+import kingSoccerballSprite from "./assets/kings/soccerballKing.png";
+import kingAlienSprite from "./assets/kings/alienKing.png";
+import kingPicassoSprite from "./assets/kings/PicassoKing.png";
 
 import { makeInitialBoard } from "./board";
 import { applyMove, genMoves, hasCaptureFrom, wanderAllCats } from "./engine";
@@ -88,6 +92,14 @@ function getPieceSprite(cell: NonNullable<Board[number][number]>) {
         return catkingSprite;
       case "beetle":
         return kingBeetleSprite;
+      case "basketball":
+        return kingBasketballSprite;
+      case "soccerball":
+        return kingSoccerballSprite;
+      case "alien":
+        return kingAlienSprite;
+      case "picasso":
+        return kingPicassoSprite;
       case "heavy":
         return cell.hp > 1 ? pebblekingSprite : crackedPebblekingSprite;
       case "man":
