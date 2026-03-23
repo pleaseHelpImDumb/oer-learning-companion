@@ -50,6 +50,9 @@ app.use("/users", userRouter);
 const sessionRouter = require("./src/routes/sessionRouter.js");
 app.use("/sessions", authMiddleware, sessionRouter);
 
+const aiRouter = require("./src/routes/aiRouter.js");
+app.use("/ai", authMiddleware, aiRouter);
+
 // NOT FOUND
 app.use((req, res) => {
   res.status(StatusCodes.NOT_FOUND).json({ error: "Page not found!" });

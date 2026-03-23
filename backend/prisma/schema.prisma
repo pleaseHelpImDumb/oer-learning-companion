@@ -80,6 +80,23 @@ model StudySession {
 
   // Foreign Keys
   user User @relation(fields:[userId], references:[id])
+
+  aiInteractions AIInteraction[]
+}
+
+model AIInteraction {
+  id Int @id @default(autoincrement())
+  sessionId Int
+  role AIRole
+  createdAt DateTime @default(now())
+  message String
+
+  session StudySession @relation(fields:[sessionId], references:[id])
+}
+
+enum AIRole {
+  USER
+  AI
 }
 
 enum Role {

@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes"); // Status codes
 
-// Database
+// Database setup
 const { PrismaClient } = require("@prisma/client");
 let opts;
 if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
