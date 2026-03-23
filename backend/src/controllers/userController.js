@@ -70,7 +70,7 @@ const login = async (req, res, next) => {
     const csrfToken = generateCSRFToken();
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user.userId,
         email: user.email,
         csrfToken: csrfToken,
       },
@@ -88,7 +88,7 @@ const login = async (req, res, next) => {
     res.json({
       message: "Log-in success!",
       user: {
-        id: user.id,
+        userId: user.userId,
         email: user.email,
         name: user.name,
       },
@@ -111,7 +111,7 @@ const register = async (req, res, next) => {
 
     const { username, email, password } = value;
 
-    // Check if already registered?
+    // check if already registered? via email
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser)
       return res
@@ -128,7 +128,7 @@ const register = async (req, res, next) => {
     const csrfToken = generateCSRFToken();
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user.userId,
         email: user.email,
         csrfToken: csrfToken,
       },
@@ -147,7 +147,7 @@ const register = async (req, res, next) => {
     // Add jwt/csrf security later
     res.status(StatusCodes.CREATED).json({
       user: {
-        id: user.id,
+        userId: user.userId,
         username: user.username,
         email: user.email,
       },
@@ -196,7 +196,7 @@ const forgotPassword = async (req, res, next) => {
       .digest("hex");
 
     await prisma.user.update({
-      where: { id: user.id },
+      where: { userId: user.userId },
       data: {
         resetPasswordToken: hashedToken,
         resetPasswordExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 min
@@ -248,7 +248,7 @@ const resetPassword = async (req, res, next) => {
 
     // we found user, hashed password, and can now UPDATE
     await prisma.user.update({
-      where: { id: user.id },
+      where: { userId: user.userId },
       data: {
         password: hashedPassword,
         resetPasswordToken: null,
@@ -274,11 +274,16 @@ const onboard = async (req, res, next) => {
       });
     }
 
-    const { favQuote, avatarUrl, checkInIntervalMinutes, trackId, nickname } =
-      value;
+    const {
+      favoriteQuote,
+      avatarUrl,
+      checkInIntervalMinutes,
+      trackId,
+      nickname,
+    } = value;
     const userId = req.user.id; // get from auth middleware
     const track = await prisma.hobbyTrack.findUnique({
-      where: { id: trackId },
+      where: { trackId: trackId },
     });
 
     if (!track) {
@@ -288,9 +293,9 @@ const onboard = async (req, res, next) => {
     }
     // user
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { userId: userId },
       data: {
-        favoriteQuote: favQuote,
+        favoriteQuote: favoriteQuote,
         avatarUrl: avatarUrl,
         checkinIntervalMinutes: checkInIntervalMinutes,
         onboardingCompleted: true,
@@ -302,17 +307,17 @@ const onboard = async (req, res, next) => {
     return res.json({
       message: "Onboarding completed",
       user: {
-        id: updatedUser.id,
+        userId: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
         nickname: updatedUser.nickname,
-        favQuote: updatedUser.favQuote,
+        favoriteQuote: updatedUser.favoriteQuote,
         avatarUrl: updatedUser.avatarUrl,
         checkInIntervalMinutes: updatedUser.checkInIntervalMinutes,
         onboardingCompleted: updatedUser.onboardingCompleted,
       },
       selectedTrack: {
-        id: track.id,
+        trackId: track.trackId,
         name: track.name,
         description: track.description,
       },
@@ -332,9 +337,9 @@ const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { userId: userId },
       select: {
-        id: true,
+        userId: true,
         username: true,
         email: true,
         role: true,
@@ -356,13 +361,13 @@ const getCurrentUser = async (req, res, next) => {
     }
     res.json({
       user: {
-        id: user.id,
+        userId: user.userId,
         username: user.username,
         displayName: user.nickname,
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
-        favQuote: user.favQuote,
+        favoriteQuote: user.favoriteQuote,
         checkinIntervalMinutes: user.checkinIntervalMinutes,
         onboardingCompleted: user.onboardingCompleted,
         createdAt: user.createdAt,

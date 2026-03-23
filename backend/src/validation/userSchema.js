@@ -22,7 +22,7 @@ const resetPasswordSchema = Joi.object({
 
 const onboardSchema = Joi.object({
   nickname: Joi.string().max(15).allow(""),
-  favQuote: Joi.string().max(500).optional().allow(""),
+  favoriteQuote: Joi.string().max(500).optional().allow(""),
   avatarUrl: Joi.string().optional().allow("").max(500),
   checkInIntervalMinutes: Joi.number().integer().min(2).max(15),
   trackId: Joi.number().integer().required(),

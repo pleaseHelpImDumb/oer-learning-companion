@@ -70,7 +70,7 @@ const getActiveSession = async (req, res, next) => {
       );
 
       await prisma.studySession.update({
-        where: { id: session.id },
+        where: { sessionId: session.id },
         data: {
           status: "CANCELLED",
           endTime: new Date(),
@@ -102,7 +102,7 @@ const getActiveSession = async (req, res, next) => {
 
     res.json({
       session: {
-        id: session.id,
+        sessionId: session.id,
         status: session.status,
         startTime: session.startTime,
         lastPauseTime: session.lastPauseTime,
@@ -123,7 +123,7 @@ const pauseSession = async (req, res, next) => {
 
     const session = await prisma.studySession.findFirst({
       where: {
-        id: sessionId,
+        sessionId: sessionId,
         userId: userId,
       },
     });
@@ -141,7 +141,7 @@ const pauseSession = async (req, res, next) => {
     }
 
     const updated = await prisma.studySession.update({
-      where: { id: sessionId },
+      where: { sessionId: sessionId },
       data: {
         status: "PAUSED",
         lastPauseTime: new Date(),
@@ -151,7 +151,7 @@ const pauseSession = async (req, res, next) => {
     res.json({
       message: "Session paused",
       session: {
-        id: updated.id,
+        sessionId: updated.id,
         status: updated.status,
         lastPauseTime: updated.lastPauseTime,
       },
@@ -169,7 +169,7 @@ const resumeSession = async (req, res, next) => {
 
     const session = await prisma.studySession.findFirst({
       where: {
-        id: sessionId,
+        sessionId: sessionId,
         userId: userId,
       },
     });
@@ -185,7 +185,7 @@ const resumeSession = async (req, res, next) => {
       return res.json({
         message: "Session already active",
         session: {
-          id: session.id,
+          sessionId: session.id,
           status: session.status,
           totalPausedMinutes: session.totalPausedMinutes,
         },
@@ -204,7 +204,7 @@ const resumeSession = async (req, res, next) => {
     );
 
     const updated = await prisma.studySession.update({
-      where: { id: sessionId },
+      where: { sessionId: sessionId },
       data: {
         status: "ACTIVE",
         totalPausedMinutes: session.totalPausedMinutes + pauseDuration,
@@ -215,7 +215,7 @@ const resumeSession = async (req, res, next) => {
     res.json({
       message: "Session resumed",
       session: {
-        id: updated.id,
+        sessionId: updated.id,
         status: updated.status,
         totalPausedMinutes: updated.totalPausedMinutes,
       },
@@ -237,7 +237,7 @@ const completeSession = async (req, res, next) => {
     const userId = req.user.id;
     const session = await prisma.studySession.findFirst({
       where: {
-        id: sessionId,
+        sessionId: sessionId,
         userId: userId,
       },
     });
@@ -273,7 +273,7 @@ const completeSession = async (req, res, next) => {
 
     const result = await prisma.$transaction(async (tx) => {
       const updatedSession = await tx.studySession.update({
-        where: { id: sessionId },
+        where: { sessionId: sessionId },
         data: {
           status: "COMPLETED",
           endTime: endTime,
@@ -283,7 +283,7 @@ const completeSession = async (req, res, next) => {
       });
 
       const updatedUser = await tx.user.update({
-        where: { id: userId },
+        where: { userId: userId },
         data: { tokenBalance: { increment: tokensEarned } },
       });
 
@@ -296,7 +296,7 @@ const completeSession = async (req, res, next) => {
     res.json({
       message: "Session completed!",
       session: {
-        id: result.updatedSession.id,
+        sessionId: result.updatedSession.id,
         startTime: result.updatedSession.startTime,
         endTime: result.updatedSession.endTime,
         durationMinutes: result.updatedSession.durationMinutes,
@@ -319,7 +319,7 @@ const cancelSession = async (req, res, next) => {
     const userId = req.user.id;
     const session = await prisma.studySession.findFirst({
       where: {
-        id: sessionId,
+        sessionId: sessionId,
         userId: userId,
       },
     });
@@ -352,7 +352,7 @@ const cancelSession = async (req, res, next) => {
 
     // NO token reward
     const updated = await prisma.studySession.update({
-      where: { id: sessionId },
+      where: { sessionId: sessionId },
       data: {
         status: "CANCELLED",
         endTime: endTime,
@@ -364,7 +364,7 @@ const cancelSession = async (req, res, next) => {
     res.json({
       message: "Session cancelled",
       session: {
-        id: updated.id,
+        sessionId: updated.id,
         durationMinutes: updated.durationMinutes,
       },
     });

@@ -15,13 +15,14 @@ const prisma = new PrismaClient(opts);
 
 function getTutorModel(user) {
   return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-flash", // <-- MODEL SELECT HERE (see google ai studio)
     systemInstruction: `
       You are an AI tutor for a university student.
       Student's major: ${user.major || "not specified"}
       Student's year: ${user.yearLevel || "not specified"}
       Tailor all explanations and examples to be relevant to their field of study.
       Be concise, encouraging, and academically rigorous.
+      Limit all explanations to 3 simple lines.
     `,
   });
 }
@@ -50,7 +51,7 @@ const chat = async (req, res, next) => {
     }
     // find user
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { userId: userId },
     });
 
     // generate AI response
@@ -70,7 +71,7 @@ const chat = async (req, res, next) => {
       // user
       await tx.AIInteraction.create({
         data: {
-          sessionId: session.id,
+          sessionId: session.sessionId,
           role: "USER",
           message: message,
         },
@@ -79,7 +80,7 @@ const chat = async (req, res, next) => {
       // ai
       await tx.AIInteraction.create({
         data: {
-          sessionId: session.id,
+          sessionId: session.sessionId,
           role: "AI",
           message: aiResponse,
         },
