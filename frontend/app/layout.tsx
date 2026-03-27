@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import localFont from "next/font/local";
 import LayoutWrapper from "./components/LayoutWrapper";
-
+import "katex/dist/katex.min.css";
 export const dsDigital = localFont({
   src: [
     {

@@ -2,19 +2,38 @@
 
 import { useRouter } from "next/navigation";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
-type StuckModalProps = {
-    open: boolean;
-    onClose: () => void;
-    onHelp: () => void; // ✅ ADD THIS
-  };
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+
 export default function StuckModal() {
   const router = useRouter();
   const { state, closeAssistant, setTab, setInput, send } = useStuckAssistant();
+
   if (!state.open) return null;
 
-  const handleAction = (fn: () => void) => {
-    closeAssistant();
-    fn();
+  const cleanAssistantText = (text: string) => {
+    return text
+      .replace(/\\n/g, "\n")
+      .replace(/\\'/g, "'")
+
+      // Convert inline code to math if it's a variable or math expression
+      .replace(/`([^`]+)`/g, (_, expr) => {
+        const isSingleVariable = /^[a-zA-Z]$/.test(expr);
+        const looksLikeMath =
+          /[=+\-*/^]|\\frac|\\sqrt|[0-9]/.test(expr);
+
+        if (isSingleVariable || looksLikeMath) {
+          return `$${expr}$`;
+        }
+
+        return `\`${expr}\``;
+      })
+
+      .replace(/[ \t]+/g, " ")
+      .trim();
   };
 
   return (
@@ -38,7 +57,9 @@ export default function StuckModal() {
           <span className="text-lg font-semibold">×</span>
         </button>
 
-        <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)]">🟧 Study Assistant</p>
+        <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)]">
+          🟧 Study Assistant
+        </p>
         <div className="w-full h-px bg-black/30 mt-3" />
 
         <div className="flex flex-row font-semibold text-xl gap-3 -mb-px mt-2">
@@ -75,10 +96,54 @@ export default function StuckModal() {
                 <div
                   key={m.id}
                   className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
-                    m.role === "user" ? "ml-auto bg-black/10" : "mr-auto bg-black/5"
+                    m.role === "user"
+                      ? "ml-auto bg-black/10"
+                      : "mr-auto bg-black/5"
                   }`}
                 >
-                  {m.text}
+                  {m.role === "assistant" ? (
+                    <div className="prose prose-sm prose-code:bg-transparent prose-code:px-0 prose-code:py-0">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+                            code({ inline, children, ...props }: any) {
+                              const text = String(children);
+
+                              // If it's just a single variable like x, y, m, b → treat as math-like text
+                              if (inline && /^[a-zA-Z]$/.test(text)) {
+                                return <span className="italic">{text}</span>;
+                              }
+
+                              // If it looks like math, don't render as code
+                              if (inline && /[=+\-*/^]/.test(text)) {
+                                return <span className="font-mono">{text}</span>;
+                              }
+
+                              if (inline) {
+                                return (
+                                  <code className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]" {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              }
+                              return (
+                                <pre className="overflow-x-auto rounded-lg bg-black/10 p-3">
+                                  <code {...props}>{children}</code>
+                                </pre>
+                              );
+                          },
+                        }}
+                      >
+                        {cleanAssistantText(m.text)}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div>{m.text}</div>
+                  )}
                 </div>
               ))}
             </div>

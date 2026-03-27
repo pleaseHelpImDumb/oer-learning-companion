@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [avatarUrl, setAvatarUrl] = useState(`profile0`);
+  const [username, setUsername] = useState("username");
 
   const TRACKS = {
     Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
@@ -59,9 +60,13 @@ useEffect(() => {
     const avatarURL = userData.user?.avatarUrl;
     console.log("normalized userTrack:", userTrack);
     const rawAvatarUrl = userData.user?.avatarUrl;
+    const name = userData.user?.displayName;
 
     if (typeof rawAvatarUrl === "string" && rawAvatarUrl.trim() !== "") {
       setAvatarUrl(rawAvatarUrl);
+    }
+    if (typeof name === "string"){
+      setUsername(name);
     }
     if (userTrack && userTrack in TRACKS) {
       setTrack(userTrack as TrackName);
@@ -209,7 +214,12 @@ if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
   )}
 </div>
         </div>
-
+        <div className="flex items-center justify-center align-center">
+          <Link className="pr-[5%]"
+                href="/dashboard"
+                >
+                    {username}
+                </Link>
         <div className="relative hidden lg:flex lg:justify-end">
           <button
             className="flex items-center"
@@ -227,6 +237,11 @@ if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
           {open && (
             <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-lg bg-[#D3D3D3] py-2 shadow-md">
               <div className="w-[80%] flex flex-col items-center justify-center align-center">
+                <Link className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200"
+                href="/dashboard"
+                >
+                    {username}
+                </Link>
                 <Link
                   href="/settings"
                   className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200 border-y-1 border-black"
@@ -242,6 +257,7 @@ if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>

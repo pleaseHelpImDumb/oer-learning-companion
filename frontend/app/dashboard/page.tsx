@@ -96,7 +96,7 @@ export default function Home() {
       <div className="w-full">
         <div className="rounded-lg bg-[#ffd36b] px-4 py-4 text-lg font-semibold sm:text-xl">
           <p className="text-black">
-            {user?.favoriteQuote || "No favorite quote yet."}
+            {user?.favQuote || " "}
           </p>
         </div>
       </div>
