@@ -280,12 +280,15 @@ const onboard = async (req, res, next) => {
       checkInIntervalMinutes,
       trackId,
       nickname,
+      yearLevel,
+      major,
     } = value;
     const userId = req.user.id; // get from auth middleware
+
+    // find track
     const track = await prisma.hobbyTrack.findUnique({
       where: { trackId: trackId },
     });
-
     if (!track) {
       return res.status(StatusCodes.NOT_FOUND).json({
         error: "Selected track not found",
@@ -301,6 +304,8 @@ const onboard = async (req, res, next) => {
         onboardingCompleted: true,
         nickname: nickname,
         trackId: trackId,
+        yearLevel: yearLevel,
+        major: major,
       },
     });
 
@@ -315,6 +320,8 @@ const onboard = async (req, res, next) => {
         avatarUrl: updatedUser.avatarUrl,
         checkInIntervalMinutes: updatedUser.checkInIntervalMinutes,
         onboardingCompleted: updatedUser.onboardingCompleted,
+        yearLevel: updatedUser.yearLevel,
+        major: updatedUser.major,
       },
       selectedTrack: {
         trackId: track.trackId,

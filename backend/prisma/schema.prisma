@@ -7,6 +7,14 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
+/*
+This week's changes:
+
+USER: add yearLevel (FRESHMAN, SOPHOMORE...), Major ("Comp Sci","Biology")
+STUDYSESSION: add numAiInteractions (not strictly needed, but if purging AIINTERACTION table it's nice) and group (CONTROL, TREATMENT (from document sent this morning))
+AIINTERACTION: add supportLevel (1, 2, 3, any other options)
+
+*/
 model User {
   userId Int @id @default(autoincrement())
   role Role @default(STUDENT)
@@ -27,6 +35,8 @@ model User {
   checkinIntervalMinutes Int @default(5)
   favoriteQuote String?
   onboardingCompleted Boolean @default(false)
+  yearLevel StudentYear @default(FRESHMAN)
+  major String?
 
   trackId Int?
   track HobbyTrack? @relation(fields:[trackId], references: [trackId])
@@ -76,6 +86,8 @@ model StudySession {
   lastPauseTime DateTime?
   totalPausedMinutes Int @default(0)
   durationMinutes Int? //set on completed
+  numAiInteractions Int @default(0)
+  group Group?
 
   // Foreign Keys
   user User @relation(fields:[userId], references:[userId])
@@ -89,6 +101,7 @@ model AIInteraction {
   role AIRole
   createdAt DateTime @default(now())
   message String
+  supportLevel Int @default(1)
 
   session StudySession @relation(fields:[sessionId], references:[sessionId])
 }
@@ -108,4 +121,16 @@ enum SessionStatus {
   PAUSED
   COMPLETED
   CANCELLED
+}
+
+enum StudentYear {
+  FRESHMAN
+  SOPHOMORE
+  JUNIOR
+  SENIOR
+}
+
+enum Group {
+  CONTROL
+  TREATMENT
 }

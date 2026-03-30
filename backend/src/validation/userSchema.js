@@ -26,6 +26,8 @@ const onboardSchema = Joi.object({
   avatarUrl: Joi.string().optional().allow("").max(500),
   checkInIntervalMinutes: Joi.number().integer().min(2).max(15),
   trackId: Joi.number().integer().required(),
+  yearLevel: Joi.number().integer().min(1).max(4).required(),
+  major: Joi.string().max(20).allow("").required(),
 });
 
 module.exports = {

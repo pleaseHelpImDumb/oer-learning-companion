@@ -70,7 +70,7 @@ const getActiveSession = async (req, res, next) => {
       );
 
       await prisma.studySession.update({
-        where: { sessionId: session.id },
+        where: { sessionId: session.sessionId },
         data: {
           status: "CANCELLED",
           endTime: new Date(),

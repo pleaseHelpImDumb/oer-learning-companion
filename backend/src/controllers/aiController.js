@@ -13,27 +13,59 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
 }
 const prisma = new PrismaClient(opts);
 
-function getTutorModel(user) {
-  return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash", // <-- MODEL SELECT HERE (see google ai studio)
-    systemInstruction: `
+// Validation
+const Joi = require("joi");
+const { chatSchema } = require("../validation/aiSchema");
+
+function getTutorModel(user, supportLevel) {
+  let systemInstruction = `
       You are an AI tutor for a university student.
       Student's major: ${user.major || "not specified"}
       Student's year: ${user.yearLevel || "not specified"}
       Tailor all explanations and examples to be relevant to their field of study.
       Be concise, encouraging, and academically rigorous.
-      Limit all explanations to 3 simple lines.
-    `,
+
+      NEVER provide the direction solution.
+    `;
+  switch (supportLevel) {
+    case 1:
+      systemInstruction += `
+      
+      Provide 3 simple lines of explanation in this format: 1) Simple sentence explanation 2) Formula if applicable 3) Guiding hint
+      Each line should be no more than 20 words.
+      `;
+      break;
+    case 2:
+      systemInstruction += `
+      
+      Provide 4 simple lines of explanation in this format: 1) Simple sentence explanation 2) Formula if applicable 3) Guiding hint 4) Another example
+      Each line should be no more than 40 words.
+      `;
+      break;
+    case 3:
+      systemInstruction += `
+      
+      Provide a paragraph guiding and teaching the user. Assume a support level of 3/3. The user really needs help.
+      `;
+      break;
+  }
+  //console.log("This is the system instructions:\n", systemInstruction);
+  return genAI.getGenerativeModel({
+    model: "gemini-2.5-flash", // <-- MODEL SELECT HERE (see google ai studio)
+    systemInstruction: systemInstruction,
   });
 }
 
 const chat = async (req, res, next) => {
   try {
-    const { message } = req.body;
-
-    if (!message || typeof message !== "string") {
-      return res.status(400).json({ error: "Valid message is required" });
+    const { error, value } = chatSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
     }
+
+    const { message, supportLevel } = value;
 
     const userId = req.user.id;
 
@@ -55,7 +87,7 @@ const chat = async (req, res, next) => {
     });
 
     // generate AI response
-    const model = getTutorModel(user);
+    const model = getTutorModel(user, supportLevel);
     const result = await model.generateContent({
       contents: [
         {
@@ -68,21 +100,31 @@ const chat = async (req, res, next) => {
 
     // store user message and AI message
     await prisma.$transaction(async (tx) => {
-      // user
+      // create user message
       await tx.AIInteraction.create({
         data: {
           sessionId: session.sessionId,
           role: "USER",
           message: message,
+          supportLevel: supportLevel,
         },
       });
 
-      // ai
+      // create ai
       await tx.AIInteraction.create({
         data: {
           sessionId: session.sessionId,
           role: "AI",
           message: aiResponse,
+          supportLevel: supportLevel,
+        },
+      });
+
+      // update session aiInteraction count
+      await tx.studySession.update({
+        where: { sessionId: session.sessionId },
+        data: {
+          numAiInteractions: { increment: 1 },
         },
       });
     });
