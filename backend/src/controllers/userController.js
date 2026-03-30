@@ -294,6 +294,15 @@ const onboard = async (req, res, next) => {
         error: "Selected track not found",
       });
     }
+
+    const yearLevelMap = {
+      1: "FRESHMAN",
+      2: "SOPHOMORE",
+      3: "JUNIOR",
+      4: "SENIOR",
+    };
+    const yearLevelEnum = yearLevelMap[Number(yearLevel)];
+
     // user
     const updatedUser = await prisma.user.update({
       where: { userId: userId },
@@ -304,7 +313,7 @@ const onboard = async (req, res, next) => {
         onboardingCompleted: true,
         nickname: nickname,
         trackId: trackId,
-        yearLevel: yearLevel,
+        yearLevel: yearLevelEnum,
         major: major,
       },
     });
