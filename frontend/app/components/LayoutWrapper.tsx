@@ -7,6 +7,8 @@ import SiteFooter from "../components/SiteFooter";
 import AppShell from "../components/AppShell";
 import Robot from "../components/RobotEmoji";
 import { StuckAssistantProvider } from "../providers/stuck-assistance-provider";
+import { SessionProvider } from "../providers/session-provider";
+import LayoutInner from "./LayoutInner";
 
 export default function LayoutWrapper({
   children,
@@ -22,7 +24,13 @@ export default function LayoutWrapper({
       const [url, options] = args;
 
       console.groupCollapsed(
-        `%c🌐 FETCH → ${typeof url === "string" ? url : url instanceof Request ? url.url : "unknown url"}`,
+        `%c🌐 FETCH → ${
+          typeof url === "string"
+            ? url
+            : url instanceof Request
+              ? url.url
+              : "unknown url"
+        }`,
         "color: #2563eb; font-weight: bold;"
       );
 
@@ -61,18 +69,9 @@ export default function LayoutWrapper({
 
   const hideLayout = ["/", "/register", "/forgotpassword", "/onboarding"].includes(pathname);
 
-  if (hideLayout) {
-    return <>{children}</>;
-  }
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <SiteHeader />
-      <StuckAssistantProvider>
-        <AppShell>{children}</AppShell>
-        <Robot />
-      </StuckAssistantProvider>
-      <SiteFooter />
-    </div>
+    <SessionProvider shouldCheckSession={!hideLayout}>
+      <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
+    </SessionProvider>
   );
 }

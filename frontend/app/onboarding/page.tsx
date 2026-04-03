@@ -11,6 +11,8 @@ export default function Home() {
   const [on, setOn] = useState(true);
   const [campus, setCampus] = useState("");
   const [course, setCourse] = useState("");
+  const [year, setYear] = useState(0);
+  const [major, setMajor] = useState("");
   const [checkValue, setCheckValue] = useState(5);
   const [checkUnit, setCheckUnit] = useState("Minutes");
   const [customQuote, setCustomQuote] = useState("");
@@ -19,6 +21,12 @@ export default function Home() {
   const [selectedAvatar, setSelectedAvatar] = useState("");
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const yearOptions = [
+    { label: "Freshman", value: 1 },
+    { label: "Sophomore", value: 2 },
+    { label: "Junior", value: 3 },
+    { label: "Senior", value: 4 },
+  ];
   const avatars = [
     { id: "profile1", src: "/assets/profiles/profile1.png", alt: "Profile Option 1" },
     { id: "profile2", src: "/assets/profiles/profile2.png", alt: "Profile Option 2" },
@@ -80,7 +88,7 @@ async function submitOnboarding(quickstart: boolean) {
     }
   }
 
-  const favQuote = customQuote.trim() || selectedQuote.trim() || "";
+  const favoriteQuote = customQuote.trim() || selectedQuote.trim() || "";
   const trackMap: Record<string, number> = {
     sports: 1,
     games: 2,
@@ -92,10 +100,12 @@ async function submitOnboarding(quickstart: boolean) {
 
   const payload = {
     nickname: nickname.trim(),
-    favQuote,
+    favoriteQuote,
     avatarUrl: selectedAvatar || "",
     checkInIntervalMinutes: minutes,
     trackId: trackMap[selectedTrackId],
+    yearLevel: year,
+    major: major,
   };
 
   try {
@@ -248,6 +258,45 @@ return (
             id="course"
             value={course}
             onChange={(e) => setCourse(e.target.value)}
+            className="w-full rounded border border-black bg-white p-2"
+            placeholder="Please enter your course (optional)."
+          />
+        </div>
+      </div>
+
+      <div className="grid w-full grid-cols-1 gap-4 pt-6 md:grid-cols-2">
+        <div className="flex flex-col">
+          <label htmlFor="year" className="mb-1 text-sm sm:text-base">
+            Enter Year.<span className="text-[#ff0000]">*</span>
+          </label>
+          <div className="grid grid-cols-1 gap-3">
+            {yearOptions.map((option) => (
+              <label
+                key={option.value}
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="year"
+                  value={option.value}
+                  checked={year === option.value}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  className="h-4 w-4"
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
+            Enter Major.<span className="text-[#ff0000]">*</span>
+          </label>
+          <input
+            id="major"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
             className="w-full rounded border border-black bg-white p-2"
             placeholder="Please enter your course (optional)."
           />

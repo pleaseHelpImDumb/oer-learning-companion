@@ -8,7 +8,7 @@ export function makePiece(owner: Player, kind: Piece["kind"] = "man"): Piece {
     owner,
     kind,
     hp: kind === "heavy" ? 2 : 
-        kind === "block" ? 5 : 1,
+        kind === "block" ? 2 : 1,
     isKinged: false,
   };
 }
@@ -36,9 +36,9 @@ export function makeInitialBoard(): Board {
 
   // Example special pieces so you can test:
   b[7][0] = makePiece("R", "king");
-  b[5][2] = makePiece("R", "heavy");
+  b[5][2] = makePiece("R", "cat");
   b[5][0] = makePiece("R", "knight");
-  b[7][2] = makePiece("R", "cat");
+  b[7][2] = makePiece("R", "heavy");
   b[5][4] = makePiece("R", "beetle");
   b[5][6] = makePiece("R", "picasso");
   b[6][1] = makePiece("R", "alien");

@@ -5,14 +5,72 @@ import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+const [selectedMinutes, setSelectedMinutes] = useState("0:05:00");
+const [time, setTime] = useState("0:05:00");
   const [user, setUser] = useState<any>(null);
   const [latestBadge, setLatestBadge] = useState<{
     emoji: string;
     name: string;
   } | null>(null);
   const [quote, setQuote] = useState<string | null>(null);
+const [startingSession, setStartingSession] = useState(false);
+const [sessionError, setSessionError] = useState<string | null>(null);
 
+function getCsrfToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("csrfToken");
+}
+
+async function handleStartSession() {
+  console.log("[SESSION] Start button clicked");
+
+  if (!API_BASE_URL) {
+    console.error("[SESSION] NEXT_PUBLIC_API_BASE_URL is missing");
+    setSessionError("API base URL is missing.");
+    return;
+  }
+
+  try {
+    setStartingSession(true);
+    setSessionError(null);
+
+    const csrfToken = getCsrfToken();
+
+    console.log("[SESSION] Sending POST request to /sessions/start");
+
+    const res = await fetch(`${API_BASE_URL}/sessions/start`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    console.log("[SESSION] Response status:", res.status);
+    console.log("[SESSION] Response body:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || "Could not start session");
+    }
+
+    console.log("[SESSION] Session started successfully:", data?.session);
+
+    // optional: if you're using SessionProvider, refresh it here
+    // await refreshSession();
+
+  } catch (error) {
+    console.error("[SESSION] Failed to start session:", error);
+    setSessionError(
+      error instanceof Error ? error.message : "Failed to start session"
+    );
+  } finally {
+    setStartingSession(false);
+  }
+}
   const renderCount = useRef(0);
   renderCount.current += 1;
 
@@ -42,11 +100,7 @@ export default function Home() {
 
         const fetchedUser = data?.user;
 
-        const favoriteQuote =
-          fetchedUser?.favoriteQuote ??
-          fetchedUser?.favQuote ??
-          fetchedUser?.quote ??
-          null;
+        const favoriteQuote = fetchedUser?.favoriteQuote || "No favorite quote yet.";
 
         setUser(fetchedUser);
         setQuote(favoriteQuote);
@@ -96,7 +150,7 @@ export default function Home() {
       <div className="w-full">
         <div className="rounded-lg bg-[#ffd36b] px-4 py-4 text-lg font-semibold sm:text-xl">
           <p className="text-black">
-            {user?.favQuote || " "}
+            {user?.favoriteQuote}
           </p>
         </div>
       </div>
@@ -211,35 +265,58 @@ export default function Home() {
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 <option value="breaks">Breaks</option>
-                <option value="short">Short break</option>
-                <option value="long">Long break</option>
-                <option value="none">No breaks</option>
+                <option value="short">1</option>
+                <option value="long">2</option>
+                <option value="none">3</option>
+                <option value="none">4</option>
+                <option value="none">5</option>
+                <option value="none">6</option>
+                <option value="none">7</option>
+                <option value="none">8</option>
+                <option value="none">9</option>
+                <option value="none">10</option>
               </select>
             </div>
 
             <div className="flex flex-col gap-2 text-left">
               <label className="font-medium text-white">Minutes*:</label>
               <select
-                defaultValue="5"
+                value={selectedMinutes}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSelectedMinutes(newValue);
+                  setTime(newValue);
+                }}
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
-                <option value="5">5 mins</option>
-                <option value="10">10 mins</option>
-                <option value="15">15 mins</option>
-                <option value="20">20 mins</option>
+                <option value="0:05:00">5 mins</option>
+                <option value="0:10:00">10 mins</option>
+                <option value="0:15:00">15 mins</option>
+                <option value="0:20:00">20 mins</option>
+                <option value="0:30:00">30 mins</option>
+                <option value="0:40:00">40 mins</option>
+                <option value="1:00:00">60 mins</option>
+                <option value="1:20:00">80 mins</option>
+                <option value="1:40:00">100 mins</option>
+                <option value="2:00:00">120 mins</option>
               </select>
             </div>
           </div>
 
           <div className="mt-6 inline-flex items-center justify-center rounded-full bg-[#7ED957] px-6 py-4 font-digital text-2xl font-bold tracking-widest text-[#0b1f14] shadow-inner sm:text-3xl">
-            00:00:00
+            {time}
           </div>
 
-          <Link href="login" className="mt-6 flex w-full justify-center">
-            <button className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl">
-              Start Session
-            </button>
-          </Link>
+<div className="mt-6 flex w-full justify-center">
+  <button
+    type="button"
+    onClick={handleStartSession}
+    disabled={startingSession}
+    className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
+  >
+    {startingSession ? "Starting..." : "Start Session"}
+  </button>
+</div>
         </section>
       </div>
     </div>

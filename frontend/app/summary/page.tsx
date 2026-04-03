@@ -5,21 +5,59 @@ export default function Home() {
     <div className="w-full">
       {/* page padding + max width so things don't stretch weirdly on ultrawide */}
       <div className="mx-auto w-full max-w-12xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="mb-4 border-b border-gray-300 pb-3">
+  <h1 className="text-black text-3xl sm:text-4xl font-bold">
+    Session Summary
+  </h1>
+</div>
         <div className="flex flex-col gap-6">
           {/* TOP ROW: Progress + Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Progress card */}
-            <div className="bg-white rounded-2xl p-4 sm:p-6 lg:col-span-3">
-              <div className="w-full max-w-sm sm:max-w-md mx-auto aspect-square relative">
-                <Image
-                  src="/assets/progress_circle/1.png"
-                  alt="progress: 0%"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
+<div className="bg-white rounded-2xl p-4 sm:p-6 lg:col-span-3">
+  <div className="flex flex-col md:flex-row md:items-center gap-6">
+    {/* Left: image */}
+<div className="w-full max-w-sm sm:max-w-md aspect-square relative shrink-0 md:w-[260px]">
+  <Image
+    src="/assets/progress_circle/1.png"
+    alt="progress: 0%"
+    fill
+    className="object-contain"
+    priority
+  />
+
+  {/* Centered percentage */}
+  <div className="absolute inset-0 flex items-center justify-center">
+    <span className="text-[#235937] font-bold text-4xl sm:text-5xl">
+      0%
+    </span>
+  </div>
+</div>
+
+    {/* Right: title + bars */}
+    <div className="flex-1">
+      <h2 className="text-black font-semibold text-xl sm:text-2xl lg:text-3xl mb-4">
+        Study Goals Completed
+      </h2>
+
+      <div className="space-y-4">
+        {[0, 0].map((value, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <span className="text-[#235937] font-bold text-2xl sm:text-3xl w-6">
+              {value}
+            </span>
+            <div className="h-3 flex-1 rounded-full bg-gray-300">
+              <div
+                className="h-3 rounded-full bg-[#235937]"
+                style={{ width: "0%" }}
+              />
             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
 
             {/* Notes card */}
             <div className="bg-white rounded-2xl p-4 sm:p-6 lg:col-span-2">
@@ -38,7 +76,7 @@ export default function Home() {
           </div>
 
           {/* MID ROW: stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl p-4 sm:p-6">
               <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Study Goals Completed
@@ -51,6 +89,14 @@ export default function Home() {
             <div className="bg-white rounded-2xl p-4 sm:p-6">
               <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Hours Studied This Week
+              </p>
+              <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
+                3
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 sm:p-6">
+              <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
+                Modules Studied This Week
               </p>
               <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3

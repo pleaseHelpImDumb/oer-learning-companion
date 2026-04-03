@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo, useReducer } from "react";
-import ReactMarkdown from 'react-markdown';
+
 export type Msg = { id: string; role: "user" | "assistant"; text: string };
 
 type State = {
@@ -9,6 +9,8 @@ type State = {
   tab: "chat" | "history";
   input: string;
   messages: Msg[];
+  loading: boolean;
+  supportLevel: "1" | "2" | "3";
 };
 
 type Action =
@@ -17,13 +19,17 @@ type Action =
   | { type: "SET_TAB"; tab: State["tab"] }
   | { type: "SET_INPUT"; input: string }
   | { type: "ADD_MESSAGES"; messages: Msg[] }
+  | { type: "SET_LOADING"; loading: boolean }
+  | { type: "SET_SUPPORT_LEVEL"; supportLevel: State["supportLevel"] }
   | { type: "RESET" };
 
 const initialState: State = {
   open: false,
   tab: "chat",
   input: "",
-  messages: [{ id: "m0", role: "assistant", text: "What’s hard to understand?" }],
+  loading: false,
+  supportLevel: "2",
+  messages: [{ id: "m0", role: "assistant", text: "Greetings! I am the OER Learning Companion study assistant! Just start a study session to get chatting!" }],
 };
 
 function reducer(state: State, action: Action): State {
@@ -38,6 +44,10 @@ function reducer(state: State, action: Action): State {
       return { ...state, input: action.input };
     case "ADD_MESSAGES":
       return { ...state, messages: [...state.messages, ...action.messages] };
+    case "SET_LOADING":
+      return { ...state, loading: action.loading };
+    case "SET_SUPPORT_LEVEL":
+      return { ...state, supportLevel: action.supportLevel };
     case "RESET":
       return initialState;
     default:
@@ -51,7 +61,8 @@ type Ctx = {
   closeAssistant: () => void;
   setTab: (t: State["tab"]) => void;
   setInput: (s: string) => void;
-  send: () => void;
+  setSupportLevel: (level: State["supportLevel"]) => void;
+  send: () => Promise<void>;
 };
 
 const StuckAssistantContext = createContext<Ctx | null>(null);
@@ -66,22 +77,76 @@ export function StuckAssistantProvider({ children }: { children: React.ReactNode
       closeAssistant: () => dispatch({ type: "CLOSE" }),
       setTab: (t) => dispatch({ type: "SET_TAB", tab: t }),
       setInput: (s) => dispatch({ type: "SET_INPUT", input: s }),
-      send: () => {
+      setSupportLevel: (level) =>
+        dispatch({ type: "SET_SUPPORT_LEVEL", supportLevel: level }),
+
+      send: async () => {
         const text = state.input.trim();
-        if (!text) return;
+        if (!text || state.loading) return;
+
+        const userMessage: Msg = {
+          id: crypto.randomUUID(),
+          role: "user",
+          text,
+        };
 
         dispatch({
           type: "ADD_MESSAGES",
-          messages: [
-            { id: crypto.randomUUID(), role: "user", text },
-            {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              text: "That's a fantastic question! `y = mx + b` is the **slope-intercept form** of a linear equation, and it's one of the most fundamental formulas you'll encounter in mathematics and across many academic disciplines.\n\nLet's break it down:\n\n*   **`y`**: This represents the **dependent variable** or the output. Its value depends on the value of `x`.\n*   **`x`**: This represents the **independent variable** or the input. You choose a value for `x`, and that determines `y`.\n*   **`m`**: This is the **slope** of the line. It tells you the rate of change of `y` with respect to `x`.\n    *   A positive `m` means `y` increases as `x` increases.\n    *   A negative `m` means `y` decreases as `x` increases.\n    *   A larger absolute value of `m` means a steeper line (a faster rate of change).\n*   **`b`**: This is the **y-intercept**. It's the value of `y` when `x = 0`. Think of it as the starting point or the initial value.\n\n### What it's Used For:\n\n`y = mx + b` is used to **model and understand linear relationships** between two variables. Anytime you have a situation where one quantity changes at a constant rate with respect to another, this equation is your go-to tool.\n\nCommon applications include:\n\n1.  **Prediction and Forecasting**: If you know the linear relationship, you can predict future outcomes (`y`) based on inputs (`x`).\n2.  **Trend Analysis**: Identifying and quantifying the rate at which something is changing over time or with respect to another factor.\n3.",
-            },
-          ],
+          messages: [userMessage],
         });
+
         dispatch({ type: "SET_INPUT", input: "" });
+        dispatch({ type: "SET_LOADING", loading: true });
+
+        try {
+          const csrfToken = localStorage.getItem("csrfToken"); // if you're storing it there
+
+          const res = await fetch("http://localhost:3000/ai/chat", {
+            method: "POST",
+            credentials: "include", // send auth cookie
+            headers: {
+              "Content-Type": "application/json",
+              ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+            },
+            body: JSON.stringify({
+              message: text,
+              supportLevel: state.supportLevel,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data?.error || "Failed to get AI response");
+          }
+
+          dispatch({
+            type: "ADD_MESSAGES",
+            messages: [
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                text: data.response || "No response returned.",
+              },
+            ],
+          });
+        } catch (error) {
+          dispatch({
+            type: "ADD_MESSAGES",
+            messages: [
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                text:
+                  error instanceof Error
+                    ? `Error: ${error.message}`
+                    : "Something went wrong while contacting the AI.",
+              },
+            ],
+          });
+        } finally {
+          dispatch({ type: "SET_LOADING", loading: false });
+        }
       },
     };
   }, [state]);
