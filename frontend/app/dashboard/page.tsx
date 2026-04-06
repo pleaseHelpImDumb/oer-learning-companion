@@ -6,17 +6,17 @@ import { useSession } from "../providers/session-provider";
 
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const [selectedMinutes, setSelectedMinutes] = useState("0:05:00");
-const [time, setTime] = useState("0:05:00");
+  const [selectedMinutes, setSelectedMinutes] = useState("0:05:00");
+  const [time, setTime] = useState("0:05:00");
   const [user, setUser] = useState<any>(null);
   const [latestBadge, setLatestBadge] = useState<{
     emoji: string;
     name: string;
   } | null>(null);
   const [quote, setQuote] = useState<string | null>(null);
-const [startingSession, setStartingSession] = useState(false);
-const [sessionError, setSessionError] = useState<string | null>(null);
-const { refreshSession } = useSession();
+  const [startingSession, setStartingSession] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const { refreshSession } = useSession();
 function getCsrfToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("csrfToken");
