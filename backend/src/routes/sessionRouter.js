@@ -8,6 +8,8 @@ const {
   resumeSession,
   completeSession,
   cancelSession,
+  setSessionNotes,
+  getSessionNotes,
 } = require("../controllers/sessionController.js");
 
 // routes/sessionRoutes.js
@@ -17,5 +19,8 @@ router.post("/:id/pause", pauseSession);
 router.post("/:id/resume", resumeSession);
 router.post("/:id/complete", completeSession); // finish with rewards
 router.post("/:id/cancel", cancelSession); // end early, no rewards
+
+router.post("/:id/notes", setSessionNotes); // set notes
+router.get("/:id/notes", getSessionNotes); // get notes
 
 module.exports = router;

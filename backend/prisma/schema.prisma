@@ -60,6 +60,7 @@ model Badge {
   name String @unique
   description String
   category String
+  iconUrl String
 
   userBadges UserBadge[]
 }
@@ -88,7 +89,8 @@ model StudySession {
   durationMinutes Int? //set on completed
   numAiInteractions Int @default(0)
   group Group?
-
+  notes String?
+  
   // Foreign Keys
   user User @relation(fields:[userId], references:[userId])
 

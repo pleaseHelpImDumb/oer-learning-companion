@@ -373,6 +373,76 @@ const cancelSession = async (req, res, next) => {
   }
 };
 
+// Set Session Notes - Sets note attribute for any session, no restrictions
+const setSessionNotes = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.id);
+    const userId = req.user.id;
+
+    const sessionNotes = req.body.sessionNotes;
+    // sessionNotes validation
+
+    const session = await prisma.studySession.findFirst({
+      where: {
+        sessionId: sessionId,
+        userId: userId,
+      },
+    });
+    if (!session) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Session not found",
+      });
+    }
+
+    // validate if session is active/canceled/paused here -> restrict setting notes to active session only
+
+    const updated = await prisma.studySession.update({
+      where: { sessionId: sessionId },
+      data: {
+        notes: sessionNotes,
+      },
+    });
+
+    res.json({
+      message: "Session notes updated!",
+      session: {
+        sessionId: updated.id,
+        sessionNotes: updated.notes,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getSessionNotes = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.id);
+    const userId = req.user.id;
+
+    const session = await prisma.studySession.findFirst({
+      where: {
+        sessionId: sessionId,
+        userId: userId,
+      },
+    });
+    if (!session) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Session not found",
+      });
+    }
+
+    res.json({
+      session: {
+        sessionId: session.id,
+        sessionNotes: session.notes,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   startSession,
   getActiveSession,
@@ -380,4 +450,6 @@ module.exports = {
   resumeSession,
   completeSession,
   cancelSession,
+  setSessionNotes,
+  getSessionNotes,
 };
