@@ -140,7 +140,7 @@ export default function SiteHeader() {
 
   useEffect(() => {
     if (!activeSession) {
-      console.log("[HEADER TIMER] No active session. Showing 0:00:00");
+      //console.log("[HEADER TIMER] No active session. Showing 0:00:00");
       setTimerDisplay("0:00:00");
       return;
     }
@@ -149,7 +149,7 @@ export default function SiteHeader() {
       const elapsedMs = getElapsedMs(activeSession);
       const formatted = formatElapsed(elapsedMs);
 
-      console.log("[HEADER TIMER] Updated elapsed time:", formatted);
+      //console.log("[HEADER TIMER] Updated elapsed time:", formatted);
       setTimerDisplay(formatted);
     };
 

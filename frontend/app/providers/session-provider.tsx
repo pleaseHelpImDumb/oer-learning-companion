@@ -14,7 +14,10 @@ type ActiveSession = {
 type SessionContextType = {
   activeSession: ActiveSession | null;
   loading: boolean;
+  sessionActionLoading: boolean;
   refreshSession: () => Promise<void>;
+  cancelSession: () => Promise<void>;
+  pauseSession: () => Promise<void>;
 };
 
 type SessionProviderProps = {
@@ -32,48 +35,8 @@ export function SessionProvider({
 
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [loading, setLoading] = useState<boolean>(shouldCheckSession);
-const [sessionActionLoading, setSessionActionLoading] = useState(false);
+  const [sessionActionLoading, setSessionActionLoading] = useState(false);
 
-const stopSession = async () => {
-  if (!activeSession || !API_BASE_URL) return;
-
-  try {
-    setSessionActionLoading(true);
-    console.log("[SESSION PROVIDER] Stopping session:", activeSession.id);
-
-    const csrfToken =
-      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
-
-    const res = await fetch(
-      `${API_BASE_URL}/sessions/${activeSession.id}/cancel`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-        },
-        body: JSON.stringify({}),
-      }
-    );
-
-    const data = await res.json().catch(() => ({}));
-
-    console.log("[SESSION PROVIDER] stop response status:", res.status);
-    console.log("[SESSION PROVIDER] stop response body:", data);
-
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || "Failed to stop session");
-    }
-
-    setActiveSession(null);
-    console.log("[SESSION PROVIDER] Session stopped successfully");
-  } catch (error) {
-    console.error("[SESSION PROVIDER] Failed to stop session:", error);
-  } finally {
-    setSessionActionLoading(false);
-  }
-};
   const refreshSession = async () => {
     if (!API_BASE_URL || !shouldCheckSession) {
       setLoading(false);
@@ -93,6 +56,7 @@ const stopSession = async () => {
       });
 
       const data = await res.json().catch(() => ({}));
+      console.log("[SESSION PROVIDER] refreshSession response:", data);
 
       if (!res.ok) {
         setActiveSession(null);
@@ -108,6 +72,86 @@ const stopSession = async () => {
     }
   };
 
+  const cancelSession = async () => {
+    if (!activeSession || !API_BASE_URL) {
+      console.log("[SESSION PROVIDER] stopSession aborted", {
+        hasActiveSession: !!activeSession,
+        API_BASE_URL,
+      });
+      return;
+    }
+
+    try {
+      setSessionActionLoading(true);
+
+      const csrfToken =
+        typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/cancel`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      console.log("[SESSION PROVIDER] stop response:", data);
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || "Failed to stop session");
+      }
+
+      await refreshSession();
+    } catch (error) {
+      console.error("[SESSION PROVIDER] Failed to stop session:", error);
+    } finally {
+      setSessionActionLoading(false);
+    }
+  };
+
+  const pauseSession = async () => {
+    if (!activeSession || !API_BASE_URL) {
+      console.log("[SESSION PROVIDER] pauseSession aborted", {
+        hasActiveSession: !!activeSession,
+        API_BASE_URL,
+      });
+      return;
+    }
+
+    try {
+      setSessionActionLoading(true);
+
+      const csrfToken =
+        typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/pause`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      console.log("[SESSION PROVIDER] pause response:", data);
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || "Failed to pause session");
+      }
+
+      await refreshSession();
+    } catch (error) {
+      console.error("[SESSION PROVIDER] Failed to pause session:", error);
+    } finally {
+      setSessionActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     void refreshSession();
   }, [API_BASE_URL, shouldCheckSession]);
@@ -116,10 +160,15 @@ const stopSession = async () => {
     () => ({
       activeSession,
       loading,
+      sessionActionLoading,
       refreshSession,
+      cancelSession,
+      pauseSession,
     }),
-    [activeSession, loading]
+    [activeSession, loading, sessionActionLoading]
   );
+
+  console.log("[SESSION PROVIDER] context value", value);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

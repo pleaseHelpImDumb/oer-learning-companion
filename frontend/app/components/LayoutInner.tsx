@@ -17,11 +17,17 @@ export default function LayoutInner({
   const {
     activeSession,
     loading,
-    stopSession,
+    cancelSession,
     pauseSession,
     sessionActionLoading,
   } = useSession();
-
+  console.log("[LAYOUT] useSession returned:", {
+    activeSession,
+    loading,
+    cancelSession,
+    pauseSession,
+    sessionActionLoading,
+  });
   if (hideLayout) {
     return <>{children}</>;
   }
@@ -65,7 +71,7 @@ export default function LayoutInner({
                   type="button"
                   onClick={() => {
                     console.log("[LAYOUT] Stop session button clicked");
-                    void stopSession();
+                    void cancelSession();
                   }}
                   disabled={sessionActionLoading}
                   className="rounded-xl bg-[#ffd36b] px-4 py-2 text-sm font-semibold text-[#235937] shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"

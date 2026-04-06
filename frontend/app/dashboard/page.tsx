@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "../providers/session-provider";
 
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -15,7 +16,7 @@ const [time, setTime] = useState("0:05:00");
   const [quote, setQuote] = useState<string | null>(null);
 const [startingSession, setStartingSession] = useState(false);
 const [sessionError, setSessionError] = useState<string | null>(null);
-
+const { refreshSession } = useSession();
 function getCsrfToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("csrfToken");
@@ -59,9 +60,7 @@ async function handleStartSession() {
 
     console.log("[SESSION] Session started successfully:", data?.session);
 
-    // optional: if you're using SessionProvider, refresh it here
-    // await refreshSession();
-
+    await refreshSession(); // <- this is the key
   } catch (error) {
     console.error("[SESSION] Failed to start session:", error);
     setSessionError(
