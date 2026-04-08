@@ -102,7 +102,7 @@ const getActiveSession = async (req, res, next) => {
 
     res.json({
       session: {
-        sessionId: session.id,
+        sessionId: session.sessionId,
         status: session.status,
         startTime: session.startTime,
         lastPauseTime: session.lastPauseTime,
@@ -185,7 +185,7 @@ const resumeSession = async (req, res, next) => {
       return res.json({
         message: "Session already active",
         session: {
-          sessionId: session.id,
+          sessionId: session.sessionId,
           status: session.status,
           totalPausedMinutes: session.totalPausedMinutes,
         },
@@ -224,6 +224,7 @@ const resumeSession = async (req, res, next) => {
     next(err);
   }
 };
+
 // calculateTokens - helper function for some calculation on determining token amount
 // CURRENT CALCULATION: 1 token / 5 minutes studied
 function calculateTokens(studyMinutes) {
@@ -282,21 +283,32 @@ const completeSession = async (req, res, next) => {
         },
       });
 
+      const updatedStats = await updateUserStats(
+        tx,
+        userId,
+        studyMinutes,
+        session,
+      );
+      // award bages based on those updatedStats
+      const earnedBadges = await checkAndAwardBadges(
+        tx,
+        userId,
+        updatedStats,
+        updatedSession,
+      );
+
       const updatedUser = await tx.user.update({
         where: { userId: userId },
         data: { tokenBalance: { increment: tokensEarned } },
       });
 
-      // badges WIP
-      // await checkAndAwardBadges(tx, userId);
-
-      return { updatedSession, updatedUser };
+      return { updatedSession, updatedStats, updatedUser, earnedBadges };
     });
 
     res.json({
       message: "Session completed!",
       session: {
-        sessionId: result.updatedSession.id,
+        sessionId: result.updatedSession.sessionId,
         startTime: result.updatedSession.startTime,
         endTime: result.updatedSession.endTime,
         durationMinutes: result.updatedSession.durationMinutes,
@@ -305,12 +317,129 @@ const completeSession = async (req, res, next) => {
       rewards: {
         tokensEarned: tokensEarned,
         totalTokens: result.updatedUser.tokens,
+        badgesEarned: result.earnedBadges,
       },
     });
   } catch (err) {
     next(err);
   }
 };
+
+// user stats helper function
+async function updateUserStats(tx, userId, studyMinutes, session) {
+  // get user's stats
+  let stats = await tx.userStats.findUnique({
+    where: { userId },
+  });
+
+  if (!stats) {
+    stats = await tx.userStats.create({
+      data: {
+        userId,
+        lastSessionDate: new Date(0),
+      },
+    });
+  }
+
+  const today = new Date();
+  const last = new Date(stats.lastSessionDate);
+
+  const isSameDay = today.toDateString() === last.toDateString();
+
+  // streak logic, getting yesterday
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = yesterday.toDateString() === last.toDateString();
+  let newStreak = stats.currentStreakLength;
+  if (!isSameDay) {
+    if (isYesterday) {
+      newStreak += 1;
+    } else {
+      newStreak = 1;
+    }
+  }
+
+  return await tx.userStats.update({
+    where: { userId },
+    data: {
+      totalStudyMinutes: { increment: studyMinutes },
+      totalSessions: { increment: 1 },
+      currentStreakLength: newStreak,
+      longestStreakLength: Math.max(newStreak, stats.longestStreakLength),
+      lastSessionDate: today,
+      totalAiInteractions: { increment: session.numAiInteractions },
+    },
+  });
+}
+
+// badge award-er helper function
+async function checkAndAwardBadges(tx, userId, stats, session) {
+  // get all badges
+  const userBadges = await tx.userBadge.findMany({
+    where: { userId },
+    select: { badgeId: true },
+  });
+
+  //  get all owned ids
+  const ownedIds = userBadges.map((b) => b.badgeId);
+
+  // split based on category and filter on<= threshold val
+  // TOTAL_TIME
+  const timeBadges = await tx.badge.findMany({
+    where: {
+      type: "TOTAL_TIME",
+      thresholdValue: { lte: stats.totalStudyMinutes },
+      badgeId: { notIn: ownedIds },
+    },
+  });
+
+  // STREAK
+  const streakBadges = await tx.badge.findMany({
+    where: {
+      type: "STREAK",
+      thresholdValue: { lte: stats.currentStreakLength },
+      badgeId: { notIn: ownedIds },
+    },
+  });
+
+  // SESSION_COUNT
+  const sessionBadges = await tx.badge.findMany({
+    where: {
+      type: "SESSION_COUNT",
+      thresholdValue: { lte: stats.totalSessions },
+      badgeId: { notIn: ownedIds },
+    },
+  });
+
+  // MILESTONE
+  const milestoneBadges = await tx.badge.findMany({
+    where: {
+      type: "MILESTONE",
+      thresholdValue: { lte: stats.totalSessions },
+      badgeId: { notIn: ownedIds },
+    },
+  });
+
+  // construct badges earned -- put in userBadge
+  const earned = [
+    ...timeBadges,
+    ...streakBadges,
+    ...sessionBadges,
+    ...milestoneBadges,
+  ];
+
+  if (earned.length === 0) return [];
+
+  await tx.userBadge.createMany({
+    data: earned.map((b) => ({
+      userId,
+      badgeId: b.badgeId,
+    })),
+    skipDuplicates: true,
+  });
+
+  return earned; //<-- array of ALL earned badges NOT ALREADY owned
+}
 
 // Cancel Session - App cancels the session
 const cancelSession = async (req, res, next) => {
@@ -350,22 +479,34 @@ const cancelSession = async (req, res, next) => {
     );
     const studyMinutes = totalMinutes - finalPausedMinutes;
 
-    // NO token reward
-    const updated = await prisma.studySession.update({
-      where: { sessionId: sessionId },
-      data: {
-        status: "CANCELLED",
-        endTime: endTime,
-        durationMinutes: studyMinutes,
-        totalPausedMinutes: finalPausedMinutes,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      // no token/badge award
+      const updatedSession = await tx.studySession.update({
+        where: { sessionId: sessionId },
+        data: {
+          status: "CANCELLED",
+          endTime: endTime,
+          durationMinutes: studyMinutes,
+          totalPausedMinutes: finalPausedMinutes,
+        },
+      });
+
+      // update only total time studied
+      await tx.userStats.update({
+        where: { userId },
+        data: {
+          totalStudyMinutes: { increment: studyMinutes },
+        },
+      });
+
+      return updatedSession;
     });
 
     res.json({
       message: "Session cancelled",
       session: {
-        sessionId: updated.id,
-        durationMinutes: updated.durationMinutes,
+        sessionId: result.sessionId,
+        durationMinutes: result.durationMinutes,
       },
     });
   } catch (err) {
@@ -434,10 +575,29 @@ const getSessionNotes = async (req, res, next) => {
 
     res.json({
       session: {
-        sessionId: session.id,
+        sessionId: session.sessionId,
         sessionNotes: session.notes,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const createWellnessCheck = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.id);
+    const { feelingGood, helpChosen } = req.body; // validation later?
+
+    const check = await prisma.wellnessCheck.create({
+      data: {
+        sessionId,
+        feelingGood,
+        helpChosen,
+      },
+    });
+
+    res.json({ check });
   } catch (err) {
     next(err);
   }
@@ -452,4 +612,5 @@ module.exports = {
   cancelSession,
   setSessionNotes,
   getSessionNotes,
+  createWellnessCheck,
 };

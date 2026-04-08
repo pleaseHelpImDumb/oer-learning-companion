@@ -9,31 +9,31 @@ async function main() {
     {
       name: "3 Day Streak",
       description: "Study 3 days in a row",
-      category: "STREAK",
+      type: "STREAK",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
     {
       name: "7 Day Streak",
       description: "Study 7 days in a row",
-      category: "STREAK",
+      type: "STREAK",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
     {
       name: "10 Sessions",
       description: "Complete 10 study sessions",
-      category: "TOTAL_SESSIONS",
+      type: "SESSION_COUNT",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
     {
       name: "25 Sessions",
       description: "Complete 25 study sessions",
-      category: "TOTAL_SESSIONS",
+      type: "SESSION_COUNT",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
     {
       name: "First Goal",
       description: "Complete your first study goal",
-      category: "MILESTONE",
+      type: "MILESTONE",
       iconUrl: `/assets/tracks/default/sports.png`,
     },
   ];

@@ -120,16 +120,34 @@ const register = async (req, res, next) => {
 
     // If not, create the new user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { username, email, password: hashedPassword },
+    // create user and user's stats
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          username,
+          email,
+          password: hashedPassword,
+        },
+      });
+
+      await tx.userStats.create({
+        data: {
+          user: {
+            connect: { userId: user.userId },
+          },
+          lastSessionDate: null,
+        },
+      });
+
+      return user;
     });
 
     // Security CSRF & JWT:
     const csrfToken = generateCSRFToken();
     const token = jwt.sign(
       {
-        userId: user.userId,
-        email: user.email,
+        userId: result.userId,
+        email: result.email,
         csrfToken: csrfToken,
       },
       process.env.JWT_SECRET,
@@ -147,12 +165,12 @@ const register = async (req, res, next) => {
     // Add jwt/csrf security later
     res.status(StatusCodes.CREATED).json({
       user: {
-        userId: user.userId,
-        username: user.username,
-        email: user.email,
+        userId: result.userId,
+        username: result.username,
+        email: result.email,
       },
       csrfToken: csrfToken,
-      message: `Welcome, ${user.username}! Your account has been registered.`,
+      message: `Welcome, ${result.username}! Your account has been registered.`,
     });
   } catch (err) {
     next(err);
@@ -353,20 +371,21 @@ const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await prisma.user.findUnique({
-      where: { userId: userId },
-      select: {
-        userId: true,
-        username: true,
-        email: true,
-        role: true,
-        nickname: true,
-        avatarUrl: true,
-        favoriteQuote: true,
-        checkinIntervalMinutes: true,
-        onboardingCompleted: true,
-        createdAt: true,
-        track: true,
-        tokenBalance: true,
+      where: { userId },
+      include: {
+        userBadges: {
+          select: {
+            unlockedAt: true,
+            badge: {
+              select: {
+                badgeId: true,
+                name: true,
+                description: true,
+                iconUrl: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -375,6 +394,14 @@ const getCurrentUser = async (req, res, next) => {
         error: "User not found",
       });
     }
+
+    const badges = user.userBadges.map((ub) => ({
+      badgeId: ub.badge.badgeId,
+      name: ub.badge.name,
+      description: ub.badge.description,
+      iconUrl: ub.badge.iconUrl,
+      unlockedAt: ub.unlockedAt,
+    }));
     res.json({
       user: {
         userId: user.userId,
@@ -389,6 +416,7 @@ const getCurrentUser = async (req, res, next) => {
         createdAt: user.createdAt,
         track: user.track,
         tokenBalance: user.tokenBalance,
+        badges: badges,
       },
     });
   } catch (err) {

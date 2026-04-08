@@ -10,6 +10,7 @@ const {
   cancelSession,
   setSessionNotes,
   getSessionNotes,
+  createWellnessCheck,
 } = require("../controllers/sessionController.js");
 
 // routes/sessionRoutes.js
@@ -22,5 +23,7 @@ router.post("/:id/cancel", cancelSession); // end early, no rewards
 
 router.post("/:id/notes", setSessionNotes); // set notes
 router.get("/:id/notes", getSessionNotes); // get notes
+
+router.post("/:id/break", createWellnessCheck); // wellness check
 
 module.exports = router;

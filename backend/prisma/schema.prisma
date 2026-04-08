@@ -36,7 +36,7 @@ model User {
   // For Backwards Reference
   studySessions StudySession[]
   userBadges UserBadge[]
-  userStats UserStats[]
+  userStats UserStats?
 }
 
 model HobbyTrack {
@@ -52,7 +52,8 @@ model Badge {
   badgeId Int @id @default(autoincrement())
   name String @unique
   description String
-  category String
+  type BadgeType
+  thresholdValue Int?
   iconUrl String
 
   userBadges UserBadge[]
@@ -76,7 +77,7 @@ model UserStats {
   totalSessions Int @default(0)
   currentStreakLength Int @default(0)
   longestStreakLength Int @default(0)
-  lastSessionDate DateTime
+  lastSessionDate DateTime?
   totalAiInteractions Int @default(0)
   totalWellnessChecks Int @default(0)
 
@@ -153,4 +154,11 @@ enum StudentYear {
 enum Group {
   CONTROL
   TREATMENT
+}
+
+enum BadgeType{
+  TOTAL_TIME
+  SESSION_COUNT
+  STREAK
+  MILESTONE
 }
