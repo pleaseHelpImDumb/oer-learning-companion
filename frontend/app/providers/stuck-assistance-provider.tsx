@@ -29,7 +29,13 @@ const initialState: State = {
   input: "",
   loading: false,
   supportLevel: "2",
-  messages: [{ id: "m0", role: "assistant", text: "Greetings! I am the OER Learning Companion study assistant! Just start a study session to get chatting!" }],
+  messages: [
+    {
+      id: "m0",
+      role: "assistant",
+      text: "Greetings! I am the OER Learning Companion study assistant! Just start a study session to get chatting!",
+    },
+  ],
 };
 
 function reducer(state: State, action: Action): State {
@@ -67,7 +73,11 @@ type Ctx = {
 
 const StuckAssistantContext = createContext<Ctx | null>(null);
 
-export function StuckAssistantProvider({ children }: { children: React.ReactNode }) {
+export function StuckAssistantProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const api = useMemo<Ctx>(() => {
@@ -101,7 +111,7 @@ export function StuckAssistantProvider({ children }: { children: React.ReactNode
         try {
           const csrfToken = localStorage.getItem("csrfToken"); // if you're storing it there
 
-          const res = await fetch("http://localhost:3000/ai/chat", {
+          const res = await fetch("http://localhost:3001/ai/chat", {
             method: "POST",
             credentials: "include", // send auth cookie
             headers: {
@@ -160,6 +170,9 @@ export function StuckAssistantProvider({ children }: { children: React.ReactNode
 
 export function useStuckAssistant() {
   const ctx = useContext(StuckAssistantContext);
-  if (!ctx) throw new Error("useStuckAssistant must be used within StuckAssistantProvider");
+  if (!ctx)
+    throw new Error(
+      "useStuckAssistant must be used within StuckAssistantProvider",
+    );
   return ctx;
 }

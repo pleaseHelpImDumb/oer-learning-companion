@@ -7,14 +7,6 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-/*
-This week's changes:
-
-USER: add yearLevel (FRESHMAN, SOPHOMORE...), Major ("Comp Sci","Biology")
-STUDYSESSION: add numAiInteractions (not strictly needed, but if purging AIINTERACTION table it's nice) and group (CONTROL, TREATMENT (from document sent this morning))
-AIINTERACTION: add supportLevel (1, 2, 3, any other options)
-
-*/
 model User {
   userId Int @id @default(autoincrement())
   role Role @default(STUDENT)
@@ -44,6 +36,7 @@ model User {
   // For Backwards Reference
   studySessions StudySession[]
   userBadges UserBadge[]
+  userStats UserStats[]
 }
 
 model HobbyTrack {
@@ -77,6 +70,19 @@ model UserBadge {
   @@id([userId, badgeId]) // comp primary key
 }
 
+model UserStats {
+  userId Int @id
+  totalStudyMinutes Int @default(0)
+  totalSessions Int @default(0)
+  currentStreakLength Int @default(0)
+  longestStreakLength Int @default(0)
+  lastSessionDate DateTime
+  totalAiInteractions Int @default(0)
+  totalWellnessChecks Int @default(0)
+
+  user User @relation(fields:[userId], references:[userId])
+}
+
 model StudySession {
   sessionId Int @id @default(autoincrement())
   userId Int
@@ -90,11 +96,12 @@ model StudySession {
   numAiInteractions Int @default(0)
   group Group?
   notes String?
-  
+
   // Foreign Keys
   user User @relation(fields:[userId], references:[userId])
 
   aiInteractions AIInteraction[]
+  wellnessChecks WellnessCheck[]
 }
 
 model AIInteraction {
@@ -104,6 +111,17 @@ model AIInteraction {
   createdAt DateTime @default(now())
   message String
   supportLevel Int @default(1)
+
+  session StudySession @relation(fields:[sessionId], references:[sessionId])
+}
+
+// ADD WELLNESS/CHECK-IN TABLE
+model WellnessCheck {
+  wellnessCheckId Int @id @default(autoincrement())
+  sessionId Int
+  createdAt DateTime @default(now())
+  feelingGood Boolean
+  helpChosen String
 
   session StudySession @relation(fields:[sessionId], references:[sessionId])
 }
