@@ -654,4 +654,5 @@ module.exports = {
   setSessionNotes,
   getSessionNotes,
   createWellnessCheck,
+  spendToken,
 };

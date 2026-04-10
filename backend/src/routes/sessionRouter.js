@@ -11,6 +11,7 @@ const {
   setSessionNotes,
   getSessionNotes,
   createWellnessCheck,
+  spendToken,
 } = require("../controllers/sessionController.js");
 
 // routes/sessionRoutes.js
@@ -25,5 +26,7 @@ router.post("/:id/notes", setSessionNotes); // set notes
 router.get("/:id/notes", getSessionNotes); // get notes
 
 router.post("/:id/break", createWellnessCheck); // wellness check
+
+router.post("/:id/consume-token", spendToken); // end early, no rewards
 
 module.exports = router;
