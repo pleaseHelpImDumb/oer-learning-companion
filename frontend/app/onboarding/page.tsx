@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -21,6 +21,22 @@ export default function Home() {
   const [selectedAvatar, setSelectedAvatar] = useState("");
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  useEffect(() => {
+  const saved = localStorage.getItem("darkMode");
+  if (saved === "true") {
+    setDarkMode(true);
+  }
+}, []);
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+
+  localStorage.setItem("darkMode", String(darkMode));
+}, [darkMode]);
   const yearOptions = [
     { label: "Freshman", value: 1 },
     { label: "Sophomore", value: 2 },
@@ -182,7 +198,7 @@ return (
     <main className="mx-auto flex w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-10">
       <div className="h-2 sm:h-4" />
 
-      <div className="w-full rounded-sm bg-[#ffd36b] py-5 sm:px-6 sm:py-6">
+      <div className="w-full rounded-sm bg-[#ffd36b] dark:bg-[#2E2A57] dark:text-[#ffffff] py-5 sm:px-6 sm:py-6">
         <b>ⓘ Welcome! This page helps you personalize your learning companion.</b>
 
         <p className="pt-2 text-sm sm:text-base">
@@ -228,7 +244,7 @@ return (
           Quick Start
         </button>
         <span
-            className="flex shrink-0 h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-black text-xs"
+            className="flex shrink-0 h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-black text-xs dark:border-white"
             title="Get straight to studying with default settings.
             All settings can be changed later."
           >
@@ -245,7 +261,7 @@ return (
             id="campus"
             value={campus}
             onChange={(e) => setCampus(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2"
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
             placeholder="Please enter your campus (optional)."
           />
         </div>
@@ -258,7 +274,7 @@ return (
             id="course"
             value={course}
             onChange={(e) => setCourse(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2"
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
             placeholder="Please enter your course (optional)."
           />
         </div>
@@ -281,7 +297,7 @@ return (
                   value={option.value}
                   checked={year === option.value}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="h-4 w-4"
+                  className="h-4 w-4 dark:accent-[#2E2A57]"
                 />
                 <span>{option.label}</span>
               </label>
@@ -297,7 +313,7 @@ return (
             id="major"
             value={major}
             onChange={(e) => setMajor(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2"
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
             placeholder="Please enter your course (optional)."
           />
         </div>
@@ -316,13 +332,13 @@ return (
             step="1"
             value={checkValue}
             onChange={(e) => setCheckValue(Number(e.target.value))}
-            className="w-24 rounded border border-black bg-white px-2 py-1"
+            className="w-24 rounded border border-black bg-white px-2 py-1 dark:bg-[#2E2A57]"
           />
 
           <select
             value={checkUnit}
             onChange={(e) => setCheckUnit(e.target.value)}
-            className="rounded border border-black bg-white px-2 py-1"
+            className="rounded border border-black bg-white px-2 py-1 dark:bg-[#2E2A57]"
           >
             <option>Minutes</option>
             <option>Hours</option>
@@ -346,7 +362,7 @@ return (
             id="enterQuote"
             value={customQuote}
             onChange={(e) => setCustomQuote(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2"
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
             placeholder="Type a quote (optional)."
           />
         </div>
@@ -361,7 +377,7 @@ return (
             id="selectQuote"
             value={selectedQuote}
             onChange={(e) => setSelectedQuote(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2"
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
             placeholder="Select a quote (optional)."
           />
         </div>
@@ -377,27 +393,27 @@ return (
             id="nickname"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 md:max-w-md"
+            className="w-full rounded border border-black bg-white p-2 md:max-w-md dark:bg-[#2E2A57]"
             placeholder="Enter a nickname."
           />
 
           <div className="flex items-center gap-3">
             <span className="text-sm sm:text-base">Dark Mode</span>
-            <div className="onoffswitch">
-              <input
-                type="checkbox"
-                name="onoffswitch"
-                className="onoffswitch-checkbox"
-                id="myonoffswitch"
-                tabIndex={0}
-                checked={on}
-                onChange={(e) => setOn(e.target.checked)}
+
+            <button
+              type="button"
+              onClick={() => setDarkMode((prev) => !prev)}
+              aria-pressed={darkMode}
+              aria-label={darkMode ? "Turn dark mode off" : "Turn dark mode on"}
+              className="relative h-8 w-16"
+            >
+              <Image
+                src={darkMode ? "/dark_mode_on=true.png" : "/dark_mode_on=false.png"}
+                alt={darkMode ? "Dark mode on" : "Dark mode off"}
+                fill
+                className="object-contain"
               />
-              <label className="onoffswitch-label" htmlFor="myonoffswitch">
-                <span className="onoffswitch-inner" />
-                <span className="onoffswitch-switch" />
-              </label>
-            </div>
+            </button>
           </div>
         </div>
       </div>

@@ -105,9 +105,9 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="p-[1%] border-b-1 bg-[#235937]">
+      <div className="p-[1%] border-b-1 bg-[#235937] dark:bg-[#1C1836]">
         <div className="flex flex-row">
-            <p className="text-2xl font-bold text-[#ffd36b] w-[4%]">Timer</p>
+            <p className="text-2xl font-bold text-[#ffd36b] dark:text-white w-[4%]">Timer</p>
               <p className="text-white text-2xl font-bold pl-[42%]">Minutes</p>
         </div>
         </div>

@@ -44,7 +44,7 @@ export default function StuckModal() {
         if (e.target === e.currentTarget) closeAssistant();
       }}
     >
-      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 h-[80vh] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 h-[80vh] overflow-hidden flex flex-col dark:bg-[#0B0B26]">
         <button
           onClick={closeAssistant}
           aria-label="Close"
@@ -53,7 +53,7 @@ export default function StuckModal() {
           <span className="text-lg font-semibold">×</span>
         </button>
 
-        <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)]">
+        <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)] dark:text-white/80">
           🟧 Study Assistant
         </p>
         <div className="w-full h-px bg-black/30 mt-3" />
@@ -153,7 +153,7 @@ export default function StuckModal() {
             This tool supports learning—it won&apos;t do the work for you.
           </p>
 
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 dark:border-1 dark:border-white/60">
             <input
               value={state.input}
               onChange={(e) => setInput(e.target.value)}
@@ -178,7 +178,7 @@ export default function StuckModal() {
                 aria-haspopup="true"
                 aria-expanded={open}
                 onClick={() => setOpen((prev) => !prev)}
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white dark:bg-[#0B0B26] dark:text-white/70 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-[#28284F]"
               >
                 <span>Support Level</span>
                 <svg

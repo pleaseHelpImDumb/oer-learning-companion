@@ -38,23 +38,23 @@ export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 max-h-[80vh] overflow-auto">
+      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 max-h-[80vh] overflow-auto dark:bg-[#10102E]">
         <button
           onClick={onClose}
           aria-label="Close"
           className="absolute top-3 right-3 sm:top-4 sm:right-4
                      w-9 h-9 flex items-center justify-center
-                     rounded-full bg-[#ADD8E6]/50 hover:bg-[#ADD8E6]/70 transition"
+                     rounded-full bg-[#ADD8E6]/50 dark:bg-[#1C1836] hover:bg-[#ADD8E6]/70 transition"
         >
           <span className="text-lg font-semibold">×</span>
         </button>
 
         <div className="flex flex-col gap-4 sm:gap-6 items-center pb-[3%]">
-          <p className="text-center font-semibold text-[clamp(1rem,2vw,1.5rem)]">
+          <p className="text-center font-semibold text-[clamp(1rem,2vw,1.5rem)] dark:text-white/80">
             We&apos;ve got you. What would help right now?
           </p>
 
-          <div className="w-full h-px bg-black/80 rounded-2xl" />
+          <div className="w-full h-px bg-black/80 dark:bg-white/80 rounded-2xl" />
 
           <div className="w-full flex flex-wrap justify-center gap-3 sm:gap-4">
             {actions.map((action) => (
@@ -67,7 +67,7 @@ export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
                   handle(action.onClick); // close + run
                 }
               }}
-              className="border-2 border-[#ADD8E6] text-[#0077B6] font-semibold
+              className="border-2 border-[#ADD8E6] dark:border-[#47478F] text-[#0077B6] dark:text-white/80 font-semibold
                       rounded-full px-4 py-2
                       text-[clamp(0.9rem,1.4vw,1.25rem)]
                       min-w-[9.5rem] sm:min-w-[10.5rem]"

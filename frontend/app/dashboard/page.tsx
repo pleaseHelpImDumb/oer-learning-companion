@@ -147,8 +147,8 @@ async function handleStartSession() {
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
       <div className="w-full">
-        <div className="rounded-lg bg-[#ffd36b] px-4 py-4 text-lg font-semibold sm:text-xl">
-          <p className="text-black">
+        <div className="rounded-lg bg-[#ffd36b] dark:bg-[#38324D] px-4 py-4 text-lg font-semibold sm:text-xl">
+          <p className="text-black dark:text-white dark:bg-[#38324D]">
             {user?.favoriteQuote}
           </p>
         </div>
@@ -156,36 +156,36 @@ async function handleStartSession() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
         <div className="flex flex-col gap-6">
-          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] drop-shadow-xl">
-            <div className="bg-[#235937] px-4 py-4 sm:px-6">
+          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] dark:bg-[#38324D] drop-shadow-xl">
+            <div className="bg-[#235937] dark:bg-[#201C2E] dark:border-b-1 dark:border-white px-4 py-4 sm:px-6">
               <b className="text-2xl text-white sm:text-3xl">My Progress</b>
             </div>
 
             <div className="px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] px-4 py-5 text-center">
-                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937]">
+                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     5
                   </p>
-                  <p className="text-base font-semibold text-[#235937] sm:text-lg">
+                  <p className="text-base font-semibold text-[#235937] dark:text-white sm:text-lg">
                     Hours Studied
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] px-4 py-5 text-center">
-                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937]">
+                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     {user?.tokenBalance ?? 0}
                   </p>
-                  <p className="text-base font-semibold text-[#235937] sm:text-lg">
+                  <p className="text-base font-semibold text-[#235937] sm:text-lg dark:text-white">
                     Tokens
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] px-4 py-5 text-center">
-                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937]">
+                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     {latestBadge ? latestBadge.emoji : "🧊"}
                   </p>
-                  <p className="px-2 text-sm font-semibold text-[#235937] sm:text-base">
+                  <p className="px-2 text-sm font-semibold text-[#235937] dark:text-white sm:text-base">
                     {latestBadge ? latestBadge.name : "No badge yet"}
                   </p>
                 </div>
@@ -197,14 +197,14 @@ async function handleStartSession() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] drop-shadow-xl">
-            <div className="bg-[#235937] px-4 py-4 sm:px-6">
+          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] dark:bg-[#38324D] drop-shadow-xl">
+            <div className="bg-[#235937] dark:bg-[#201C2E] dark:border-b-1 dark:border-white px-4 py-4 sm:px-6">
               <b className="text-2xl text-white sm:text-3xl">Rewards</b>
             </div>
 
             <div className="px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] dark:bg-[#3A3157] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
                     50
                   </p>
@@ -213,7 +213,7 @@ async function handleStartSession() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] dark:bg-[#3A3157] px-4 py-5 text-center">
                       <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
                         {Array.isArray(user?.badges) ? user.badges.length : 0}
                       </p>
@@ -224,12 +224,12 @@ async function handleStartSession() {
 
                 <Link
                   href="/activity"
-                  className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#ffd36b] px-4 py-5 text-center"
+                  className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#ffd36b] dark:bg-[#858532] px-4 py-5 text-center"
                 >
-                  <p className="text-[clamp(1.75rem,6vw,3rem)] font-semibold text-white">
+                  <p className="text-[clamp(1.75rem,6vw,3rem)] font-semibold text-white dark:text-black">
                     Play
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-[#235937] sm:text-base">
+                  <p className="mt-2 text-sm font-semibold text-[#235937] sm:text-base dark:text-black">
                     Play a Mini-Game
                   </p>
                 </Link>
@@ -238,7 +238,7 @@ async function handleStartSession() {
           </section>
         </div>
 
-        <section className="flex flex-col items-center rounded-2xl bg-[#235937] px-4 py-6 text-center sm:px-6">
+        <section className="flex flex-col items-center rounded-2xl bg-[#235937] dark:bg-[#201C2E] dark:border-1 dark:border-white px-4 py-6 text-center sm:px-6">
           <p className="pb-2 text-2xl font-semibold text-white sm:text-3xl">
             Set Today's Goal
           </p>
