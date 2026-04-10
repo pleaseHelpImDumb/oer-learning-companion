@@ -22,7 +22,6 @@ model User {
   resetPasswordExpires   DateTime?
 
   // Student
-  tokenBalance Int @default(0)
   nickname String?
   checkinIntervalMinutes Int @default(5)
   favoriteQuote String?
@@ -80,6 +79,7 @@ model UserStats {
   lastSessionDate DateTime?
   totalAiInteractions Int @default(0)
   totalWellnessChecks Int @default(0)
+    totalTokensEarned Int @default(0)
 
   user User @relation(fields:[userId], references:[userId])
 }
@@ -95,6 +95,7 @@ model StudySession {
   totalPausedMinutes Int @default(0)
   durationMinutes Int? //set on completed
   numAiInteractions Int @default(0)
+  tokensSpent Int @default(0)
   group Group?
   notes String?
 

@@ -1,5 +1,8 @@
 const { StatusCodes } = require("http-status-codes"); // Status codes
 
+const COST_PER_GAME = 1;
+const MINUTES_PER_TOKEN = 5;
+
 // Database setup
 const { PrismaClient } = require("@prisma/client");
 let opts;
@@ -48,7 +51,6 @@ const startSession = async (req, res, next) => {
 const getActiveSession = async (req, res, next) => {
   try {
     const userId = req.user.id;
-
     const session = await prisma.studySession.findFirst({
       where: {
         userId: userId,
@@ -89,6 +91,8 @@ const getActiveSession = async (req, res, next) => {
     const totalElapsed = Math.floor(
       (now - new Date(session.startTime)) / 1000 / 60,
     );
+    const tokensEarned = Math.floor(totalElapsed / MINUTES_PER_TOKEN); // <- 1 token per 5 minutes
+    const tokensAvailable = tokensEarned - session.tokensSpent;
 
     let currentPauseDuration = 0;
     if (session.status === "PAUSED" && session.lastPauseTime) {
@@ -108,6 +112,57 @@ const getActiveSession = async (req, res, next) => {
         lastPauseTime: session.lastPauseTime,
         totalPausedMinutes: session.totalPausedMinutes,
         currentStudyMinutes: studyMinutes,
+        tokensAvailable: tokensAvailable,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const spendToken = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const session = await prisma.studySession.findFirst({
+      where: {
+        userId,
+        status: { in: ["ACTIVE", "PAUSED"] },
+      },
+    });
+
+    if (!session) {
+      return res.json({ message: "No session found", session: null });
+    }
+
+    const now = new Date();
+    const totalElapsed = Math.floor(
+      (now - new Date(session.startTime)) / 60000,
+    );
+
+    const tokensEarned = Math.floor(totalElapsed / 5);
+    const tokensAvailable = tokensEarned - session.tokensSpent;
+
+    if (tokensAvailable < COST_PER_GAME) {
+      return res.json({ message: "Not enough tokens" });
+    }
+
+    const updatedSession = await prisma.studySession.update({
+      where: {
+        id: session.id,
+      },
+      data: {
+        tokensSpent: {
+          increment: 1,
+        },
+      },
+    });
+
+    return res.json({
+      message: "Token spent",
+      session: {
+        sessionId: updatedSession.id,
+        status: updatedSession.status,
+        tokensAvailable: tokensAvailable - 1,
       },
     });
   } catch (err) {
@@ -225,13 +280,7 @@ const resumeSession = async (req, res, next) => {
   }
 };
 
-// calculateTokens - helper function for some calculation on determining token amount
-// CURRENT CALCULATION: 1 token / 5 minutes studied
-function calculateTokens(studyMinutes) {
-  return Math.floor(studyMinutes / 5);
-}
-
-// Complete Session - User Finishes Session (Awards Tokens)
+// Complete Session - User Finishes Session
 const completeSession = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
@@ -269,9 +318,6 @@ const completeSession = async (req, res, next) => {
     );
     const studyMinutes = totalMinutes - finalPausedMinutes;
 
-    // token calculations
-    const tokensEarned = calculateTokens(studyMinutes);
-
     const result = await prisma.$transaction(async (tx) => {
       const updatedSession = await tx.studySession.update({
         where: { sessionId: sessionId },
@@ -297,12 +343,7 @@ const completeSession = async (req, res, next) => {
         updatedSession,
       );
 
-      const updatedUser = await tx.user.update({
-        where: { userId: userId },
-        data: { tokenBalance: { increment: tokensEarned } },
-      });
-
-      return { updatedSession, updatedStats, updatedUser, earnedBadges };
+      return { updatedSession, updatedStats, earnedBadges };
     });
 
     res.json({
@@ -315,8 +356,6 @@ const completeSession = async (req, res, next) => {
         totalPausedMinutes: result.updatedSession.totalPausedMinutes,
       },
       rewards: {
-        tokensEarned: tokensEarned,
-        totalTokens: result.updatedUser.tokens,
         badgesEarned: result.earnedBadges,
       },
     });
@@ -358,6 +397,8 @@ async function updateUserStats(tx, userId, studyMinutes, session) {
       newStreak = 1;
     }
   }
+  // tokens earned, adding to user lifetime
+  const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
 
   return await tx.userStats.update({
     where: { userId },
@@ -368,6 +409,7 @@ async function updateUserStats(tx, userId, studyMinutes, session) {
       longestStreakLength: Math.max(newStreak, stats.longestStreakLength),
       lastSessionDate: today,
       totalAiInteractions: { increment: session.numAiInteractions },
+      totalTokensEarned: { increment: tokensEarned },
     },
   });
 }
@@ -480,7 +522,6 @@ const cancelSession = async (req, res, next) => {
     const studyMinutes = totalMinutes - finalPausedMinutes;
 
     const result = await prisma.$transaction(async (tx) => {
-      // no token/badge award
       const updatedSession = await tx.studySession.update({
         where: { sessionId: sessionId },
         data: {
