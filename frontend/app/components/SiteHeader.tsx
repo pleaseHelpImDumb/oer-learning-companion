@@ -10,7 +10,7 @@ export default function SiteHeader() {
   const [username, setUsername] = useState("username");
   const [timerDisplay, setTimerDisplay] = useState("0:00:00");
   const { activeSession } = useSession();
-
+  const [tokenBalance, setTokenBalance] = useState(0);
   const TRACKS = {
     Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
     Gaming: ["🕹️", "🎮", "🎲", "♟️"],
@@ -100,7 +100,11 @@ export default function SiteHeader() {
         } else {
           console.log("track failed guard");
         }
+          const tokens = userData.user?.tokenBalance;
 
+          if (typeof tokens === "number") {
+            setTokenBalance(tokens);
+          }
         const rawUserBadges = userData.user?.userBadges;
 
         if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
@@ -237,7 +241,9 @@ export default function SiteHeader() {
 
             <div className="flex gap-1 text-xl leading-none sm:text-2xl">
               {TRACKS[track].map((emoji, i) => (
-                <span key={i}>{emoji}</span>
+                <span key={i} style={{ opacity: i < tokenBalance ? 1 : 0.3 }}>
+                  {emoji}
+                </span>
               ))}
             </div>
           </div>

@@ -174,7 +174,7 @@ async function handleStartSession() {
 
                 <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937]">
-                    12
+                    {user?.tokenBalance ?? 0}
                   </p>
                   <p className="text-base font-semibold text-[#235937] sm:text-lg">
                     Tokens
@@ -214,9 +214,9 @@ async function handleStartSession() {
                 </div>
 
                 <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] px-4 py-5 text-center">
-                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
-                    {Array.isArray(user?.userBadges) ? user.userBadges.length : 0}
-                  </p>
+                      <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
+                        {Array.isArray(user?.badges) ? user.badges.length : 0}
+                      </p>
                   <p className="mt-2 text-sm font-semibold text-white sm:text-base">
                     Badges
                   </p>

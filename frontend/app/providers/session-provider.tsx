@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type ActiveSession = {
-  id: number;
+  sessionId: number;
   status: "ACTIVE" | "PAUSED";
   startTime: string;
   lastPauseTime?: string | null;
@@ -18,6 +18,8 @@ type SessionContextType = {
   refreshSession: () => Promise<void>;
   cancelSession: () => Promise<void>;
   pauseSession: () => Promise<void>;
+  resumeSession: () => Promise<void>;
+  completeSession: () => Promise<void>;
 };
 
 type SessionProviderProps = {
@@ -87,7 +89,7 @@ export function SessionProvider({
       const csrfToken =
         typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
-      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/cancel`, {
+      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/cancel`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -127,7 +129,7 @@ export function SessionProvider({
       const csrfToken =
         typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
-      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/pause`, {
+      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/pause`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -152,21 +154,106 @@ export function SessionProvider({
     }
   };
 
+  const resumeSession = async () => {
+    if (!activeSession || !API_BASE_URL) {
+      console.log("[SESSION PROVIDER] resumeSession aborted", {
+        hasActiveSession: !!activeSession,
+        API_BASE_URL,
+      });
+      return;
+    }
+
+    try {
+      setSessionActionLoading(true);
+
+      const csrfToken =
+        typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/resume`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      console.log("[SESSION PROVIDER] resume response:", data);
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || "Failed to resume session");
+      }
+
+      await refreshSession();
+    } catch (error) {
+      console.error("[SESSION PROVIDER] Failed to resume session:", error);
+    } finally {
+      setSessionActionLoading(false);
+    }
+  };
+
+const completeSession = async () => {
+  if (!activeSession || !API_BASE_URL) {
+    console.log("[SESSION PROVIDER] completeSession aborted", {
+      hasActiveSession: !!activeSession,
+      API_BASE_URL,
+    });
+    return;
+  }
+
+  try {
+    setSessionActionLoading(true);
+
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(
+      `${API_BASE_URL}/sessions/${activeSession.sessionId}/complete`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[SESSION PROVIDER] complete response:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || "Failed to complete session");
+    }
+
+    await refreshSession();
+  } catch (error) {
+    console.error("[SESSION PROVIDER] Failed to complete session:", error);
+  } finally {
+    setSessionActionLoading(false);
+  }
+};
+
   useEffect(() => {
     void refreshSession();
   }, [API_BASE_URL, shouldCheckSession]);
 
-  const value = useMemo(
-    () => ({
-      activeSession,
-      loading,
-      sessionActionLoading,
-      refreshSession,
-      cancelSession,
-      pauseSession,
-    }),
-    [activeSession, loading, sessionActionLoading]
-  );
+const value = useMemo(
+  () => ({
+    activeSession,
+    loading,
+    sessionActionLoading,
+    refreshSession,
+    cancelSession,
+    pauseSession,
+    resumeSession,
+    completeSession,
+  }),
+  [activeSession, loading, sessionActionLoading]
+);
 
   console.log("[SESSION PROVIDER] context value", value);
 

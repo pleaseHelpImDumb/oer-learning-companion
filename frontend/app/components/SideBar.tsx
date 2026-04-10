@@ -90,19 +90,19 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
             );
           }
 
-          if (isAiHelp) {
-            return (
-              <button
-                key={icon.src}
-                type="button"
-                onClick={() => setAiHelpOpen(true)}
-                className={cellClass}
-                aria-label="Open AI Help window"
-              >
-                <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
-              </button>
-            );
-          }
+if (icon.alt === "Help") {
+  return (
+    <button
+      key={icon.src}
+      type="button"
+      onClick={() => openAssistant()}
+      className={cellClass}
+      aria-label="Open AI companion"
+    >
+      <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+    </button>
+  );
+}
 
           return (
             <Link key={icon.src} href={icon.href} className={cellClass}>

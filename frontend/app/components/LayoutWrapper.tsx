@@ -17,55 +17,70 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
 
-  useEffect(() => {
-    const originalFetch = window.fetch;
+useEffect(() => {
+  if ((window as any).__fetchDebugPatched) {
+    return;
+  }
 
-    window.fetch = async (...args) => {
-      const [url, options] = args;
+  const originalFetch = window.fetch;
+  (window as any).__fetchDebugPatched = true;
+  (window as any).__originalFetch = originalFetch;
 
-      console.groupCollapsed(
-        `%c🌐 FETCH → ${
-          typeof url === "string"
-            ? url
-            : url instanceof Request
-              ? url.url
-              : "unknown url"
-        }`,
-        "color: #2563eb; font-weight: bold;"
-      );
+  window.fetch = async (...args) => {
+    const [url, options] = args;
 
-      console.log("Request options:", options);
+    console.groupCollapsed(
+      `%c🌐 FETCH → ${
+        typeof url === "string"
+          ? url
+          : url instanceof Request
+            ? url.url
+            : "unknown url"
+      }`,
+      "color: #2563eb; font-weight: bold;"
+    );
+
+    console.log("Request options:", options);
+
+    try {
+      const response = await originalFetch(...args);
+
+      let body: unknown = null;
 
       try {
-        const response = await originalFetch(...args);
-
         const clone = response.clone();
-        let body;
+        const rawText = await clone.text();
 
-        try {
-          body = await clone.json();
-        } catch {
-          body = await clone.text();
+        if (rawText) {
+          try {
+            body = JSON.parse(rawText);
+          } catch {
+            body = rawText;
+          }
         }
-
-        console.log("Status:", response.status);
-        console.log("Response body:", body);
-
-        console.groupEnd();
-        return response;
-      } catch (err) {
-        console.error("Fetch error:", err);
-        console.groupEnd();
-        throw err;
+      } catch (readErr) {
+        console.warn("Could not read response body:", readErr);
       }
-    };
 
-    console.log("✅ Fetch debugging enabled");
+      console.log("Status:", response.status);
+      console.log("Response body:", body);
 
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, []);
+      console.groupEnd();
+      return response;
+    } catch (err) {
+      console.error("Fetch error:", err);
+      console.groupEnd();
+      throw err;
+    }
+  };
+
+  console.log("✅ Fetch debugging enabled");
+
+  return () => {
+    window.fetch = (window as any).__originalFetch || originalFetch;
+    (window as any).__fetchDebugPatched = false;
+  };
+}, []);
 
   const hideLayout = ["/", "/register", "/forgotpassword", "/onboarding"].includes(pathname);
 

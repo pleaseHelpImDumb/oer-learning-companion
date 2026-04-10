@@ -19,6 +19,7 @@ export default function LayoutInner({
     loading,
     cancelSession,
     pauseSession,
+    resumeSession,
     sessionActionLoading,
   } = useSession();
   console.log("[LAYOUT] useSession returned:", {
@@ -26,6 +27,7 @@ export default function LayoutInner({
     loading,
     cancelSession,
     pauseSession,
+    resumeSession,
     sessionActionLoading,
   });
   if (hideLayout) {
@@ -58,13 +60,18 @@ export default function LayoutInner({
                 <button
                   type="button"
                   onClick={() => {
-                    console.log("[LAYOUT] Pause session button clicked");
-                    void pauseSession();
+                    if(activeSession.status!=="PAUSED"){
+                      console.log("[LAYOUT] Pause session button clicked");
+                      void pauseSession();
+                    } else{
+                      console.log("[LAYOUT] Resume session button clicked");
+                      void resumeSession();
+                    }
                   }}
                   disabled={sessionActionLoading}
                   className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#235937] shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {sessionActionLoading ? "Working..." : "Pause Session"}
+                  {sessionActionLoading ? "Working..." : activeSession.status=="ACTIVE" ? "Pause Session" : "Resume Session"}
                 </button>
 
                 <button
