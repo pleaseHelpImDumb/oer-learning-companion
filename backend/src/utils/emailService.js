@@ -1,23 +1,23 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
-const sendPasswordResetEmail = async (email, resetToken) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
+const sendPasswordResetEmail = async (email, resetUrl) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.EMAIL_FROM,
     to: email,
-    subject: "Password Reset Request - OER Learning Companion",
+    subject: "Password Reset Request - Motivational Learning Companion",
     html: `
       <h2>Password Reset Request</h2>
-      <p>You requested a password reset for your OER Learning Companion account.</p>
+      <p>You requested a password reset for your MLC account.</p>
       <p>Click the link below to reset your password:</p>
       <a href="${resetUrl}" style="
         display: inline-block;
@@ -31,7 +31,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
       <p><strong>This link expires in 30 minutes.</strong></p>
       <p>If you didn't request this, please ignore this email.</p>
       <hr>
-      <small>OER Learning Companion</small>
+      <small>Motivational Learning Companion></small>
     `,
   };
 
