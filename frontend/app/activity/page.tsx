@@ -495,7 +495,7 @@ return (
   <div className="px-3 py-3">
     <div className="flex flex-col md:flex-row items-start gap-6 min-h-screen">
       {/* Left menu */}
-<aside className="w-full md:w-80 lg:w-96 shrink-0 rounded-xl border-2 border-black bg-white p-6 shadow-sm md:min-h-[85vh]">
+<aside className="w-full md:w-80 lg:w-96 shrink-0 rounded-xl border-2 border-black bg-white dark:bg-[#38324D] p-6 shadow-sm md:min-h-[85vh]">
   <h2 className="text-2xl font-bold mb-4">Piece Info</h2>
 
   {selectedCell ? (
@@ -508,13 +508,13 @@ return (
         </div>
       </div>
 
-      <div className="text-base text-gray-700 leading-relaxed">
+      <div className="text-base text-gray-700 dark:text-white-80 dark:text-white-80 leading-relaxed">
         {piecedescription?.description}
       </div>
 
       <div className="border-t border-gray-700"></div>
 
-      <div className="text-base text-gray-700 leading-relaxed">
+      <div className="text-base text-gray-700 dark:text-white-80 leading-relaxed">
         {pieceInfo?.description}
       </div>
 

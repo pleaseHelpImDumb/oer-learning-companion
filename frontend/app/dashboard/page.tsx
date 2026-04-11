@@ -245,20 +245,9 @@ async function handleStartSession() {
 
           <p className="text-white">Set a session length to start.</p>
 
-          <div className="mt-5 flex w-full max-w-md flex-col gap-4">
+          <div className="mt-5 flex w-full max-w-xs flex-col gap-3">
             <div className="flex flex-col gap-2 text-left">
               <label className="font-medium text-white">Select number of:</label>
-              <select
-                defaultValue="minutes"
-                className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="minutes">Minutes</option>
-                <option value="modules">Modules</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">Select:</label>
               <select
                 defaultValue="breaks"
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -274,6 +263,16 @@ async function handleStartSession() {
                 <option value="none">8</option>
                 <option value="none">9</option>
                 <option value="none">10</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 text-left">
+              <label className="font-medium text-white">Select:</label>
+              <select
+                defaultValue="minutes"
+                className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="minutes">Minutes</option>
+                {/*<option value="modules">Modules</option>*/}
               </select>
             </div>
 

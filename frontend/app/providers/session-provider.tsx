@@ -142,17 +142,44 @@ export function SessionProvider({
       const data = await res.json().catch(() => ({}));
       console.log("[SESSION PROVIDER] pause response:", data);
 
-      if (!res.ok) {
-        throw new Error(data?.error || data?.message || "Failed to pause session");
-      }
+if (!res.ok) {
+  throw new Error(data?.error || data?.message || "Failed to pause session");
+}
 
-      await refreshSession();
+setActiveSession((prev) =>
+  prev
+    ? {
+        ...prev,
+        status: "PAUSED",
+        lastPauseTime: new Date().toISOString(),
+      }
+    : prev
+);
+
+await refreshSession();
     } catch (error) {
       console.error("[SESSION PROVIDER] Failed to pause session:", error);
     } finally {
       setSessionActionLoading(false);
     }
   };
+
+  function getElapsedMs(session: {
+  startTime: string;
+  status: "ACTIVE" | "PAUSED";
+  lastPauseTime?: string | null;
+  totalPausedMinutes: number;
+}) {
+  const startMs = new Date(session.startTime).getTime();
+  const pausedMs = (session.totalPausedMinutes || 0) * 60 * 1000;
+
+  const effectiveNow =
+    session.status === "PAUSED" && session.lastPauseTime
+      ? new Date(session.lastPauseTime).getTime()
+      : Date.now();
+
+  return Math.max(0, effectiveNow - startMs - pausedMs);
+}
 
   const resumeSession = async () => {
     if (!activeSession || !API_BASE_URL) {

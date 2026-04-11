@@ -52,6 +52,15 @@ useEffect(() => {
     { id: "profile6", src: "/assets/profiles/profile6.png", alt: "Profile Option 6" },
   ];
 
+    const avatars_selected = [
+    { id: "profile1", src: "/assets/profiles_selected/profile1.png", alt: "Profile Option 1" },
+    { id: "profile2", src: "/assets/profiles_selected/profile2.png", alt: "Profile Option 2" },
+    { id: "profile3", src: "/assets/profiles_selected/profile3.png", alt: "Profile Option 3" },
+    { id: "profile4", src: "/assets/profiles_selected/profile4.png", alt: "Profile Option 4" },
+    { id: "profile5", src: "/assets/profiles_selected/profile5.png", alt: "Profile Option 5" },
+    { id: "profile6", src: "/assets/profiles_selected/profile6.png", alt: "Profile Option 6" },
+  ];
+
   const tracks = [
     { id: "sports", src: "/assets/tracks/default/sports.png", alt: "Sports Track" },
     { id: "games", src: "/assets/tracks/default/games.png", alt: "Gaming Track" },
@@ -59,6 +68,14 @@ useEffect(() => {
     { id: "pets", src: "/assets/tracks/default/pets.png", alt: "Pets Track" },
     { id: "space", src: "/assets/tracks/default/space.png", alt: "Space Track" },
     { id: "music", src: "/assets/tracks/default/music.png", alt: "Music Track" },
+  ];
+  const tracks_dark = [
+    { id: "sports", src: "/assets/tracks/dark_mode/sports.png", alt: "Sports Track" },
+    { id: "games", src: "/assets/tracks/dark_mode/games.png", alt: "Gaming Track" },
+    { id: "art", src: "/assets/tracks/dark_mode/art.png", alt: "Art Track" },
+    { id: "pets", src: "/assets/tracks/dark_mode/pets.png", alt: "Pets Track" },
+    { id: "space", src: "/assets/tracks/dark_mode/space.png", alt: "Space Track" },
+    { id: "music", src: "/assets/tracks/dark_mode/music.png", alt: "Music Track" },
   ];
 
 async function submitOnboarding(quickstart: boolean) {
@@ -193,6 +210,15 @@ async function submitOnboarding(quickstart: boolean) {
     });
  * 
  */
+const selectClass =
+  "w-full appearance-none rounded-md border border-[#c8c2b8] bg-white px-3 py-2 text-sm font-medium text-[#1f2937] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#235937] dark:border-white/30 dark:bg-[#1b2740] dark:text-white dark:shadow-none dark:focus:ring-[#7cc46b]";
+
+const inputClass =
+  "w-full rounded-md border border-[#c8c2b8] bg-white px-3 py-2 text-sm text-[#1f2937] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#235937] dark:border-white/30 dark:bg-transparent dark:text-white dark:shadow-none dark:focus:ring-[#7cc46b]";
+
+
+const labelClass = "mb-1 text-sm font-medium text-[#235937] dark:text-white";
+  const currentTracks = darkMode ? tracks_dark : tracks;
 return (
   <div className="min-h-screen font-sans">
     <main className="mx-auto flex w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-10">
@@ -281,7 +307,20 @@ return (
       </div>
 
       <div className="grid w-full grid-cols-1 gap-4 pt-6 md:grid-cols-2">
+
         <div className="flex flex-col">
+          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
+            Enter Major.<span className="text-[#ff0000]">*</span>
+          </label>
+          <input
+            id="major"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            placeholder="Please enter your course (optional)."
+          />
+        </div>
+                <div className="flex flex-col">
           <label htmlFor="year" className="mb-1 text-sm sm:text-base">
             Enter Year.<span className="text-[#ff0000]">*</span>
           </label>
@@ -303,19 +342,6 @@ return (
               </label>
             ))}
           </div>
-        </div>
-
-        <div className="flex flex-col">
-          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
-            Enter Major.<span className="text-[#ff0000]">*</span>
-          </label>
-          <input
-            id="major"
-            value={major}
-            onChange={(e) => setMajor(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Please enter your course (optional)."
-          />
         </div>
       </div>
 
@@ -418,61 +444,67 @@ return (
         </div>
       </div>
 
-      <div className="flex flex-col pt-5">
-        <span className="text-sm sm:text-base">
-          Select your avatar.<span className="text-[#ff0000]">*</span>
-        </span>
+          <div className="pt-2">
+            <span className="text-sm font-medium text-[#235937] dark:text-white">
+              Select your avatar.<span className="text-red-500">*</span>
+            </span>
 
-        <div className="grid w-full grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-6">
-          {avatars.map((avatar) => (
-            <button
-              key={avatar.id}
-              type="button"
-              onClick={() => setSelectedAvatar(avatar.id)}
-              className={`flex justify-center rounded-full border-[5px] transition sm:border-[7px] ${
-                selectedAvatar === avatar.id
-                  ? "border-[#235937] scale-105"
-                  : "border-transparent hover:border-[#235937]"
-              }`}
-            >
-              <Image
-                alt={avatar.alt}
-                src={avatar.src}
-                width={120}
-                height={120}
-                className="h-auto w-full max-w-[100px] sm:max-w-[120px]"
-              />
-            </button>
-          ))}
-        </div>
+            <div className="grid w-full grid-cols-3 gap-4 pt-4 sm:grid-cols-4 lg:grid-cols-6">
+              {avatars.map((avatar) => {
+                const isSelected = selectedAvatar === avatar.id;
+                const selectedVersion = avatars_selected.find((a) => a.id === avatar.id);
+                const imgSrc = isSelected ? selectedVersion?.src || avatar.src : avatar.src;
 
-        <span className="pt-5 text-sm sm:text-base">
-          How do you like to have fun?<span className="text-[#ff0000]">*</span>
-        </span>
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => setSelectedAvatar(avatar.id)}
+                    className={`flex justify-center rounded-full transition-transform duration-150 ${
+                      isSelected ? "scale-105" : "hover:scale-105"
+                    }`}
+                  >
+                    <Image
+                      alt={avatar.alt}
+                      src={imgSrc}
+                      width={96}
+                      height={96}
+                      className="h-auto w-full max-w-[78px] sm:max-w-[88px]"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        <div className="grid w-full grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-6">
-          {tracks.map((track) => (
-            <button
-              key={track.id}
-              type="button"
-              onClick={() => setSelectedTrackId(track.id)}
-              className={`flex justify-center rounded border-[3px] p-1 transition ${
-                selectedTrackId === track.id
-                  ? "border-red-500 bg-[#90D5FF]"
-                  : "border-transparent bg-transparent hover:bg-[#90D5FF]"
-              }`}
-            >
-              <Image
-                alt={track.alt}
-                src={track.src}
-                width={120}
-                height={120}
-                className="h-auto w-full max-w-[100px] sm:max-w-[120px]"
-              />
-            </button>
-          ))}
-        </div>
-      </div>
+          <div className="pt-1">
+            <span className="text-sm font-medium text-[#235937] dark:text-white">
+              How do you like to have fun?<span className="text-red-500">*</span>
+            </span>
+
+            <div className="grid w-full grid-cols-3 gap-4 pt-4 sm:grid-cols-4 lg:grid-cols-6">
+              {currentTracks.map((track) => (
+                <button
+                  key={track.id}
+                  type="button"
+                  onClick={() => setSelectedTrackId(track.id)}
+                  className={`flex flex-col items-center rounded-md px-1 py-2 transition ${
+                    selectedTrackId === track.id
+                      ? "bg-[#dff3e4] dark:bg-white/10"
+                      : "hover:bg-[#edf7ef] dark:hover:bg-white/5"
+                  }`}
+                >
+                  <Image
+                    alt={track.alt}
+                    src={track.src}
+                    width={64}
+                    height={64}
+                    className="h-auto w-full max-w-[46px] sm:max-w-[56px]"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
 
       <div className="w-full pt-6">
         <button

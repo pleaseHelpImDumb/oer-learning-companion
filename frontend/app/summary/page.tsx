@@ -6,7 +6,7 @@ export default function Home() {
       {/* page padding + max width so things don't stretch weirdly on ultrawide */}
       <div className="mx-auto w-full max-w-12xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="mb-4 border-b border-gray-300 pb-3">
-  <h1 className="text-black text-3xl sm:text-4xl font-bold">
+  <h1 className="text-black dark:text-white/80 text-3xl sm:text-4xl font-bold">
     Session Summary
   </h1>
 </div>
@@ -14,7 +14,7 @@ export default function Home() {
           {/* TOP ROW: Progress + Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Progress card */}
-<div className="bg-white rounded-2xl p-4 sm:p-6 lg:col-span-3">
+<div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6 lg:col-span-3">
   <div className="flex flex-col md:flex-row md:items-center gap-6">
     {/* Left: image */}
 <div className="w-full max-w-sm sm:max-w-md aspect-square relative shrink-0 md:w-[260px]">
@@ -28,7 +28,7 @@ export default function Home() {
 
   {/* Centered percentage */}
   <div className="absolute inset-0 flex items-center justify-center">
-    <span className="text-[#235937] font-bold text-4xl sm:text-5xl">
+    <span className="text-[#235937] dark:text-white/80 font-bold text-4xl sm:text-5xl">
       0%
     </span>
   </div>
@@ -36,7 +36,7 @@ export default function Home() {
 
     {/* Right: title + bars */}
     <div className="flex-1">
-      <h2 className="text-black font-semibold text-xl sm:text-2xl lg:text-3xl mb-4">
+      <h2 className="text-black dark:text-white/80 font-semibold text-xl sm:text-2xl lg:text-3xl mb-4">
         Study Goals Completed
       </h2>
 
@@ -60,16 +60,16 @@ export default function Home() {
 </div>
 
             {/* Notes card */}
-            <div className="bg-white rounded-2xl p-4 sm:p-6 lg:col-span-2">
-              <h2 className="text-black font-semibold text-xl sm:text-2xl lg:text-3xl">
+            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6 lg:col-span-2">
+              <h2 className="text-black dark:text-white/80 font-semibold text-xl sm:text-2xl lg:text-3xl">
                 Notes
               </h2>
-              <p className="text-black mt-2 mb-3">
+              <p className="text-black dark:text-white/80 mt-2 mb-3">
                 ☰ Add a note about this study session...
               </p>
 
               <textarea
-                className="border border-gray-300 w-full rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black p-3 min-h-[140px] sm:min-h-[200px] resize-none"
+                className="border border-gray-300 w-full rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black p-3 min-h-[140px] sm:min-h-[200px] resize-none dark:text-white/80"
                 placeholder="What do you want to remember or reflect upon for next time..."
               />
             </div>
@@ -77,8 +77,8 @@ export default function Home() {
 
           {/* MID ROW: stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-4 sm:p-6">
-              <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
+            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+              <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Study Goals Completed
               </p>
               <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
@@ -86,16 +86,16 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-6">
-              <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
+            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+              <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Hours Studied This Week
               </p>
               <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3
               </p>
             </div>
-            <div className="bg-white rounded-2xl p-4 sm:p-6">
-              <p className="text-black font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
+            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+              <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Modules Studied This Week
               </p>
               <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
@@ -105,7 +105,7 @@ export default function Home() {
           </div>
 
           {/* BOTTOM: 4-up metrics */}
-          <div className="bg-white rounded-2xl p-4 sm:p-6">
+          <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 ["Check-Ins", "12"],
@@ -114,7 +114,7 @@ export default function Home() {
                 ["With Breaks", "2"],
               ].map(([label, value]) => (
                 <div key={label} className="min-w-0">
-                  <p className="text-black font-bold text-[clamp(1rem,1.4vw,1.8rem)]">
+                  <p className="text-black dark:text-white/80 font-bold text-[clamp(1rem,1.4vw,1.8rem)]">
                     {label}
                   </p>
                   <p className="text-[#235937] font-bold mt-1 text-[clamp(1.6rem,2.5vw,2.8rem)]">
@@ -132,6 +132,7 @@ export default function Home() {
               <div className="h-px bg-transparent" />
             </div>
           </div>
+
         </div>
       </div>
     </div>

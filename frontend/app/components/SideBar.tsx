@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import StuckModal from "./StuckModal";
-import AIHelpModal from "./AIHelp";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
+
 const icons = [
   { src: "/dashboard.png", alt: "Home", href: "/dashboard" },
   { src: "/timer.png", alt: "Timer", href: "/timer" },
@@ -28,22 +28,43 @@ type Props = {
 
 export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
   const [stuckOpen, setStuckOpen] = useState(false);
-  const [aiHelpOpen, setAiHelpOpen] = useState(false); // ✅ NEW
   const { openAssistant } = useStuckAssistant();
-  const asideClass = snapped
-    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] dark:bg-[#151229] dark:border-white border-b border-black grid grid-cols-11"
-    : "z-30 w-14 sm:w-16 bg-[#235937] border-r dark:bg-[#151229] dark:border-white border-black grid grid-rows-11";
 
-  const cellClass =
-    "relative w-full h-full flex items-center justify-center hover:bg-[#1c4a2d] dark:hover:bg-[#38324D] transition-colors";
+  const asideClass = snapped
+    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] dark:bg-[#151229] border-b border-white/20 grid grid-cols-11"
+    : "z-30 w-10 sm:w-12 bg-[#235937] dark:bg-[#151229] border-r border-white/20 flex flex-col items-center py-3";
+
+  const cellClass = snapped
+    ? "relative flex h-full w-full items-center justify-center transition-colors hover:bg-white/5"
+    : "relative flex h-11 w-full items-center justify-center transition-all duration-150 hover:bg-white/5";
+
+  const iconClass = "object-contain opacity-95";
 
   return (
     <>
       <aside className={asideClass} style={{ top: headerOffset }}>
-        {icons.map((icon) => {
+        {icons.map((icon, index) => {
           const isStuck = icon.alt === "stuck";
-          const isAiHelp = icon.alt === "help"
           const isTop = icon.alt === "Top";
+          const isBack = icon.alt === "Back";
+          const isHelp = icon.alt === "Help";
+
+          const showDividerAbove = !snapped && (icon.alt === "Settings" || icon.alt === "Back");
+
+          const content = (
+            <>
+              {showDividerAbove && (
+                <div className="absolute top-0 left-1/2 h-px w-6 -translate-x-1/2 bg-white/25" />
+              )}
+              <Image
+                src={icon.src}
+                alt={icon.alt}
+                fill
+                sizes={snapped ? "48px" : "32px"}
+                className={`${iconClass} p-2.5 sm:p-2`}
+              />
+            </>
+          );
 
           if (isTop) {
             return (
@@ -57,12 +78,12 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
                 className={cellClass}
                 aria-label="Move nav to top bar"
               >
-                <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+                {content}
               </button>
             );
           }
 
-          if (icon.alt === "Back") {
+          if (isBack) {
             return (
               <button
                 key={icon.src}
@@ -71,7 +92,7 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
                 className={cellClass}
                 aria-label="Move nav back to side"
               >
-                <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+                {content}
               </button>
             );
           }
@@ -85,42 +106,37 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
                 className={cellClass}
                 aria-label="Open stuck window"
               >
-                <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+                {content}
               </button>
             );
           }
 
-if (icon.alt === "Help") {
-  return (
-    <button
-      key={icon.src}
-      type="button"
-      onClick={() => openAssistant()}
-      className={cellClass}
-      aria-label="Open AI companion"
-    >
-      <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
-    </button>
-  );
-}
+          if (isHelp) {
+            return (
+              <button
+                key={icon.src}
+                type="button"
+                onClick={() => openAssistant()}
+                className={cellClass}
+                aria-label="Open AI companion"
+              >
+                {content}
+              </button>
+            );
+          }
 
           return (
             <Link key={icon.src} href={icon.href} className={cellClass}>
-              <Image src={icon.src} alt={icon.alt} fill sizes="64px" className="object-contain p-2" />
+              {content}
             </Link>
           );
         })}
       </aside>
 
-    <StuckModal
-      open={stuckOpen}
-      onClose={() => setStuckOpen(false)}
-      onHelp={() => openAssistant()}  // ✅ global open
-    />
-
-      <AIHelpModal 
-        open={aiHelpOpen} 
-        onClose={() => openAssistant()} 
+      <StuckModal
+        open={stuckOpen}
+        onClose={() => setStuckOpen(false)}
+        onHelp={() => openAssistant()}
       />
     </>
   );

@@ -8,7 +8,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { useState } from "react";
-
+import Image from "next/image";
 export default function StuckModal() {
   const router = useRouter();
   const { state, closeAssistant, setTab, setInput, setSupportLevel, send } =
@@ -148,93 +148,61 @@ export default function StuckModal() {
           )}
         </div>
 
-        <div className="pt-3 border-t border-black/20">
-          <p className="text-xs italic opacity-70 mb-2">
-            This tool supports learning—it won&apos;t do the work for you.
-          </p>
+<div className="pt-3 border-t border-black/20 dark:border-white/20">
+  <p className="mb-2 text-xs italic opacity-70">
+    This tool supports learning—it won&apos;t do the work for you.
+  </p>
 
-          <div className="flex items-end gap-2 dark:border-1 dark:border-white/60">
-            <input
-              value={state.input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") send();
-              }}
-              placeholder="What’s hard to understand?"
-              className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60"
-            />
+  <div className="flex items-end gap-2">
+    <input
+      value={state.input}
+      onChange={(e) => setInput(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") send();
+      }}
+      placeholder="What’s hard to understand?"
+      className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
+    />
 
-            <button
-              onClick={send}
-              className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5"
-              aria-label="Send"
-            >
-              ↩︎
-            </button>
+    <button
+      onClick={send}
+      className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
+      aria-label="Send"
+    >
+      ↩︎
+    </button>
+  </div>
 
-            <div className="relative">
-              <button
-                type="button"
-                aria-haspopup="true"
-                aria-expanded={open}
-                onClick={() => setOpen((prev) => !prev)}
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white dark:bg-[#0B0B26] dark:text-white/70 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-[#28284F]"
-              >
-                <span>Support Level</span>
-                <svg
-                  className="ml-2 h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+<div className="mt-3 flex flex-wrap gap-3">
+  {[
+    { level: "1", base: "hint" },
+    { level: "2", base: "stuck" },
+    { level: "3", base: "struggle" },
+  ].map(({ level, base }) => {
+    const isSelected = state.supportLevel === level;
 
-              {open && (
-                <div className="absolute bottom-full right-0 z-[100] mb-2 w-56 origin-bottom-right rounded-md border border-gray-200 bg-white shadow-lg">
-                  <div className="py-1">
-                    <button
-                      type="button"
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => {
-                        setSupportLevel("1");
-                        setOpen(false);
-                      }}
-                    >
-                      1
-                    </button>
-
-                    <button
-                      type="button"
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => {
-                        setSupportLevel("2");
-                        setOpen(false);
-                      }}
-                    >
-                      2
-                    </button>
-
-                    <button
-                      type="button"
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => {
-                        setSupportLevel("3");
-                        setOpen(false);
-                      }}
-                    >
-                      3
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+    return (
+      <button
+        key={level}
+        type="button"
+        onClick={() => setSupportLevel(level as "1" | "2" | "3")}
+        className="transition hover:scale-105"
+      >
+        <div className="w-[120px] h-[50px] flex items-center justify-center">
+<Image
+  src={`/${base}${isSelected ? "_selected" : ""}.png`}
+  alt={base}
+  width={0}
+  height={0}
+  sizes="100vw"
+  className="h-[50px] w-auto object-contain"
+/>
         </div>
+      </button>
+    );
+  })}
+</div>
+</div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import Robot from "../components/RobotEmoji";
 import { StuckAssistantProvider } from "../providers/stuck-assistance-provider";
 import { SessionProvider } from "../providers/session-provider";
 import LayoutInner from "./LayoutInner";
-
+import CheckInController from "./CheckInController";
 export default function LayoutWrapper({
   children,
 }: {
@@ -83,10 +83,35 @@ useEffect(() => {
 }, []);
 
   const hideLayout = ["/", "/register", "/forgotpassword", "/onboarding"].includes(pathname);
+  useEffect(() => {
+  if (hideLayout) return;
 
-  return (
-    <SessionProvider shouldCheckSession={!hideLayout}>
+  const syncDarkMode = () => {
+    const stored = localStorage.getItem("darkMode");
+    const cookieMatch = document.cookie.match(/darkMode=(true|false)/);
+
+    const isDark =
+      stored === "true" ||
+      (stored === null && cookieMatch?.[1] === "true");
+
+    document.documentElement.classList.toggle("dark", isDark);
+  };
+
+  syncDarkMode();
+
+  window.addEventListener("dark-mode-updated", syncDarkMode);
+
+  return () => {
+    window.removeEventListener("dark-mode-updated", syncDarkMode);
+  };
+}, [hideLayout]);
+
+return (
+  <SessionProvider shouldCheckSession={!hideLayout}>
+    <StuckAssistantProvider>
       <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
-    </SessionProvider>
-  );
+      {!hideLayout && <CheckInController />}
+    </StuckAssistantProvider>
+  </SessionProvider>
+);
 }
