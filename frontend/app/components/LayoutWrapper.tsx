@@ -10,6 +10,7 @@ import { StuckAssistantProvider } from "../providers/stuck-assistance-provider";
 import { SessionProvider } from "../providers/session-provider";
 import LayoutInner from "./LayoutInner";
 import CheckInController from "./CheckInController";
+import SessionResumeModalController from "./SessionResumeModalController";
 export default function LayoutWrapper({
   children,
 }: {
@@ -110,7 +111,10 @@ return (
   <SessionProvider shouldCheckSession={!hideLayout}>
     <StuckAssistantProvider>
       <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
+
       {!hideLayout && <CheckInController />}
+      {!hideLayout && <SessionResumeModalController />}
+
     </StuckAssistantProvider>
   </SessionProvider>
 );

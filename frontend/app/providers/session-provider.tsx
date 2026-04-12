@@ -9,12 +9,14 @@ type ActiveSession = {
   lastPauseTime?: string | null;
   totalPausedMinutes: number;
   currentStudyMinutes?: number;
+  tokensAvailable?: number;
 };
 
 type SessionContextType = {
   activeSession: ActiveSession | null;
   loading: boolean;
   sessionActionLoading: boolean;
+  liveStudySeconds: number;
   refreshSession: () => Promise<void>;
   startSession: () => Promise<void>;
   cancelSession: () => Promise<void>;
@@ -29,17 +31,54 @@ type SessionProviderProps = {
 };
 
 const SessionContext = createContext<SessionContextType | null>(null);
-
 export function SessionProvider({
   children,
   shouldCheckSession = true,
 }: SessionProviderProps) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+const [loading, setLoading] = useState<boolean>(shouldCheckSession);
+const [sessionActionLoading, setSessionActionLoading] = useState(false);
+const [liveStudySeconds, setLiveStudySeconds] = useState(0);
+const [sessionClockKey, setSessionClockKey] = useState<string | null>(null);
+const [clockAnchorMs, setClockAnchorMs] = useState<number | null>(null);
+function buildSessionClockKey(session: ActiveSession | null) {
+  if (!session) return null;
+  return `${session.sessionId}:${session.startTime}`;
+}
 
-  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
-  const [loading, setLoading] = useState<boolean>(shouldCheckSession);
-  const [sessionActionLoading, setSessionActionLoading] = useState(false);
+function syncLocalClockFromSession(session: ActiveSession | null) {
+  const nextKey = buildSessionClockKey(session);
 
+  if (!session) {
+    setSessionClockKey(null);
+    setLiveStudySeconds(0);
+    setClockAnchorMs(null);
+    return;
+  }
+
+  const coarseSeconds = (session.currentStudyMinutes ?? 0) * 60;
+
+  setSessionClockKey((prevKey) => {
+    const isSameSession = prevKey === nextKey;
+
+    if (!isSameSession) {
+      // brand new session: initialize from backend
+      setLiveStudySeconds(coarseSeconds);
+    } else {
+      // same session: NEVER let backend minute rounding pull time backward
+      setLiveStudySeconds((prevSeconds) => Math.max(prevSeconds, coarseSeconds));
+    }
+
+    return nextKey;
+  });
+
+  if (session.status === "ACTIVE") {
+    setClockAnchorMs(Date.now());
+  } else {
+    setClockAnchorMs(null);
+  }
+}
   const refreshSession = async () => {
     if (!API_BASE_URL || !shouldCheckSession) {
       setLoading(false);
@@ -66,8 +105,9 @@ export function SessionProvider({
         return;
       }
 
-      setActiveSession(data?.session || null);
-    } catch (error) {
+const nextSession = data?.session || null;
+setActiveSession(nextSession);
+syncLocalClockFromSession(nextSession);    } catch (error) {
       console.error("[SESSION PROVIDER ERROR]", error);
       setActiveSession(null);
     } finally {
@@ -143,7 +183,9 @@ const startSession = async () => {
       if (!res.ok) {
         throw new Error(data?.error || data?.message || "Failed to stop session");
       }
-
+setLiveStudySeconds(0);
+setClockAnchorMs(null);
+setSessionClockKey(null);
       await refreshSession();
     } catch (error) {
       console.error("[SESSION PROVIDER] Failed to stop session:", error);
@@ -152,38 +194,37 @@ const startSession = async () => {
     }
   };
 
-  const pauseSession = async () => {
-    if (!activeSession || !API_BASE_URL) {
-      console.log("[SESSION PROVIDER] pauseSession aborted", {
-        hasActiveSession: !!activeSession,
-        API_BASE_URL,
-      });
-      return;
+const pauseSession = async () => {
+  if (!activeSession || !API_BASE_URL) {
+    console.log("[SESSION PROVIDER] pauseSession aborted", {
+      hasActiveSession: !!activeSession,
+      API_BASE_URL,
+    });
+    return;
+  }
+
+  try {
+    setSessionActionLoading(true);
+
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/pause`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[SESSION PROVIDER] pause response:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || "Failed to pause session");
     }
-
-    try {
-      setSessionActionLoading(true);
-
-      const csrfToken =
-        typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
-
-      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/pause`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-        },
-        body: JSON.stringify({}),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      console.log("[SESSION PROVIDER] pause response:", data);
-
-if (!res.ok) {
-  throw new Error(data?.error || data?.message || "Failed to pause session");
-}
-
 setActiveSession((prev) =>
   prev
     ? {
@@ -193,71 +234,63 @@ setActiveSession((prev) =>
       }
     : prev
 );
+setClockAnchorMs(null);
+    await refreshSession();
+  } catch (error) {
+    console.error("[SESSION PROVIDER] Failed to pause session:", error);
+  } finally {
+    setSessionActionLoading(false);
+  }
+};
 
-await refreshSession();
-    } catch (error) {
-      console.error("[SESSION PROVIDER] Failed to pause session:", error);
-    } finally {
-      setSessionActionLoading(false);
+const resumeSession = async () => {
+  if (!activeSession || !API_BASE_URL) {
+    console.log("[SESSION PROVIDER] resumeSession aborted", {
+      hasActiveSession: !!activeSession,
+      API_BASE_URL,
+    });
+    return;
+  }
+
+  try {
+    setSessionActionLoading(true);
+
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/resume`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[SESSION PROVIDER] resume response:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || "Failed to resume session");
     }
-  };
-
-  function getElapsedMs(session: {
-  startTime: string;
-  status: "ACTIVE" | "PAUSED";
-  lastPauseTime?: string | null;
-  totalPausedMinutes: number;
-}) {
-  const startMs = new Date(session.startTime).getTime();
-  const pausedMs = (session.totalPausedMinutes || 0) * 60 * 1000;
-
-  const effectiveNow =
-    session.status === "PAUSED" && session.lastPauseTime
-      ? new Date(session.lastPauseTime).getTime()
-      : Date.now();
-
-  return Math.max(0, effectiveNow - startMs - pausedMs);
-}
-
-  const resumeSession = async () => {
-    if (!activeSession || !API_BASE_URL) {
-      console.log("[SESSION PROVIDER] resumeSession aborted", {
-        hasActiveSession: !!activeSession,
-        API_BASE_URL,
-      });
-      return;
-    }
-
-    try {
-      setSessionActionLoading(true);
-
-      const csrfToken =
-        typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
-
-      const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/resume`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-        },
-        body: JSON.stringify({}),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      console.log("[SESSION PROVIDER] resume response:", data);
-
-      if (!res.ok) {
-        throw new Error(data?.error || data?.message || "Failed to resume session");
+setActiveSession((prev) =>
+  prev
+    ? {
+        ...prev,
+        status: "ACTIVE",
+        lastPauseTime: null,
       }
-
-      await refreshSession();
-    } catch (error) {
-      console.error("[SESSION PROVIDER] Failed to resume session:", error);
-    } finally {
-      setSessionActionLoading(false);
-    }
-  };
+    : prev
+);
+setClockAnchorMs(Date.now());
+    await refreshSession();
+  } catch (error) {
+    console.error("[SESSION PROVIDER] Failed to resume session:", error);
+  } finally {
+    setSessionActionLoading(false);
+  }
+};
 
 const completeSession = async () => {
   if (!activeSession || !API_BASE_URL) {
@@ -293,7 +326,9 @@ const completeSession = async () => {
     if (!res.ok) {
       throw new Error(data?.error || data?.message || "Failed to complete session");
     }
-
+setLiveStudySeconds(0);
+setClockAnchorMs(null);
+setSessionClockKey(null);
     await refreshSession();
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to complete session:", error);
@@ -305,12 +340,24 @@ const completeSession = async () => {
   useEffect(() => {
     void refreshSession();
   }, [API_BASE_URL, shouldCheckSession]);
+  useEffect(() => {
+  if (!activeSession || activeSession.status !== "ACTIVE" || clockAnchorMs === null) {
+    return;
+  }
+
+  const interval = window.setInterval(() => {
+    setLiveStudySeconds((prev) => prev + 1);
+  }, 1000);
+
+  return () => window.clearInterval(interval);
+}, [activeSession?.sessionId, activeSession?.status, clockAnchorMs]);
 
 const value = useMemo(
   () => ({
     activeSession,
     loading,
     sessionActionLoading,
+    liveStudySeconds,
     refreshSession,
     startSession,
     cancelSession,
@@ -318,7 +365,7 @@ const value = useMemo(
     resumeSession,
     completeSession,
   }),
-  [activeSession, loading, sessionActionLoading]
+  [activeSession, loading, sessionActionLoading, liveStudySeconds]
 );
 
   console.log("[SESSION PROVIDER] context value", value);

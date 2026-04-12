@@ -4,8 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/app/providers/session-provider";
 
 type StudyTimerProps = {
-  /** fallback planned duration in minutes if no active session duration is available */
   durationMin?: number;
+};
+
+type LocalTimerState = {
+  sessionKey: string;
+  baseStudySeconds: number;
+  anchorMs: number;
+  status: "ACTIVE" | "PAUSED";
 };
 
 function pad2(n: number) {
@@ -25,9 +31,48 @@ function formatClockTime(dateLike: string | number | Date) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+const STORAGE_KEY = "study-timer-local-state";
+
+function readLocalTimerState(): LocalTimerState | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as LocalTimerState;
+
+    if (
+      !parsed ||
+      typeof parsed.sessionKey !== "string" ||
+      typeof parsed.baseStudySeconds !== "number" ||
+      typeof parsed.anchorMs !== "number" ||
+      (parsed.status !== "ACTIVE" && parsed.status !== "PAUSED")
+    ) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalTimerState(state: LocalTimerState | null) {
+  if (typeof window === "undefined") return;
+
+  if (!state) {
+    sessionStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
 export default function StudyTimer({ durationMin = 60 }: StudyTimerProps) {
 const {
   activeSession,
+  liveStudySeconds,
   startSession,
   pauseSession,
   resumeSession,
@@ -36,76 +81,136 @@ const {
 } = useSession();
 
   const [now, setNow] = useState(Date.now());
+  const [localTimer, setLocalTimer] = useState<LocalTimerState | null>(null);
 
+  const sessionKey = activeSession
+    ? `${activeSession.sessionId}:${activeSession.startTime}`
+    : null;
+
+  // Tick once per second only while the local timer is active
   useEffect(() => {
-    if (!activeSession) return;
+    if (localTimer?.status !== "ACTIVE") return;
 
     const interval = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [activeSession]);
+  }, [localTimer?.status]);
 
-const plannedDurationMinutes = durationMin;
-
-  const totalMs = plannedDurationMinutes * 60 * 1000;
-
-  const elapsedMs = useMemo(() => {
-    if (!activeSession?.startTime) return 0;
-
-    const startMs = new Date(activeSession.startTime).getTime();
-    const pausedMs = (activeSession.totalPausedMinutes ?? 0) * 60 * 1000;
-
-    if (activeSession.status === "PAUSED" && activeSession.lastPauseTime) {
-      const lastPauseMs = new Date(activeSession.lastPauseTime).getTime();
-      return Math.max(0, lastPauseMs - startMs - pausedMs);
+  // Keep a local precise timer state for the current backend session
+  useEffect(() => {
+    if (!sessionKey || !activeSession) {
+      setLocalTimer(null);
+      writeLocalTimerState(null);
+      return;
     }
 
-    return Math.max(0, now - startMs - pausedMs);
+    const stored = readLocalTimerState();
+
+    // Reuse stored precise state if it belongs to the same session
+    if (stored && stored.sessionKey === sessionKey) {
+      // If backend status changed, update only the status, not the precise seconds
+      if (stored.status !== activeSession.status) {
+        const updated: LocalTimerState = {
+          ...stored,
+          status: activeSession.status,
+          anchorMs: activeSession.status === "ACTIVE" ? Date.now() : stored.anchorMs,
+        };
+        setLocalTimer(updated);
+        writeLocalTimerState(updated);
+      } else {
+        setLocalTimer(stored);
+      }
+      return;
+    }
+
+    // First time seeing this session: initialize from backend coarse minutes
+    const initial: LocalTimerState = {
+      sessionKey,
+      baseStudySeconds: (activeSession.currentStudyMinutes ?? 0) * 60,
+      anchorMs: Date.now(),
+      status: activeSession.status,
+    };
+
+    setLocalTimer(initial);
+    writeLocalTimerState(initial);
   }, [
+    sessionKey,
+    activeSession?.sessionId,
     activeSession?.startTime,
     activeSession?.status,
-    activeSession?.lastPauseTime,
-    activeSession?.totalPausedMinutes,
-    now,
+    activeSession?.currentStudyMinutes,
   ]);
 
-  const remainingMs = Math.max(0, totalMs - elapsedMs);
-  const remainingSec = remainingMs / 1000;
+  const plannedDurationMinutes = durationMin;
+  const totalSeconds = plannedDurationMinutes * 60;
+
+  const hasSession = !!activeSession;
+  const isRunning = localTimer?.status === "ACTIVE";
+  const isPaused = localTimer?.status === "PAUSED";
+
+const studySeconds = liveStudySeconds;
+
+  const remainingSec = Math.max(0, totalSeconds - studySeconds);
   const display = formatHMS(remainingSec);
 
-  const isRunning = activeSession?.status === "ACTIVE";
-  const isPaused = activeSession?.status === "PAUSED";
-  const hasSession = !!activeSession;
-
   const projectedEndTime = useMemo(() => {
-    if (!activeSession?.startTime) return null;
-
-    const startMs = new Date(activeSession.startTime).getTime();
-    const pausedMs = (activeSession.totalPausedMinutes ?? 0) * 60 * 1000;
-
-    if (isPaused && activeSession.lastPauseTime) {
-      const pauseMs = new Date(activeSession.lastPauseTime).getTime();
-      const elapsedAtPause = Math.max(0, pauseMs - startMs - pausedMs);
-      const remainingAtPause = Math.max(0, totalMs - elapsedAtPause);
-      return new Date(now + remainingAtPause);
-    }
-
-    return new Date(startMs + pausedMs + totalMs);
-  }, [
-    activeSession?.startTime,
-    activeSession?.lastPauseTime,
-    activeSession?.totalPausedMinutes,
-    isPaused,
-    now,
-    totalMs,
-  ]);
+    if (!hasSession) return null;
+    return new Date(Date.now() + remainingSec * 1000);
+  }, [hasSession, remainingSec]);
 
   const progress = useMemo(() => {
-    if (!hasSession || totalMs <= 0) return 0;
-    return Math.min(1, Math.max(0, elapsedMs / totalMs));
-  }, [elapsedMs, totalMs, hasSession]);
+    if (!hasSession || totalSeconds <= 0) return 0;
+    return Math.min(1, Math.max(0, studySeconds / totalSeconds));
+  }, [hasSession, totalSeconds, studySeconds]);
+
+  const persistLocalTimer = (next: LocalTimerState | null) => {
+    setLocalTimer(next);
+    writeLocalTimerState(next);
+  };
+
+  const handlePause = async () => {
+    if (!localTimer) return;
+
+    const preciseStudySeconds =
+      localTimer.status === "ACTIVE"
+        ? localTimer.baseStudySeconds +
+          Math.max(0, Math.floor((Date.now() - localTimer.anchorMs) / 1000))
+        : localTimer.baseStudySeconds;
+
+    const next: LocalTimerState = {
+      ...localTimer,
+      baseStudySeconds: preciseStudySeconds,
+      anchorMs: Date.now(),
+      status: "PAUSED",
+    };
+
+    persistLocalTimer(next);
+    await pauseSession();
+  };
+
+  const handleResume = async () => {
+    if (!localTimer) return;
+
+    const next: LocalTimerState = {
+      ...localTimer,
+      anchorMs: Date.now(),
+      status: "ACTIVE",
+    };
+
+    persistLocalTimer(next);
+    await resumeSession();
+  };
+
+  const handleStart = async () => {
+    await startSession();
+  };
+
+  const handleStop = async () => {
+    persistLocalTimer(null);
+    await cancelSession();
+  };
 
   const size = 420;
   const stroke = 13;
@@ -187,13 +292,13 @@ const plannedDurationMinutes = durationMin;
                   </button>
                 )
               ) : (
-<button
-  onClick={() => void startSession()}
-  disabled={sessionActionLoading}
-  className="px-5 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow disabled:opacity-60"
->
-  {sessionActionLoading ? "Starting..." : "Start Studying"}
-</button>
+                <button
+                  onClick={() => void startSession()}
+                  disabled={sessionActionLoading}
+                  className="px-5 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow disabled:opacity-60"
+                >
+                  {sessionActionLoading ? "Starting..." : "Start Studying"}
+                </button>
               )}
 
               <button

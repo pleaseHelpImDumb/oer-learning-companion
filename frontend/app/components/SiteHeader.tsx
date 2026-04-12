@@ -12,8 +12,7 @@ export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [avatarUrl, setAvatarUrl] = useState(`profile0`);
   const [username, setUsername] = useState("username");
-  const [timerDisplay, setTimerDisplay] = useState("0:00:00");
-  const { activeSession } = useSession();
+const { activeSession, liveStudySeconds } = useSession();
   const [tokenBalance, setTokenBalance] = useState(0);
 const TRACKS = {
   Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
@@ -66,26 +65,14 @@ function normalizeTrack(user: any): TrackName | null {
     name: string;
   } | null>(null);
 
-  function formatElapsed(ms: number) {
-    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+  function formatElapsedSeconds(totalSeconds: number) {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
 
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-
-  function getElapsedMs(session: any) {
-    const startMs = new Date(session.startTime).getTime();
-    const pausedMs = (session.totalPausedMinutes || 0) * 60 * 1000;
-
-    if (session.status === "PAUSED" && session.lastPauseTime) {
-      const pauseStartMs = new Date(session.lastPauseTime).getTime();
-      return Math.max(0, pauseStartMs - startMs - pausedMs);
-    }
-
-    return Math.max(0, Date.now() - startMs - pausedMs);
-  }
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
 useEffect(() => {
   async function userInfo() {
@@ -194,27 +181,9 @@ return () => {
   window.removeEventListener("profile-updated", handleProfileUpdated as EventListener);
 };
 }, [API_BASE_URL]);
-
-  useEffect(() => {
-    if (!activeSession) {
-      //console.log("[HEADER TIMER] No active session. Showing 0:00:00");
-      setTimerDisplay("0:00:00");
-      return;
-    }
-
-    const updateTimer = () => {
-      const elapsedMs = getElapsedMs(activeSession);
-      const formatted = formatElapsed(elapsedMs);
-
-      //console.log("[HEADER TIMER] Updated elapsed time:", formatted);
-      setTimerDisplay(formatted);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeSession]);
+const timerDisplay = activeSession
+  ? formatElapsedSeconds(liveStudySeconds)
+  : "0:00:00";
   useEffect(() => {
   const syncTrackFromStorage = () => {
     const savedTrack = localStorage.getItem("selectedTrackName");
