@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import StuckModal from "./StuckModal";
+import AIHelpModal from "./AIHelp";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
 
 const icons = [
@@ -31,8 +32,8 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
   const { openAssistant } = useStuckAssistant();
 
   const asideClass = snapped
-    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] dark:bg-[#151229] border-b border-white/20 grid grid-cols-11"
-    : "z-30 w-10 sm:w-12 bg-[#235937] dark:bg-[#151229] border-r border-white/20 flex flex-col items-center py-3";
+    ? "z-30 w-full h-14 sm:h-16 bg-[#235937] dark:bg-[#23314c] border-b border-white/20 grid grid-cols-11"
+    : "z-30 w-10 sm:w-12 bg-[#235937] dark:bg-[#23314c] border-r border-white/20 flex flex-col items-center py-3";
 
   const cellClass = snapped
     ? "relative flex h-full w-full items-center justify-center transition-colors hover:bg-white/5"
@@ -43,13 +44,14 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
   return (
     <>
       <aside className={asideClass} style={{ top: headerOffset }}>
-        {icons.map((icon, index) => {
+        {icons.map((icon) => {
           const isStuck = icon.alt === "stuck";
           const isTop = icon.alt === "Top";
           const isBack = icon.alt === "Back";
           const isHelp = icon.alt === "Help";
 
-          const showDividerAbove = !snapped && (icon.alt === "Settings" || icon.alt === "Back");
+          const showDividerAbove =
+            !snapped && (icon.alt === "Settings" || icon.alt === "Back");
 
           const content = (
             <>
@@ -136,8 +138,13 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
       <StuckModal
         open={stuckOpen}
         onClose={() => setStuckOpen(false)}
-        onHelp={() => openAssistant()}
+        onHelp={() => {
+          setStuckOpen(false);
+          openAssistant();
+        }}
       />
+
+      <AIHelpModal />
     </>
   );
 }

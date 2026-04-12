@@ -242,7 +242,7 @@ return () => {
 }, []);
 
   return (
-    <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#151229] text-white">
+    <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#000d2a] text-white">
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-3 sm:px-6 items-center lg:grid lg:grid-cols-[220px_minmax(0,1fr)_220px] lg:items-center lg:gap-6">
         <div className="flex items-center justify-between gap-4 lg:justify-start">
           <div className="whitespace-nowrap text-base font-semibold sm:text-lg">

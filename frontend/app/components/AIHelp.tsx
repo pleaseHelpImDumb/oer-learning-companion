@@ -56,7 +56,7 @@ export default function StuckModal() {
         <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)] dark:text-white/80">
           🟧 Study Assistant
         </p>
-        <div className="w-full h-px bg-black/30 mt-3" />
+        <div className="w-full h-px bg-black/30 dark:bg-white/80 mt-3" />
 
         <div className="flex flex-row font-semibold text-xl gap-3 -mb-px mt-2">
           <button
@@ -81,7 +81,7 @@ export default function StuckModal() {
           </button>
         </div>
 
-        <div className="w-full h-px bg-black/30" />
+        <div className="w-full h-px bg-black/30 dark:bg-white/80" />
 
         <div className="flex-1 overflow-y-auto py-4">
           {state.tab === "history" ? (
@@ -186,17 +186,20 @@ export default function StuckModal() {
         key={level}
         type="button"
         onClick={() => setSupportLevel(level as "1" | "2" | "3")}
-        className="transition hover:scale-105"
+        aria-pressed={isSelected}
+        className={`rounded-lg transition ${
+          isSelected ? "scale-105" : "hover:scale-105"
+        }`}
       >
         <div className="w-[120px] h-[50px] flex items-center justify-center">
-<Image
-  src={`/${base}${isSelected ? "_selected" : ""}.png`}
-  alt={base}
-  width={0}
-  height={0}
-  sizes="100vw"
-  className="h-[50px] w-auto object-contain"
-/>
+          <Image
+            src={`/${base}${isSelected ? "_selected" : ""}.png`}
+            alt={base}
+            width={120}
+            height={50}
+            className="h-[50px] w-auto object-contain"
+            draggable={false}
+          />
         </div>
       </button>
     );

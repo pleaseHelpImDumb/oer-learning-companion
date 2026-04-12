@@ -14,7 +14,7 @@ export default function Home() {
           {/* TOP ROW: Progress + Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Progress card */}
-<div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6 lg:col-span-3">
+<div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6 lg:col-span-3">
   <div className="flex flex-col md:flex-row md:items-center gap-6">
     {/* Left: image */}
 <div className="w-full max-w-sm sm:max-w-md aspect-square relative shrink-0 md:w-[260px]">
@@ -60,7 +60,7 @@ export default function Home() {
 </div>
 
             {/* Notes card */}
-            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6 lg:col-span-2">
+            <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6 lg:col-span-2">
               <h2 className="text-black dark:text-white/80 font-semibold text-xl sm:text-2xl lg:text-3xl">
                 Notes
               </h2>
@@ -77,35 +77,35 @@ export default function Home() {
 
           {/* MID ROW: stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+            <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Study Goals Completed
               </p>
-              <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
+              <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3
               </p>
             </div>
 
-            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+            <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Hours Studied This Week
               </p>
-              <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
+              <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3
               </p>
             </div>
-            <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+            <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Modules Studied This Week
               </p>
-              <p className="text-[#235937] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
+              <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3
               </p>
             </div>
           </div>
 
           {/* BOTTOM: 4-up metrics */}
-          <div className="bg-white dark:bg-[#38324D] rounded-2xl p-4 sm:p-6">
+          <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 ["Check-Ins", "12"],
@@ -117,7 +117,7 @@ export default function Home() {
                   <p className="text-black dark:text-white/80 font-bold text-[clamp(1rem,1.4vw,1.8rem)]">
                     {label}
                   </p>
-                  <p className="text-[#235937] font-bold mt-1 text-[clamp(1.6rem,2.5vw,2.8rem)]">
+                  <p className="text-[#235937] dark:text-[#639e61] font-bold mt-1 text-[clamp(1.6rem,2.5vw,2.8rem)]">
                     {value}
                   </p>
                 </div>

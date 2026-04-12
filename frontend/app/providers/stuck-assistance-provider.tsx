@@ -28,7 +28,7 @@ const initialState: State = {
   tab: "chat",
   input: "",
   loading: false,
-  supportLevel: "2",
+  supportLevel: "1",
   messages: [
     {
       id: "m0",

@@ -38,7 +38,7 @@ export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 max-h-[80vh] overflow-auto dark:bg-[#10102E]">
+      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 max-h-[80vh] overflow-auto dark:bg-[#23314c]">
         <button
           onClick={onClose}
           aria-label="Close"
@@ -67,7 +67,7 @@ export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
                   handle(action.onClick); // close + run
                 }
               }}
-              className="border-2 border-[#ADD8E6] dark:border-[#47478F] text-[#0077B6] dark:text-white/80 font-semibold
+              className="border-2 border-[#ADD8E6] dark:border-[#57ba5c] text-[#0077B6] dark:text-[#57ba5c] font-semibold
                       rounded-full px-4 py-2
                       text-[clamp(0.9rem,1.4vw,1.25rem)]
                       min-w-[9.5rem] sm:min-w-[10.5rem]"

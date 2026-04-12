@@ -16,6 +16,7 @@ type SessionContextType = {
   loading: boolean;
   sessionActionLoading: boolean;
   refreshSession: () => Promise<void>;
+  startSession: () => Promise<void>;
   cancelSession: () => Promise<void>;
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
@@ -73,7 +74,44 @@ export function SessionProvider({
       setLoading(false);
     }
   };
+const startSession = async () => {
+  if (!API_BASE_URL) {
+    console.log("[SESSION PROVIDER] startSession aborted", {
+      API_BASE_URL,
+    });
+    return;
+  }
 
+  try {
+    setSessionActionLoading(true);
+
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(`${API_BASE_URL}/sessions/start`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[SESSION PROVIDER] start response:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || "Failed to start session");
+    }
+
+    await refreshSession();
+  } catch (error) {
+    console.error("[SESSION PROVIDER] Failed to start session:", error);
+  } finally {
+    setSessionActionLoading(false);
+  }
+};
   const cancelSession = async () => {
     if (!activeSession || !API_BASE_URL) {
       console.log("[SESSION PROVIDER] stopSession aborted", {
@@ -274,6 +312,7 @@ const value = useMemo(
     loading,
     sessionActionLoading,
     refreshSession,
+    startSession,
     cancelSession,
     pauseSession,
     resumeSession,

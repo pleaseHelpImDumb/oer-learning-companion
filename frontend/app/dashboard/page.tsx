@@ -14,62 +14,9 @@ export default function Home() {
     name: string;
   } | null>(null);
   const [quote, setQuote] = useState<string | null>(null);
-  const [startingSession, setStartingSession] = useState(false);
-  const [sessionError, setSessionError] = useState<string | null>(null);
-  const { refreshSession } = useSession();
-function getCsrfToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("csrfToken");
-}
 
-async function handleStartSession() {
-  console.log("[SESSION] Start button clicked");
+const { startSession, sessionActionLoading } = useSession();
 
-  if (!API_BASE_URL) {
-    console.error("[SESSION] NEXT_PUBLIC_API_BASE_URL is missing");
-    setSessionError("API base URL is missing.");
-    return;
-  }
-
-  try {
-    setStartingSession(true);
-    setSessionError(null);
-
-    const csrfToken = getCsrfToken();
-
-    console.log("[SESSION] Sending POST request to /sessions/start");
-
-    const res = await fetch(`${API_BASE_URL}/sessions/start`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-      },
-      body: JSON.stringify({}),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    console.log("[SESSION] Response status:", res.status);
-    console.log("[SESSION] Response body:", data);
-
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || "Could not start session");
-    }
-
-    console.log("[SESSION] Session started successfully:", data?.session);
-
-    await refreshSession(); // <- this is the key
-  } catch (error) {
-    console.error("[SESSION] Failed to start session:", error);
-    setSessionError(
-      error instanceof Error ? error.message : "Failed to start session"
-    );
-  } finally {
-    setStartingSession(false);
-  }
-}
   const renderCount = useRef(0);
   renderCount.current += 1;
 
@@ -147,8 +94,8 @@ async function handleStartSession() {
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
       <div className="w-full">
-        <div className="rounded-lg bg-[#ffd36b] dark:bg-[#38324D] px-4 py-4 text-lg font-semibold sm:text-xl">
-          <p className="text-black dark:text-white dark:bg-[#38324D]">
+        <div className="rounded-lg bg-[#ffd36b] dark:bg-[#26314a] px-4 py-4 text-lg font-semibold sm:text-xl">
+          <p className="text-black dark:text-white dark:bg-[#26314a]">
             {user?.favoriteQuote}
           </p>
         </div>
@@ -156,14 +103,14 @@ async function handleStartSession() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
         <div className="flex flex-col gap-6">
-          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] dark:bg-[#38324D] drop-shadow-xl">
-            <div className="bg-[#235937] dark:bg-[#201C2E] dark:border-b-1 dark:border-white px-4 py-4 sm:px-6">
+          <section className="overflow-hidden rounded-2xl bg-[#fdf5e7] dark:bg-[#17233d] drop-shadow-xl">
+            <div className="bg-[#235937] dark:bg-[#26314a] px-4 py-4 sm:px-6">
               <b className="text-2xl text-white sm:text-3xl">My Progress</b>
             </div>
 
             <div className="px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     5
                   </p>
@@ -172,7 +119,7 @@ async function handleStartSession() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     {user?.tokenBalance ?? 0}
                   </p>
@@ -181,7 +128,7 @@ async function handleStartSession() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#fbeabd] dark:bg-[#3A3157] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
                     {latestBadge ? latestBadge.emoji : "🧊"}
                   </p>
@@ -197,14 +144,14 @@ async function handleStartSession() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[#d8d8d8] bg-[#fdf5e7] dark:bg-[#38324D] drop-shadow-xl">
-            <div className="bg-[#235937] dark:bg-[#201C2E] dark:border-b-1 dark:border-white px-4 py-4 sm:px-6">
+          <section className="overflow-hidden rounded-2xl bg-[#fdf5e7] dark:bg-[#17233d] drop-shadow-xl">
+            <div className="bg-[#235937] dark:bg-[#26314a] px-4 py-4 sm:px-6">
               <b className="text-2xl text-white sm:text-3xl">Rewards</b>
             </div>
 
             <div className="px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] dark:bg-[#3A3157] px-4 py-5 text-center">
+                <div className="flex flex-col items-center rounded-xl bg-[#235937] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
                     50
                   </p>
@@ -213,18 +160,18 @@ async function handleStartSession() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#235937] dark:bg-[#3A3157] px-4 py-5 text-center">
-                      <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
+                <div className="flex flex-col items-center rounded-xl bg-[#235937] dark:bg-[#ffd85a] px-4 py-5 text-center">
+                      <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white dark:text-black">
                         {Array.isArray(user?.badges) ? user.badges.length : 0}
                       </p>
-                  <p className="mt-2 text-sm font-semibold text-white sm:text-base">
+                  <p className="mt-2 text-sm font-semibold text-white dark:text-black sm:text-base">
                     Badges
                   </p>
                 </div>
 
                 <Link
                   href="/activity"
-                  className="flex flex-col items-center rounded-xl border border-[#d8d8d8] bg-[#ffd36b] dark:bg-[#858532] px-4 py-5 text-center"
+                  className="flex flex-col items-center rounded-xl bg-[#ffd36b] dark:bg-[#fdae3f] px-4 py-5 text-center"
                 >
                   <p className="text-[clamp(1.75rem,6vw,3rem)] font-semibold text-white dark:text-black">
                     Play
@@ -238,7 +185,7 @@ async function handleStartSession() {
           </section>
         </div>
 
-        <section className="flex flex-col items-center rounded-2xl bg-[#235937] dark:bg-[#201C2E] dark:border-1 dark:border-white px-4 py-6 text-center sm:px-6">
+        <section className="flex flex-col items-center rounded-2xl bg-[#235937] dark:bg-[#26314a] px-4 py-6 text-center sm:px-6">
           <p className="pb-2 text-2xl font-semibold text-white sm:text-3xl">
             Set Today's Goal
           </p>
@@ -306,14 +253,14 @@ async function handleStartSession() {
           </div>
 
 <div className="mt-6 flex w-full justify-center">
-  <button
-    type="button"
-    onClick={handleStartSession}
-    disabled={startingSession}
-    className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
-  >
-    {startingSession ? "Starting..." : "Start Session"}
-  </button>
+<button
+  type="button"
+  onClick={() => void startSession()}
+  disabled={sessionActionLoading}
+  className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
+>
+  {sessionActionLoading ? "Starting..." : "Start Session"}
+</button>
 </div>
         </section>
       </div>
