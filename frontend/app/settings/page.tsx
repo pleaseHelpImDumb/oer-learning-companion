@@ -4,11 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { usePopup } from "../providers/popup-provider";
 export default function Home() {
   const pathname = usePathname();
   const [darkMode, setDarkMode] = useState(false);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+type PopupTrack =
+  | "Art"
+  | "Gaming"
+  | "Music"
+  | "Pets"
+  | "Space"
+  | "Sports";
+
+const [selectedTrackId, setSelectedTrackId] = useState<PopupTrack | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState("");
   const [course, setCourse] = useState("");
   const [campus, setCampus] = useState("");
@@ -35,6 +43,7 @@ export default function Home() {
     { label: "Senior", value: 4 },
   ];
 const [hydrated, setHydrated] = useState(false);
+const { showPopup } = usePopup();
 function getAvatarIdFromUrl(url: string | undefined | null) {
   if (!url) return "";
 
@@ -157,13 +166,13 @@ const payload = {
     console.log("ONBOARD STATUS:", res.status);
     console.log("ONBOARD RESPONSE:", data);
 
-    if (!res.ok) {
-      alert(data.error || data.message || "Failed to save settings");
-      return;
-    }
+if (!res.ok) {
+  alert(data.error || data.message || "Failed to save settings");
+  return;
+}
 
-    localStorage.setItem("selectedTrackName", selectedTrackId || "");
-    window.dispatchEvent(new Event("track-updated"));
+localStorage.setItem("selectedTrackName", selectedTrackId || "");
+window.dispatchEvent(new Event("track-updated"));
 window.dispatchEvent(
   new CustomEvent("profile-updated", {
     detail: {
@@ -173,7 +182,13 @@ window.dispatchEvent(
     },
   })
 );
-    alert("Settings saved.");
+
+showPopup({
+  type: "settingsSaved",
+  trackName: selectedTrackId,
+  message: "Your changes have been successfully made.",
+  autoCloseMs: 2500,
+});
   } catch (error) {
     console.error("Onboarding/settings save error:", error);
     alert("Something went wrong while saving settings.");
@@ -236,23 +251,23 @@ useEffect(() => {
     { id: "profile6", src: "/assets/profiles_hovered/profile6.png", alt: "Profile Option 6" },
   ];
 
-  const tracks = [
-    { id: "Sports", src: "/assets/tracks/default/sports.png", alt: "Sports Track" },
-    { id: "Gaming", src: "/assets/tracks/default/games.png", alt: "Gaming Track" },
-    { id: "Art", src: "/assets/tracks/default/art.png", alt: "Art Track" },
-    { id: "Pets", src: "/assets/tracks/default/pets.png", alt: "Pets Track" },
-    { id: "Space", src: "/assets/tracks/default/space.png", alt: "Space Track" },
-    { id: "Music", src: "/assets/tracks/default/music.png", alt: "Music Track" },
-  ];
+const tracks: { id: PopupTrack; src: string; alt: string }[] = [
+  { id: "Sports", src: "/assets/tracks/default/sports.png", alt: "Sports Track" },
+  { id: "Gaming", src: "/assets/tracks/default/games.png", alt: "Gaming Track" },
+  { id: "Art", src: "/assets/tracks/default/art.png", alt: "Art Track" },
+  { id: "Pets", src: "/assets/tracks/default/pets.png", alt: "Pets Track" },
+  { id: "Space", src: "/assets/tracks/default/space.png", alt: "Space Track" },
+  { id: "Music", src: "/assets/tracks/default/music.png", alt: "Music Track" },
+];
 
-  const tracks_dark = [
-    { id: "Sports", src: "/assets/tracks/dark_mode/sports.png", alt: "Sports Track" },
-    { id: "Gaming", src: "/assets/tracks/dark_mode/games.png", alt: "Gaming Track" },
-    { id: "Art", src: "/assets/tracks/dark_mode/art.png", alt: "Art Track" },
-    { id: "Pets", src: "/assets/tracks/dark_mode/pets.png", alt: "Pets Track" },
-    { id: "Space", src: "/assets/tracks/dark_mode/space.png", alt: "Space Track" },
-    { id: "Music", src: "/assets/tracks/dark_mode/music.png", alt: "Music Track" },
-  ];
+const tracks_dark: { id: PopupTrack; src: string; alt: string }[] = [
+  { id: "Sports", src: "/assets/tracks/dark_mode/sports.png", alt: "Sports Track" },
+  { id: "Gaming", src: "/assets/tracks/dark_mode/games.png", alt: "Gaming Track" },
+  { id: "Art", src: "/assets/tracks/dark_mode/art.png", alt: "Art Track" },
+  { id: "Pets", src: "/assets/tracks/dark_mode/pets.png", alt: "Pets Track" },
+  { id: "Space", src: "/assets/tracks/dark_mode/space.png", alt: "Space Track" },
+  { id: "Music", src: "/assets/tracks/dark_mode/music.png", alt: "Music Track" },
+];
 
 useEffect(() => {
   const saved = localStorage.getItem("darkMode");

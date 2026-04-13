@@ -1,0 +1,66 @@
+"use client";
+
+import { usePopup } from "../providers/popup-provider";
+
+const TRACK_POPUP_IMAGES: Record<string, string> = {
+  art: "/changes/art.png",
+  gaming: "/changes/gaming.png",
+  music: "/changes/music.png",
+  pets: "/changes/pets.png",
+  space: "/changes/space.png",
+  sports: "/changes/sports.png",
+};
+
+function getPopupImage(popup: {
+  imageSrc?: string;
+  trackName?: string;
+}) {
+  if (popup.imageSrc) return popup.imageSrc;
+
+  if (popup.trackName) {
+    const key = popup.trackName.toLowerCase();
+    return TRACK_POPUP_IMAGES[key] || null;
+  }
+
+  return null;
+}
+
+export default function PopupRenderer() {
+  const { popup } = usePopup();
+
+  if (!popup) return null;
+
+  const resolvedImage = getPopupImage(popup);
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30">
+      {resolvedImage && (
+        <div className="relative flex items-center justify-center">
+          <img
+            src={resolvedImage}
+            alt={popup.title || "Popup visual"}
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
+
+          {popup.message && (
+            <div className="absolute inset-0 flex items-center justify-center px-6">
+              <p
+                className="
+                  text-white
+                  text-center
+                  font-bold
+                  text-[clamp(32px,5.5vw,70px)]
+                  leading-[clamp(40px,6.5vw,80px)]
+                  [-webkit-text-stroke:4px_#006AFF]
+                  [text-shadow:0_4px_10px_rgba(0,0,0,0.5)]
+                "
+              >
+                {popup.message}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
