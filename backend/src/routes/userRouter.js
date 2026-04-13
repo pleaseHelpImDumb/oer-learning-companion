@@ -10,6 +10,8 @@ const {
   resetPassword,
   onboard,
   getCurrentUser,
+  incrementBreakCount,
+  getWeekStats,
 } = require("../controllers/userController.js");
 
 router.post("/login", login);
@@ -20,5 +22,9 @@ router.post("/reset-password", resetPassword);
 router.post("/onboard", authMiddleware, onboard);
 router.post("/logout", authMiddleware, logout);
 router.get("/profile", authMiddleware, getCurrentUser);
+
+router.post("/add-break", authMiddleware, incrementBreakCount);
+
+router.get("/week-stats", authMiddleware, getWeekStats);
 
 module.exports = router;

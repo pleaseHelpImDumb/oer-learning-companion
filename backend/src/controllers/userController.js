@@ -10,7 +10,7 @@ const {
   onboardSchema,
 } = require("../validation/userSchema");
 
-// Database
+// Database setup
 const { PrismaClient } = require("@prisma/client");
 let opts;
 if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
@@ -179,7 +179,7 @@ const register = async (req, res, next) => {
 // LOGOUT (Clear Cookie)
 const logout = (req, res) => {
   res.clearCookie("jwt");
-  res.json({ message: "Logged out" });
+  res.status(StatusCodes.OK).json({ message: "Logged out" });
 };
 
 // FORGOT-PASSWORD (Sends Email if Email exists)
@@ -274,7 +274,7 @@ const resetPassword = async (req, res, next) => {
       },
     });
 
-    res.json({
+    res.status(OK).json({
       message: "Password reset successful. You can now log in.",
     });
   } catch (err) {
@@ -336,7 +336,7 @@ const onboard = async (req, res, next) => {
       },
     });
 
-    return res.json({
+    return res.status(StatusCodes.OK).json({
       message: "Onboarding completed",
       user: {
         userId: updatedUser.id,
@@ -402,7 +402,7 @@ const getCurrentUser = async (req, res, next) => {
       iconUrl: ub.badge.iconUrl,
       unlockedAt: ub.unlockedAt,
     }));
-    res.json({
+    res.status(StatusCodes.OK).json({
       user: {
         userId: user.userId,
         username: user.username,
@@ -424,6 +424,85 @@ const getCurrentUser = async (req, res, next) => {
   }
 };
 
+// simply increments the user # of breaks for UserStats
+const incrementBreakCount = async (req, res, next) => {
+  const userId = req.user.id;
+  const user = await prisma.userStats.findUnique({
+    where: { userId },
+  });
+
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      error: "User not found",
+    });
+  }
+
+  try {
+    const result = await prisma.userStats.update({
+      where: { userId },
+      data: {
+        totalBreaks: { increment: 1 },
+      },
+    });
+
+    res.status(StatusCodes.OK).json({
+      totalBreaks: result.totalBreaks,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// gets all user stats lifetime and total minutes for the past week
+const getWeekStats = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const user = await prisma.userStats.findUnique({
+      where: { userId },
+    });
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "User not found",
+      });
+    }
+
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    // get hours for the past week
+    const weeklyStudy = await prisma.studySession.aggregate({
+      where: {
+        userId,
+        status: "COMPLETED",
+        endTime: {
+          gte: oneWeekAgo,
+        },
+      },
+      _sum: {
+        durationMinutes: true,
+      },
+    });
+    // get lifetime stats
+    const stats = await prisma.userStats.findUnique({
+      where: { userId },
+    });
+
+    res.status(StatusCodes.OK).json({
+      // weekly
+      weeklyMinsStudied: weeklyStudy._sum.durationMinutes || 0,
+      // lifetime
+      totalCheckIns: stats.totalWellnessChecks,
+      totalMinutes: stats.totalStudyMinutes,
+      aiHelpCount: stats.totalAiInteractions,
+      totalBreaks: stats.totalBreaks,
+    });
+    res.status(StatusCodes.OK).json({});
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -432,4 +511,6 @@ module.exports = {
   logout,
   onboard,
   getCurrentUser,
+  incrementBreakCount,
+  getWeekStats,
 };

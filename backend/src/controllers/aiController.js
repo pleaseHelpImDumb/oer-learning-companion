@@ -17,6 +17,7 @@ const prisma = new PrismaClient(opts);
 const Joi = require("joi");
 const { chatSchema } = require("../validation/aiSchema");
 
+// Sets the model (Gemini) system instructions based on specifications
 function getTutorModel(user, supportLevel) {
   let systemInstruction = `
 You are an AI Study Assistant embedded in an OER learning platform (Lumen OHM).
@@ -96,6 +97,7 @@ This student needs significant help. Provide a thorough, step-by-step teaching r
   });
 }
 
+// Main Chat Endpoint
 const chat = async (req, res, next) => {
   try {
     const { error, value } = chatSchema.validate(req.body);

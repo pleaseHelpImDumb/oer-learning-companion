@@ -80,6 +80,7 @@ model UserStats {
   totalAiInteractions Int @default(0)
   totalWellnessChecks Int @default(0)
   totalTokensEarned Int @default(0)
+  totalBreaks Int @default(0)
 
   user User @relation(fields:[userId], references:[userId])
 }
