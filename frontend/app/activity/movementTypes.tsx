@@ -13,6 +13,8 @@ export type Piece = {
   kind: PieceKind;
   hp: number;
   isKinged: boolean;
+  dribbleDistance?: number;
+  dribbleDirection?: "forward" | "backward";
 };
 
 export type Cell = Piece | null;

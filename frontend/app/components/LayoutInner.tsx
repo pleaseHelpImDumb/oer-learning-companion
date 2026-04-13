@@ -93,7 +93,7 @@ export default function LayoutInner({
         </AppShell>
         <Robot />
       </StuckAssistantProvider>
-      <SiteFooter />
+      {/*<SiteFooter />*/}
     </div>
   );
 }

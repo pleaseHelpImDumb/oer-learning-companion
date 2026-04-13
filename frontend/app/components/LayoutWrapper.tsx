@@ -117,9 +117,9 @@ export default function LayoutWrapper({
         <PopupProvider>
           <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
 
-{!hideLayout && <CheckInController />}
-{!hideLayout && <SessionResumeModalController />}
-{!hideLayout && <PopupRenderer />}
+          {!hideLayout && <CheckInController />}
+          {!hideLayout && <SessionResumeModalController />}
+          {!hideLayout && <PopupRenderer />}
         </PopupProvider>
       </StuckAssistantProvider>
     </SessionProvider>

@@ -76,7 +76,7 @@ export default function Home() {
           </div>
 
           {/* MID ROW: stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Study Goals Completed
@@ -94,14 +94,14 @@ export default function Home() {
                 3
               </p>
             </div>
-            <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
+            {/*<div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Modules Studied This Week
               </p>
               <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
                 3
               </p>
-            </div>
+            </div>*/}
           </div>
 
           {/* BOTTOM: 4-up metrics */}

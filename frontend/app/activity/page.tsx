@@ -307,7 +307,7 @@ function canDoubleCapture(cell: NonNullable<Board[number][number]>) {
 }
 
 export default function CheckersGame() {
-  const [board, setBoard] = useState<Board>(() => makeInitialBoard());
+  const [board, setBoard] = useState<Board | null>(null);
   const [turn, setTurn] = useState<Player>("R");
   const [selected, setSelected] = useState<Pos | null>(null);
   const [mustContinueCapture, setMustContinueCapture] = useState(false);
@@ -319,14 +319,31 @@ export default function CheckersGame() {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const selectedCell = selected ? board[selected.r][selected.c] : null;
+  useEffect(() => {
+    setBoard(makeInitialBoard());
+  }, []);
 
+  const selectedCell = board && selected ? board[selected.r][selected.c] : null;
+
+  const legal = useMemo(() => {
+    if (!board || !selected) return new Map<string, Move>();
+
+    const m = new Map<string, Move>();
+    const moves = genMoves(board, selected, mustContinueCapture);
+
+    for (const mv of moves) {
+      m.set(keyOf(mv.to.r, mv.to.c), mv);
+    }
+
+    return m;
+  }, [board, selected, mustContinueCapture]);
   useEffect(() => {
     if (!keyboardGridMode) return;
 
     const index = cursor.r * 8 + cursor.c;
     squareRefs.current[index]?.focus();
   }, [keyboardGridMode, cursor]);
+if (!board) return;
 
   function isPlayableSquare(r: number, c: number) {
     return (r + c) % 2 === 1;
@@ -369,18 +386,6 @@ function enterKeyboardGridMode() {
 function exitKeyboardGridMode() {
   setKeyboardGridMode(false);
 }
-  const legal = useMemo(() => {
-    if (!selected) return new Map<string, Move>();
-
-    const m = new Map<string, Move>();
-    const moves = genMoves(board, selected, mustContinueCapture);
-
-    for (const mv of moves) {
-      m.set(keyOf(mv.to.r, mv.to.c), mv);
-    }
-
-    return m;
-  }, [board, selected, mustContinueCapture]);
 
   function reset() {
     setBoard(makeInitialBoard());
@@ -393,6 +398,9 @@ function exitKeyboardGridMode() {
 
   function onSquareClick(r: number, c: number) {
     setErr("");
+      if (!board) {
+  return <div className="p-4">Loading board...</div>;
+}
     const cell = board[r][c];
 
     // move if clicked legal destination
@@ -410,6 +418,8 @@ function exitKeyboardGridMode() {
             movedPiece.kind !== "king" &&
             movedPiece.kind !== "knight" &&
             movedPiece.kind !== "beetle" &&
+            movedPiece.kind !== "soccerball" &&
+            movedPiece.kind !== "basketball" &&
             hasCaptureFrom(next, landed)
           ) {
             setBoard(next);
@@ -501,20 +511,20 @@ return (
   {selectedCell ? (
     <div className="space-y-4">
       <div>
-        <div className="text-base text-gray-500">Selected</div>
+        <div className="text-base text-gray-500 dark:text-white/80">Selected</div>
         <div className="text-xl font-semibold">
           {selectedCell.owner === "R" ? "Red" : "Black"}{" "}
           {pieceInfo?.name === "Heavy" ? "Moon" : pieceInfo?.name}
         </div>
       </div>
 
-      <div className="text-base text-gray-700 dark:text-white-80 dark:text-white-80 leading-relaxed">
+      <div className="text-base text-gray-700 dark:text-white/80 dark:text-white/80 leading-relaxed">
         {piecedescription?.description}
       </div>
 
-      <div className="border-t border-gray-700"></div>
+      <div className="border-t border-gray-700 dark:border-white/80"></div>
 
-      <div className="text-base text-gray-700 dark:text-white-80 leading-relaxed">
+      <div className="text-base text-gray-700 dark:text-white/80 leading-relaxed">
         {pieceInfo?.description}
       </div>
 
@@ -541,7 +551,7 @@ return (
       </div>
     </div>
   ) : (
-    <div className="text-base text-gray-600 leading-relaxed">
+    <div className="text-base text-gray-600 dark:text-white/80 leading-relaxed">
       Click one of your pieces to see its description here.
     </div>
   )}
@@ -552,7 +562,7 @@ return (
     <button
       type="button"
       onClick={enterKeyboardGridMode}
-      className="w-full px-4 py-3 rounded-lg border border-black bg-gray-50 hover:bg-gray-100 text-left"
+      className="w-full px-4 py-3 rounded-lg border border-black bg-gray-50 hover:bg-gray-100 dark:bg-[#26314a] dark:hover:bg-[#26314a]/20 text-left"
     >
       Enable Arrow Key Grid Control
     </button>
@@ -560,12 +570,12 @@ return (
     <button
       type="button"
       onClick={exitKeyboardGridMode}
-      className="w-full px-4 py-3 rounded-lg border border-black bg-gray-50 hover:bg-gray-100 text-left"
+      className="w-full px-4 py-3 rounded-lg border border-black bg-gray-50 hover:bg-gray-100 dark:bg-[#26314a] dark:hover:bg-[#26314a]/20 text-left"
     >
       Exit Arrow Key Grid Control
     </button>
 
-    <div className="text-sm text-gray-600 leading-relaxed">
+    <div className="text-sm text-gray-600 dark:text-white/80 leading-relaxed">
       When enabled, use arrow keys to move around the board, Enter or Space to
       activate a square, and Escape to leave this mode.
     </div>

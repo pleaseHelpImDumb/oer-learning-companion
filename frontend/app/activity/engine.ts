@@ -145,30 +145,105 @@ function genSoccerballMoves(
   onlyCaptures = false
 ): Move[] {
   const moves: Move[] = [];
+  const directions = [
+    { dr: -1, dc: -1 },
+    { dr: -1, dc: 1 },
+    { dr: 1, dc: -1 },
+    { dr: 1, dc: 1 },
+  ];
 
-  for (let dr = -7; dr <= 7; dr++) {
-    for (let dc = -7; dc <= 7; dc++) {
-      if (dr === 0 && dc === 0) continue;
+  for (const { dr, dc } of directions) {
+    let r = from.r + dr;
+    let c = from.c + dc;
 
-      const r = from.r + dr;
-      const c = from.c + dc;
-
-      if (!inBounds(r, c)) continue;
-
+    while (inBounds(r, c)) {
       const target = board[r][c];
 
       if (!target) {
         if (!onlyCaptures) {
           moves.push({ to: { r, c } });
         }
-        continue;
+      } else {
+        moves.push({
+          to: { r, c },
+          captures: [{ r, c }],
+        });
+        break;
       }
 
-      // intentional friendly fire
-      moves.push({
-        to: { r, c },
-        captures: [{ r, c }, { r: from.r, c: from.c }],
-      });
+      r += dr;
+      c += dc;
+    }
+  }
+
+  return moves;
+}
+
+function genBasketballMoves(
+  board: Board,
+  from: Pos,
+  piece: Piece,
+  onlyCaptures = false
+): Move[] {
+  const moves: Move[] = [];
+
+  // === Vertical (rook-style: unlimited up/down) ===
+  const verticalDirs = [
+    [1, 0],
+    [-1, 0],
+  ] as const;
+
+  for (const [dr, dc] of verticalDirs) {
+    let r = from.r + dr;
+    let c = from.c + dc;
+
+    while (inBounds(r, c)) {
+      const target = board[r][c];
+
+      if (!target) {
+        if (!onlyCaptures) {
+          moves.push({ to: { r, c } });
+        }
+      } else {
+        if (target.owner !== piece.owner) {
+          moves.push({
+            to: { r, c },
+            captures: [{ r, c }],
+          });
+        }
+        break;
+      }
+
+      r += dr;
+      c += dc;
+    }
+  }
+
+  // === Horizontal (only 1 space left/right) ===
+  const horizontalDirs = [
+    [0, 1],
+    [0, -1],
+  ] as const;
+
+  for (const [dr, dc] of horizontalDirs) {
+    const r = from.r + dr;
+    const c = from.c + dc;
+
+    if (!inBounds(r, c)) continue;
+
+    const target = board[r][c];
+
+    if (!target) {
+      if (!onlyCaptures) {
+        moves.push({ to: { r, c } });
+      }
+    } else {
+      if (target.owner !== piece.owner) {
+        moves.push({
+          to: { r, c },
+          captures: [{ r, c }],
+        });
+      }
     }
   }
 
@@ -354,6 +429,10 @@ export function genMoves(
     case "soccerball":
       moves.push(...genSoccerballMoves(board, from, piece, onlyCaptures));
       moves.push(...genCheckerMoves(board, from, piece, onlyCaptures));
+      break;
+
+    case "basketball":
+      moves.push(...genBasketballMoves(board, from, piece, onlyCaptures));
       break;
 
     default:

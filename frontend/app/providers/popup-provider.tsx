@@ -2,15 +2,16 @@
 
 import React, { createContext, useContext, useMemo, useState } from "react";
 
-type PopupType =
+export type PopupType =
   | "check-in"
   | "session-complete"
   | "encouragement"
   | "warning"
   | "achievement"
-  | "settingsSaved";
+  | "settingsSaved"
+  | "sessionCelebration";
 
-type PopupTrack =
+export type PopupTrack =
   | "Art"
   | "Gaming"
   | "Music"
@@ -24,8 +25,10 @@ type PopupPayload = {
   title?: string;
   message?: string;
   imageSrc?: string;
+  gifSrc?: string;
   trackName?: PopupTrack;
   autoCloseMs?: number;
+  dimBackground?: boolean;
 };
 
 type PopupContextType = {

@@ -31,10 +31,17 @@ export default function PopupRenderer() {
   if (!popup) return null;
 
   const resolvedImage = getPopupImage(popup);
+  const backgroundClass = popup.dimBackground ? "bg-black/30" : "bg-transparent";
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30">
-      {resolvedImage && (
+    <div className={`fixed inset-0 z-[200] flex items-center justify-center pointer-events-none ${backgroundClass}`}>
+      {popup.gifSrc ? (
+        <img
+          src={popup.gifSrc}
+          alt={popup.title || "Celebration effect"}
+          className="h-full w-full object-cover"
+        />
+      ) : resolvedImage ? (
         <div className="relative flex items-center justify-center">
           <img
             src={resolvedImage}
@@ -60,7 +67,7 @@ export default function PopupRenderer() {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

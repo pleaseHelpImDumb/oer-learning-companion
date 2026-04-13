@@ -1,4 +1,4 @@
-"use client";
+{/*"use client";
 
 import { useEffect } from "react";
 import { usePopup } from "./popup-provider";
@@ -16,7 +16,7 @@ export default function SessionPopupHandler() {
   }, []);
 
   return null;
-}
+}*/}
 
 {/**
     class="

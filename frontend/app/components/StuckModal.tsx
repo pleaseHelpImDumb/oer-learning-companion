@@ -1,89 +1,112 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
 import { useState } from "react";
 import BreatheModal from "./Breathe";
+import StudyTimer from "./Break";
+
 type StuckModalProps = {
   open: boolean;
   onClose: () => void;
-  onHelp: () => void; // ✅ ADD THIS
+  onHelp: () => void;
 };
 
 export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
   const router = useRouter();
   const [breathe, setBreathe] = useState(false);
+  const [showBreak, setShowBreak] = useState(false);
+
   if (!open) return null;
-  const actions = [
-    { label: "Help", onClick: onHelp }, // ✅ CHANGE THIS (no router.push)
-    { label: "Break", onClick: () => router.push("/break") },
-    { label: "Silly Activity", onClick: () => router.push("/activity") },
-    { label: "Just Breathe", onClick: () => setBreathe(prev => !prev) }
-  ] as const;
-  
+
+const actions = [
+  { label: "Help", onClick: onHelp },
+  {
+    label: "Break",
+    onClick: () => {
+      setShowBreak((prev) => {
+        const next = !prev;
+        if (next) setBreathe(false);
+        return next;
+      });
+    },
+  },
+  { label: "Silly Activity", onClick: () => router.push("/activity") },
+  {
+    label: "Just Breathe",
+    onClick: () => {
+      setBreathe((prev) => {
+        const next = !prev;
+        if (next) setShowBreak(false);
+        return next;
+      });
+    },
+  },
+] as const;
+
   const handle = (fn: () => void) => {
     onClose();
     fn();
   };
 
   return (
-    <>
     <aside>
-    <div
-      className="fixed inset-0 z-50 bg-black/13 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Stuck help"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="relative w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 sm:p-8 max-h-[80vh] overflow-auto dark:bg-[#23314c]">
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute top-3 right-3 sm:top-4 sm:right-4
-                     w-9 h-9 flex items-center justify-center
-                     rounded-full bg-[#ADD8E6]/50 dark:bg-[#1C1836] hover:bg-[#ADD8E6]/70 transition"
-        >
-          <span className="text-lg font-semibold">×</span>
-        </button>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/13 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Stuck help"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="relative max-h-[80vh] w-full max-w-5xl overflow-auto rounded-xl bg-white p-6 shadow-lg dark:bg-[#23314c] sm:p-8">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#ADD8E6]/50 transition hover:bg-[#ADD8E6]/70 dark:bg-[#1C1836] sm:top-4 sm:right-4"
+          >
+            <span className="text-lg font-semibold">×</span>
+          </button>
 
-        <div className="flex flex-col gap-4 sm:gap-6 items-center pb-[3%]">
-          <p className="text-center font-semibold text-[clamp(1rem,2vw,1.5rem)] dark:text-white/80">
-            We&apos;ve got you. What would help right now?
-          </p>
+          <div className="flex flex-col items-center gap-4 sm:gap-6">
+            <p className="text-center text-[clamp(1rem,2vw,1.5rem)] font-semibold dark:text-white/80">
+              We&apos;ve got you. What would help right now?
+            </p>
 
-          <div className="w-full h-px bg-black/80 dark:bg-white/80 rounded-2xl" />
+            <div className="h-px w-full rounded-2xl bg-black/80 dark:bg-white/80" />
 
-          <div className="w-full flex flex-wrap justify-center gap-3 sm:gap-4">
-            {actions.map((action) => (
-            <button
-              key={action.label}
-              onClick={() => {
-                if (action.label === "Just Breathe") {
-                  action.onClick(); // setBreathe(true)
-                } else {
-                  handle(action.onClick); // close + run
-                }
-              }}
-              className="border-2 border-[#ADD8E6] dark:border-[#57ba5c] text-[#0077B6] dark:text-[#57ba5c] font-semibold
-                      rounded-full px-4 py-2
-                      text-[clamp(0.9rem,1.4vw,1.25rem)]
-                      min-w-[9.5rem] sm:min-w-[10.5rem]"
-            >
-              {action.label}
-            </button>
-          ))}
-        
+            <div className="flex w-full flex-wrap justify-center gap-3 sm:gap-4">
+              {actions.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => {
+                    if (action.label === "Just Breathe" || action.label === "Break") {
+                      action.onClick();
+                    } else {
+                      handle(action.onClick);
+                    }
+                  }}
+                  className={`min-w-[9.5rem] rounded-full border-2 px-4 py-2 text-[clamp(0.9rem,1.4vw,1.25rem)] font-semibold sm:min-w-[10.5rem] ${
+                    action.label === "Break" && showBreak
+                      ? "border-[#57ba5c] bg-[#57ba5c]/10 text-[#57ba5c]"
+                      : "border-[#ADD8E6] text-[#0077B6] dark:border-[#57ba5c] dark:text-[#57ba5c]"
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+
+            {showBreak && (
+              <div className="mt-2 w-full">
+                <StudyTimer />
+              </div>
+            )}
           </div>
+
+          {breathe && <BreatheModal />}
         </div>
-        {breathe&&
-        <BreatheModal/>
-        }
       </div>
-    </div>
     </aside>
-    </>
   );
 }
