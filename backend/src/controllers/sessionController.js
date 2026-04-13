@@ -120,6 +120,7 @@ const getActiveSession = async (req, res, next) => {
   }
 };
 
+// Spend Token -- Endpoint for currently spending 1 token (for playing a mini-game)
 const spendToken = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -364,7 +365,7 @@ const completeSession = async (req, res, next) => {
   }
 };
 
-// user stats helper function
+// user stats helper function -- updates the UserStats in the DB after a completed session
 async function updateUserStats(tx, userId, studyMinutes, session) {
   // get user's stats
   let stats = await tx.userStats.findUnique({
@@ -597,6 +598,7 @@ const setSessionNotes = async (req, res, next) => {
   }
 };
 
+// Get Session Notes
 const getSessionNotes = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
@@ -625,6 +627,7 @@ const getSessionNotes = async (req, res, next) => {
   }
 };
 
+// Creates a WellnessCheck -- Possibly move to own file later
 const createWellnessCheck = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
