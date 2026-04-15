@@ -3,6 +3,10 @@ const { StatusCodes } = require("http-status-codes"); // Status codes
 const COST_PER_GAME = 1;
 const MINUTES_PER_TOKEN = 5;
 
+// Validation
+const Joi = require("joi");
+const { sessionSchema } = require("../validation/sessionSchema.js");
+
 // Database setup
 const { PrismaClient } = require("@prisma/client");
 let opts;
@@ -31,11 +35,18 @@ const startSession = async (req, res, next) => {
       });
     }
 
+    const { value, error } = sessionSchema.validate(req.body);
+    if (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: error.details[0].message,
+      });
+    }
     // create session
     const session = await prisma.studySession.create({
       data: {
         userId: userId,
         status: "ACTIVE",
+        sessionGoalMinutes: value.sessionGoalMinutes,
       },
     });
 
@@ -113,6 +124,7 @@ const getActiveSession = async (req, res, next) => {
         totalPausedMinutes: session.totalPausedMinutes,
         currentStudyMinutes: studyMinutes,
         tokensAvailable: tokensAvailable,
+        sessionGoalMinutes: session.sessionGoalMinutes,
       },
     });
   } catch (err) {
