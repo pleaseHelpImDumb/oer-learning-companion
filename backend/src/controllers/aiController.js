@@ -2,6 +2,7 @@ require("dotenv").config();
 const { StatusCodes } = require("http-status-codes"); // Status codes
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = "gemma-4-26b-a4b-it";
 
 // Database setup
 const { PrismaClient } = require("@prisma/client");
@@ -92,8 +93,15 @@ This student needs significant help. Provide a thorough, step-by-step teaching r
   }
   //console.log("This is the system instructions:\n", systemInstruction);
   return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash", // <-- MODEL SELECT HERE (see google ai studio)
+    //for Gemma-4-26b-A4B-it model
+    model: aiModel, // <-- MODEL SELECT HERE (see google ai studio)
     systemInstruction: systemInstruction,
+    generationConfig: {
+      thinkingConfig: {
+        thinkingLevel: "minimal", // thinking depth
+        includeThoughts: false, // Prevents the internal reasoning from being sent back
+      },
+    },
   });
 }
 
@@ -154,7 +162,11 @@ const chat = async (req, res, next) => {
 
     // generate AI response
     const model = getTutorModel(user, supportLevel);
-    const result = await model.generateContent({ contents });
+    try {
+      const result = await model.generateContent({ contents });
+    } catch (err) {
+      next(err);
+    }
     const aiResponse = result.response.text();
 
     // store user message and AI message
