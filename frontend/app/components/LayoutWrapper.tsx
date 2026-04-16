@@ -13,14 +13,12 @@ import LayoutInner from "./LayoutInner";
 import CheckInController from "./CheckInController";
 import SessionResumeModalController from "./SessionResumeModalController";
 import { PopupProvider } from "../providers/popup-provider";
-import SessionPopupHandler from "../providers/SessionPopupHandler";
 export default function LayoutWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
   useEffect(() => {
     if ((window as any).__fetchDebugPatched) {
       return;
@@ -78,20 +76,18 @@ export default function LayoutWrapper({
       }
     };
 
-    console.log("✅ Fetch debugging enabled");
-
     return () => {
       window.fetch = (window as any).__originalFetch || originalFetch;
       (window as any).__fetchDebugPatched = false;
     };
   }, []);
 
-  const hideLayout = ["/", "/register", "/forgotpassword", "/onboarding"].includes(pathname);
-
+  const hideLayout = ["/", "/register", "/forgotpassword", "/onboarding", "/reset-password"].includes(pathname);
+  //^paths which will exclude user-specific variables
   useEffect(() => {
     if (hideLayout) return;
 
-    const syncDarkMode = () => {
+    const syncDarkMode = () => { //saves the dark-mode status of the user
       const stored = localStorage.getItem("darkMode");
       const cookieMatch = document.cookie.match(/darkMode=(true|false)/);
 

@@ -61,10 +61,8 @@ export default function LayoutInner({
                   type="button"
                   onClick={() => {
                     if(activeSession.status!=="PAUSED"){
-                      console.log("[LAYOUT] Pause session button clicked");
                       void pauseSession();
                     } else{
-                      console.log("[LAYOUT] Resume session button clicked");
                       void resumeSession();
                     }
                   }}
@@ -77,7 +75,6 @@ export default function LayoutInner({
                 <button
                   type="button"
                   onClick={() => {
-                    console.log("[LAYOUT] Stop session button clicked");
                     void cancelSession();
                   }}
                   disabled={sessionActionLoading}

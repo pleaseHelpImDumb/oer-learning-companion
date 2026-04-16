@@ -371,7 +371,7 @@ return (
           </select>
 
           <span
-            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-black text-xs"
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-black dark:border-white text-xs"
             title="How often would you like us to ask how you are doing?"
           >
             i

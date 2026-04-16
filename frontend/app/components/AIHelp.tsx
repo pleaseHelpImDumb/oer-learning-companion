@@ -103,9 +103,21 @@ export default function StuckModal() {
                         remarkPlugins={[remarkGfm, remarkMath]}
                         rehypePlugins={[rehypeKatex]}
                         components={{
-                          p: ({ children }) => (
-                            <p className="mb-2 last:mb-0">{children}</p>
-                          ),
+                            p: ({ children }) => {
+                              // If this paragraph contains a block element (like pre), don't wrap it
+                              if (
+                                Array.isArray(children) &&
+                                children.some(
+                                  (child: any) =>
+                                    child?.type === "pre" ||
+                                    child?.props?.node?.tagName === "pre"
+                                )
+                              ) {
+                                return <>{children}</>;
+                              }
+
+                              return <p className="mb-2 last:mb-0">{children}</p>;
+                            },
                           code({ inline, children, ...props }: any) {
                             const text = String(children);
 

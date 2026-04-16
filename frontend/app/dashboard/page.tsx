@@ -1,102 +1,137 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "../providers/session-provider";
 
+type Badge = {
+  badgeId: number;
+  name: string;
+  description: string;
+  iconUrl: string | null;
+  unlockedAt: string;
+};
+
+type UserProfile = {
+  userId: number;
+  username: string;
+  displayName: string | null;
+  email: string;
+  role: string;
+  avatarUrl: string | null;
+  favoriteQuote: string | null;
+  checkinIntervalMinutes: number | null;
+  onboardingCompleted: boolean;
+  createdAt: string;
+  track: unknown;
+  tokenBalance: number;
+  badges: Badge[];
+};
+
+type WeekStats = {
+  weeklyMinsStudied: number;
+  totalCheckIns: number;
+  totalMinutes: number;
+  aiHelpCount: number;
+  totalBreaks: number;
+};
+
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const [selectedMinutes, setSelectedMinutes] = useState("0:05:00");
   const [time, setTime] = useState("0:05:00");
-  const [user, setUser] = useState<any>(null);
-  const [latestBadge, setLatestBadge] = useState<{
-    emoji: string;
-    name: string;
-  } | null>(null);
-  const [quote, setQuote] = useState<string | null>(null);
 
-const { startSession, sessionActionLoading } = useSession();
+  const [user, setUser] = useState<UserProfile | null>(null);
+const [weekStats, setWeekStats] = useState<WeekStats>({
+  weeklyMinsStudied: 0,
+  totalCheckIns: 0,
+  totalMinutes: 0,
+  aiHelpCount: 0,
+  totalBreaks: 0,
+});
+  const [quote, setQuote] = useState("No favorite quote yet.");
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  const { startSession, sessionActionLoading } = useSession();
 
   const renderCount = useRef(0);
   renderCount.current += 1;
 
   useEffect(() => {
-    async function loadUser() {
-      const requestUrl = `${API_BASE_URL}/users/profile`;
+    async function loadDashboardData() {
+      if (!API_BASE_URL) return;
 
       try {
-        const res = await fetch(requestUrl, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const [profileRes, statsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/users/profile`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+          fetch(`${API_BASE_URL}/users/week-stats`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+        ]);
 
-        // clone lets you inspect raw response text without losing json parsing
-        const cloned = res.clone();
-        const rawText = await cloned.text();
+        const profileData = await profileRes.json().catch(() => null);
+        const statsData = await statsRes.json().catch(() => null);
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          console.error("[FETCH 5] request failed:", data?.error || "Could not fetch user info");
-          return;
+        if (!profileRes.ok) {
+          console.error(
+            "[PROFILE] request failed:",
+            profileData?.error || "Could not fetch user profile"
+          );
+        } else {
+          const fetchedUser = profileData?.user ?? null;
+          setUser(fetchedUser);
+          setQuote(fetchedUser?.favoriteQuote || "No favorite quote yet.");
         }
 
-        const fetchedUser = data?.user;
-
-        const favoriteQuote = fetchedUser?.favoriteQuote || "No favorite quote yet.";
-
-        setUser(fetchedUser);
-        setQuote(favoriteQuote);
-
-        const rawUserBadges = fetchedUser?.userBadges;
-
-        if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
-          const sortedBadges = [...rawUserBadges].sort((a, b) => {
-            const aTime = a?.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
-            const bTime = b?.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
-            return bTime - aTime;
-          });
-
-          const newestBadge = sortedBadges[0]?.badge;
-
-          if (
-            newestBadge &&
-            typeof newestBadge.emoji === "string" &&
-            newestBadge.emoji.trim() !== ""
-          ) {
-            const badgeToSet = {
-              emoji: newestBadge.emoji,
-              name:
-                typeof newestBadge.name === "string" &&
-                newestBadge.name.trim() !== ""
-                  ? newestBadge.name
-                  : "Latest Badge",
-            };
-
-            setLatestBadge(badgeToSet);
-          } else {
-            setLatestBadge(null);
-          }
+        if (!statsRes.ok) {
+          console.error(
+            "[WEEK STATS] request failed:",
+            statsData?.error || "Could not fetch week stats"
+          );
         } else {
-          console.log("[BADGES] no badges array found or empty");
+          setWeekStats(statsData);
         }
       } catch (error) {
-        console.error("[FETCH ERROR] Failed to fetch user info:", error);
+        console.error("[DASHBOARD FETCH ERROR]", error);
+      } finally {
+        setLoadingProfile(false);
       }
     }
 
-    loadUser();
+    loadDashboardData();
   }, [API_BASE_URL]);
+
+  const latestBadge =
+    Array.isArray(user?.badges) && user.badges.length > 0
+      ? [...user.badges].sort((a, b) => {
+          const aTime = a?.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
+          const bTime = b?.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
+          return bTime - aTime;
+        })[0]
+      : null;
+
+const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
+  const totalRewardPoints = user?.tokenBalance ?? 0;
+  const badgeCount = user?.badges?.length ?? 0;
 
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
       <div className="w-full">
         <div className="rounded-lg bg-[#ffd36b] dark:bg-[#26314a] px-4 py-4 text-lg font-semibold sm:text-xl">
-          <p className="text-black dark:text-white dark:bg-[#26314a]">
-            {user?.favoriteQuote}
+          <p className="text-black dark:text-white">
+            {quote}
           </p>
         </div>
       </div>
@@ -112,7 +147,7 @@ const { startSession, sessionActionLoading } = useSession();
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
-                    5
+                    {weeklyHours}
                   </p>
                   <p className="text-base font-semibold text-[#235937] dark:text-white sm:text-lg">
                     Hours Studied
@@ -129,16 +164,27 @@ const { startSession, sessionActionLoading } = useSession();
                 </div>
 
                 <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
-                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
-                    {latestBadge ? latestBadge.emoji : "🧊"}
-                  </p>
+                  {latestBadge?.iconUrl ? (
+                    <Image
+                      src={latestBadge.iconUrl}
+                      alt={latestBadge.name}
+                      width={64}
+                      height={64}
+                      className="mb-2 h-16 w-16 object-contain"
+                    />
+                  ) : (
+                    <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
+                      🧊
+                    </p>
+                  )}
+
                   <p className="px-2 text-sm font-semibold text-[#235937] dark:text-white sm:text-base">
                     {latestBadge ? latestBadge.name : "No badge yet"}
                   </p>
                 </div>
               </div>
 
-              <p className="pt-5 text-center font-semibold text-[#235937]">
+              <p className="pt-5 text-center font-semibold text-[#235937] dark:text-white">
                 Prize-O-Meter
               </p>
             </div>
@@ -153,7 +199,7 @@ const { startSession, sessionActionLoading } = useSession();
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="flex flex-col items-center rounded-xl bg-[#235937] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white">
-                    50
+                    {totalRewardPoints}
                   </p>
                   <p className="mt-2 text-sm font-semibold text-white sm:text-base">
                     Reward Points
@@ -161,9 +207,9 @@ const { startSession, sessionActionLoading } = useSession();
                 </div>
 
                 <div className="flex flex-col items-center rounded-xl bg-[#235937] dark:bg-[#ffd85a] px-4 py-5 text-center">
-                      <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white dark:text-black">
-                        {Array.isArray(user?.badges) ? user.badges.length : 0}
-                      </p>
+                  <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-white dark:text-black">
+                    {badgeCount}
+                  </p>
                   <p className="mt-2 text-sm font-semibold text-white dark:text-black sm:text-base">
                     Badges
                   </p>
@@ -192,39 +238,31 @@ const { startSession, sessionActionLoading } = useSession();
 
           <p className="text-white">Set a session length to start.</p>
 
-          <div className="mt-5 flex w-full max-w-xs flex-col gap-3">
+          <div className="mt-5 flex w-full max-w-xs flex-col gap-10">
             <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">Select number of:</label>
+              <label className="font-medium text-white">Select Number Of</label>
               <select
                 defaultValue="breaks"
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 <option value="breaks">Breaks</option>
-                <option value="short">1</option>
-                <option value="long">2</option>
-                <option value="none">3</option>
-                <option value="none">4</option>
-                <option value="none">5</option>
-                <option value="none">6</option>
-                <option value="none">7</option>
-                <option value="none">8</option>
-                <option value="none">9</option>
-                <option value="none">10</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">Select:</label>
-              <select
-                defaultValue="minutes"
-                className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="minutes">Minutes</option>
-                {/*<option value="modules">Modules</option>*/}
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
               </select>
             </div>
 
             <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">Minutes*:</label>
+              <label className="font-medium text-white">
+                Select Session Duration<span className="text-[#ff0000]">*</span>
+              </label>
               <select
                 value={selectedMinutes}
                 onChange={(e) => {
@@ -252,16 +290,16 @@ const { startSession, sessionActionLoading } = useSession();
             {time}
           </div>
 
-<div className="mt-6 flex w-full justify-center">
-<button
-  type="button"
-  onClick={() => void startSession()}
-  disabled={sessionActionLoading}
-  className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
->
-  {sessionActionLoading ? "Starting..." : "Start Session"}
-</button>
-</div>
+          <div className="mt-6 flex w-full justify-center">
+            <button
+              type="button"
+              onClick={() => void startSession()}
+              disabled={sessionActionLoading}
+              className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
+            >
+              {sessionActionLoading ? "Starting..." : "Start Session"}
+            </button>
+          </div>
         </section>
       </div>
     </div>

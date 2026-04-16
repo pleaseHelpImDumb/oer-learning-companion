@@ -120,15 +120,35 @@ export function StuckAssistantProvider({
             },
             body: JSON.stringify({
               message: text,
-              supportLevel: state.supportLevel,
+              supportLevel: Number(state.supportLevel),
             }),
           });
 
-          const data = await res.json();
+const rawText = await res.text();
+console.log("[AI CHAT RAW RESPONSE]", rawText);
 
-          if (!res.ok) {
-            throw new Error(data?.error || "Failed to get AI response");
-          }
+let data: any = {};
+try {
+  data = rawText ? JSON.parse(rawText) : {};
+} catch {
+  data = {};
+}
+
+console.log("[AI CHAT RESPONSE]", {
+  ok: res.ok,
+  status: res.status,
+  statusText: res.statusText,
+  data,
+});
+
+if (!res.ok) {
+  throw new Error(
+    data?.error ||
+      data?.message ||
+      `${res.status} ${res.statusText}` ||
+      "Failed to get AI response"
+  );
+}
 
           dispatch({
             type: "ADD_MESSAGES",
@@ -141,20 +161,22 @@ export function StuckAssistantProvider({
             ],
           });
         } catch (error) {
-          dispatch({
-            type: "ADD_MESSAGES",
-            messages: [
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                text:
-                  error instanceof Error
-                    ? `Error: ${error.message}`
-                    : "Something went wrong while contacting the AI.",
-              },
-            ],
-          });
-        } finally {
+            console.error("[STUCK ASSISTANT ERROR]", error);
+
+            dispatch({
+              type: "ADD_MESSAGES",
+              messages: [
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  text:
+                    error instanceof Error
+                      ? `Error: ${error.message}`
+                      : "Something went wrong while contacting the AI.",
+                },
+              ],
+            });
+          } finally {
           dispatch({ type: "SET_LOADING", loading: false });
         }
       },
