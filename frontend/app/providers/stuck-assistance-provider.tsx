@@ -111,7 +111,9 @@ export function StuckAssistantProvider({
         try {
           const csrfToken = localStorage.getItem("csrfToken"); // if you're storing it there
 
-          const res = await fetch("http://localhost:3001/ai/chat", {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+const res = await fetch(`${API_BASE_URL}/ai/chat`, {
             method: "POST",
             credentials: "include", // send auth cookie
             headers: {
@@ -161,7 +163,7 @@ if (!res.ok) {
             ],
           });
         } catch (error) {
-            console.error("[STUCK ASSISTANT ERROR]", error);
+            console.warn("[STUCK ASSISTANT ERROR]", error);
 
             dispatch({
               type: "ADD_MESSAGES",

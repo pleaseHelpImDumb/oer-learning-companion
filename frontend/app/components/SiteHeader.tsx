@@ -13,7 +13,7 @@ export default function SiteHeader() {
   const [avatarUrl, setAvatarUrl] = useState(`profile0`);
   const [username, setUsername] = useState("username");
 const { activeSession, liveStudySeconds } = useSession();
-  const [tokenBalance, setTokenBalance] = useState(0);
+  const [totalTokensEarned, settotalTokensEarned] = useState(0);
 const TRACKS = {
   Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
   Gaming: ["🕹️", "🎮", "🎲", "♟️"],
@@ -86,12 +86,15 @@ const userRes = await fetch(`${API_BASE_URL}/users/profile`, {
   },
 });
 
-      const userData = await userRes.json();
+const userData = await userRes.json();
 
-      if (!userRes.ok) {
-        console.log("response not ok");
-        return;
-      }
+console.log("[HEADER] full profile response:", userData);
+console.log("[HEADER] totalTokensEarned from backend:", userData.user?.totalTokensEarned);
+
+if (!userRes.ok) {
+  console.log("response not ok");
+  return;
+}
 
 const user = userData.user;
 const userTrack = normalizeTrack(user);
@@ -108,10 +111,10 @@ setAvatarUrl(getAvatarIdFromUrl(rawAvatarUrl));
         setTrack(userTrack as TrackName);
       }
 
-      const tokens = userData.user?.tokenBalance;
-      if (typeof tokens === "number") {
-        setTokenBalance(tokens);
-      }
+const tokens = userData.user?.totalTokensEarned;
+if (typeof tokens === "number") {
+  settotalTokensEarned(Math.max(0, tokens));
+}
 
       const rawUserBadges = userData.user?.userBadges;
 
@@ -180,7 +183,7 @@ window.addEventListener("profile-updated", handleProfileUpdated as EventListener
 return () => {
   window.removeEventListener("profile-updated", handleProfileUpdated as EventListener);
 };
-}, [API_BASE_URL]);
+}, [API_BASE_URL, activeSession?.sessionId]);
 const timerDisplay = activeSession
   ? formatElapsedSeconds(liveStudySeconds)
   : "0:00:00";
@@ -209,6 +212,9 @@ const timerDisplay = activeSession
     window.removeEventListener("track-updated", syncTrackFromStorage);
   };
 }, []);
+useEffect(() => {
+  console.log("[HEADER] totalTokensEarned state:", totalTokensEarned);
+}, [totalTokensEarned]);
 
   return (
     <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#000d2a] text-white">
@@ -283,17 +289,23 @@ const timerDisplay = activeSession
           </div>
 
           <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
-<span className="whitespace-nowrap text-sm font-semibold sm:text-base">
-  {tokenBalance > 0 ? "My Tokens" : "No Tokens"}
-</span>
+<div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
+  <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
+    My Tokens
+  </span>
 
-            <div className="flex gap-1 text-xl leading-none sm:text-2xl">
-              {TRACKS[track].map((emoji, i) => (
-                <span key={i} style={{ opacity: i < tokenBalance ? 1 : 0 }}>
-                  {emoji}
-                </span>
-              ))}
-            </div>
+  <div className="flex items-center gap-1 text-xl leading-none sm:text-2xl">
+    {TRACKS[track].slice(0, Math.min(totalTokensEarned, 4)).map((emoji, i) => (
+      <span key={i}>{emoji}</span>
+    ))}
+
+    {totalTokensEarned > 4 && (
+      <span className="ml-1 text-sm font-semibold text-yellow-300 sm:text-base">
+        +({totalTokensEarned - 4})
+      </span>
+    )}
+  </div>
+</div>
           </div>
 
           <div className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 lg:bg-transparent lg:p-0">

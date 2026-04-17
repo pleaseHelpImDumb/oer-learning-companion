@@ -97,7 +97,6 @@ model StudySession {
   durationMinutes Int? //set on completed
   numAiInteractions Int @default(0)
   tokensSpent Int @default(0)
-  sessionGoalMinutes Int? 
   group Group?
   notes String?
 

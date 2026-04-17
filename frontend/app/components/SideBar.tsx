@@ -11,7 +11,8 @@ const icons = [
   { src: "/dashboard.png", alt: "Home", href: "/dashboard" },
   { src: "/timer.png", alt: "Timer", href: "/timer" },
   { src: "/pencil.png", alt: "stuck", href: "/stuck" },
-  { src: "/mask.png", alt: "Focus", href: "/activity" },
+  //{ src: "/mask.png", alt: "Focus", href: "/activity" }, <-- Checkers - revisit laterrrrr, this is complicated :(
+{ src: "/mask.png", alt: "Focus", href: "/ticTacToe" },
   { src: "/sleep.png", alt: "breaks", href: "/break" },
   { src: "/profits.png", alt: "sessionsummary", href: "/summary" },
   { src: "/question.png", alt: "Help", href: "/help" },

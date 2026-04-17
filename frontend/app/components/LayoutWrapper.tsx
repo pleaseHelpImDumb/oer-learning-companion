@@ -108,16 +108,16 @@ export default function LayoutWrapper({
   }, [hideLayout]);
 
   return (
-    <SessionProvider shouldCheckSession={!hideLayout}>
-      <StuckAssistantProvider>
-        <PopupProvider>
+    <PopupProvider>
+      <SessionProvider shouldCheckSession={!hideLayout}>
+        <StuckAssistantProvider>
           <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
 
           {!hideLayout && <CheckInController />}
           {!hideLayout && <SessionResumeModalController />}
           {!hideLayout && <PopupRenderer />}
-        </PopupProvider>
-      </StuckAssistantProvider>
-    </SessionProvider>
+        </StuckAssistantProvider>
+      </SessionProvider>
+    </PopupProvider>
   );
 }

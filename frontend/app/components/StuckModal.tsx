@@ -30,7 +30,8 @@ const actions = [
       });
     },
   },
-  { label: "Silly Activity", onClick: () => router.push("/activity") },
+  //{ label: "Silly Activity", onClick: () => router.push("/activity") },
+  { label: "Silly Activity", onClick: () => router.push("/ticTacToe") },
   {
     label: "Just Breathe",
     onClick: () => {

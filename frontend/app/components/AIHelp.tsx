@@ -102,51 +102,39 @@ export default function StuckModal() {
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkMath]}
                         rehypePlugins={[rehypeKatex]}
-                        components={{
-                            p: ({ children }) => {
-                              // If this paragraph contains a block element (like pre), don't wrap it
-                              if (
-                                Array.isArray(children) &&
-                                children.some(
-                                  (child: any) =>
-                                    child?.type === "pre" ||
-                                    child?.props?.node?.tagName === "pre"
-                                )
-                              ) {
-                                return <>{children}</>;
-                              }
+components={{
+  pre({ children }) {
+    return (
+      <pre className="overflow-x-auto rounded-lg bg-black/10 p-3">
+        {children}
+      </pre>
+    );
+  },
+  code({ inline, children, ...props }: any) {
+    const text = String(children);
 
-                              return <p className="mb-2 last:mb-0">{children}</p>;
-                            },
-                          code({ inline, children, ...props }: any) {
-                            const text = String(children);
+    if (inline && /^[a-zA-Z]$/.test(text)) {
+      return <span className="italic">{text}</span>;
+    }
 
-                            if (inline && /^[a-zA-Z]$/.test(text)) {
-                              return <span className="italic">{text}</span>;
-                            }
+    if (inline && /[=+\-*/^]/.test(text)) {
+      return <span className="font-mono">{text}</span>;
+    }
 
-                            if (inline && /[=+\-*/^]/.test(text)) {
-                              return <span className="font-mono">{text}</span>;
-                            }
+    if (inline) {
+      return (
+        <code
+          className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]"
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    }
 
-                            if (inline) {
-                              return (
-                                <code
-                                  className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]"
-                                  {...props}
-                                >
-                                  {children}
-                                </code>
-                              );
-                            }
-
-                            return (
-                              <pre className="overflow-x-auto rounded-lg bg-black/10 p-3">
-                                <code {...props}>{children}</code>
-                              </pre>
-                            );
-                          },
-                        }}
+    return <code {...props}>{children}</code>;
+  },
+}}
                       >
                         {cleanAssistantText(m.text)}
                       </ReactMarkdown>

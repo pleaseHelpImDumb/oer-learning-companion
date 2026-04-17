@@ -1,5 +1,6 @@
 "use client";
 
+import { usePopup } from "./popup-provider";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type ActiveSession = {
@@ -10,6 +11,7 @@ type ActiveSession = {
   totalPausedMinutes: number;
   currentStudyMinutes?: number;
   tokensAvailable?: number;
+  sessionGoalMinutes?: number | null;
 };
 
 type SessionContextType = {
@@ -18,7 +20,7 @@ type SessionContextType = {
   sessionActionLoading: boolean;
   liveStudySeconds: number;
   refreshSession: () => Promise<void>;
-  startSession: () => Promise<void>;
+  startSession: (sessionGoalMinutes: number) => Promise<void>;
   cancelSession: () => Promise<void>;
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
@@ -42,6 +44,30 @@ const [sessionActionLoading, setSessionActionLoading] = useState(false);
 const [liveStudySeconds, setLiveStudySeconds] = useState(0);
 const [sessionClockKey, setSessionClockKey] = useState<string | null>(null);
 const [clockAnchorMs, setClockAnchorMs] = useState<number | null>(null);
+const [autoCompletingSessionId, setAutoCompletingSessionId] = useState<number | null>(null);
+const { showPopup } = usePopup();
+useEffect(() => {
+  if (!activeSession) return;
+  if (activeSession.status !== "ACTIVE") return;
+  if (!activeSession.sessionGoalMinutes || activeSession.sessionGoalMinutes <= 0) return;
+  if (sessionActionLoading) return;
+
+  const goalSeconds = activeSession.sessionGoalMinutes * 60;
+
+  if (
+    liveStudySeconds >= goalSeconds &&
+    autoCompletingSessionId !== activeSession.sessionId
+  ) {
+    setAutoCompletingSessionId(activeSession.sessionId);
+    void completeSession();
+  }
+}, [
+  activeSession,
+  liveStudySeconds,
+  sessionActionLoading,
+  autoCompletingSessionId,
+]);
+
 function buildSessionClockKey(session: ActiveSession | null) {
   if (!session) return null;
   return `${session.sessionId}:${session.startTime}`;
@@ -114,7 +140,7 @@ syncLocalClockFromSession(nextSession);    } catch (error) {
       setLoading(false);
     }
   };
-const startSession = async () => {
+const startSession = async (sessionGoalMinutes: number) => {
   if (!API_BASE_URL) {
     console.log("[SESSION PROVIDER] startSession aborted", {
       API_BASE_URL,
@@ -127,7 +153,6 @@ const startSession = async () => {
 
     const csrfToken =
       typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
-
     const res = await fetch(`${API_BASE_URL}/sessions/start`, {
       method: "POST",
       credentials: "include",
@@ -135,7 +160,7 @@ const startSession = async () => {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ sessionGoalMinutes }),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -304,11 +329,13 @@ const completeSession = async () => {
   try {
     setSessionActionLoading(true);
 
+    const completedSessionId = activeSession.sessionId;
+
     const csrfToken =
       typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
     const res = await fetch(
-      `${API_BASE_URL}/sessions/${activeSession.sessionId}/complete`,
+      `${API_BASE_URL}/sessions/${completedSessionId}/complete`,
       {
         method: "POST",
         credentials: "include",
@@ -326,12 +353,40 @@ const completeSession = async () => {
     if (!res.ok) {
       throw new Error(data?.error || data?.message || "Failed to complete session");
     }
-setLiveStudySeconds(0);
-setClockAnchorMs(null);
-setSessionClockKey(null);
+
+    setLiveStudySeconds(0);
+    setClockAnchorMs(null);
+    setSessionClockKey(null);
+    setAutoCompletingSessionId(null);
+
     await refreshSession();
+    
+    const newTokenCount =
+  data?.session?.tokensAvailable ??
+  data?.tokensAvailable ??
+  data?.user?.tokenBalance ??
+  data?.tokenBalance;
+showPopup({
+  type: "sessionCelebration",
+  gifSrc: "/assets/popups/confetti.gif",
+  imageSrc: "/assets/popups/session-complete.png",
+  autoCloseMs: 4000,
+  dimBackground: false,
+});
+
+if (newTokenCount === 4) {
+  window.setTimeout(() => {
+    showPopup({
+      type: "achievement",
+      imageSrc: "/assets/popups/minigame-unlocked.png",
+      autoCloseMs: 4000,
+      dimBackground: true,
+    });
+  }, 4100);
+}
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to complete session:", error);
+    setAutoCompletingSessionId(null);
   } finally {
     setSessionActionLoading(false);
   }
@@ -351,6 +406,27 @@ setSessionClockKey(null);
 
   return () => window.clearInterval(interval);
 }, [activeSession?.sessionId, activeSession?.status, clockAnchorMs]);
+  useEffect(() => {
+  if (!activeSession) return;
+  if (activeSession.status !== "ACTIVE") return;
+  if (!activeSession.sessionGoalMinutes || activeSession.sessionGoalMinutes <= 0) return;
+  if (sessionActionLoading) return;
+
+  const goalSeconds = activeSession.sessionGoalMinutes * 60;
+
+  if (
+    liveStudySeconds >= goalSeconds &&
+    autoCompletingSessionId !== activeSession.sessionId
+  ) {
+    setAutoCompletingSessionId(activeSession.sessionId);
+    void completeSession();
+  }
+}, [
+  activeSession,
+  liveStudySeconds,
+  sessionActionLoading,
+  autoCompletingSessionId,
+]);
 
 const value = useMemo(
   () => ({

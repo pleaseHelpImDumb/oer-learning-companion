@@ -25,7 +25,7 @@ type UserProfile = {
   onboardingCompleted: boolean;
   createdAt: string;
   track: unknown;
-  tokenBalance: number;
+  totalTokensEarned: number;
   badges: Badge[];
 };
 
@@ -40,8 +40,8 @@ type WeekStats = {
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [selectedMinutes, setSelectedMinutes] = useState("0:05:00");
-  const [time, setTime] = useState("0:05:00");
+  const [selectedMinutes, setSelectedMinutes] = useState("0:10:00");
+  const [time, setTime] = useState("0:10:00");
 
   const [user, setUser] = useState<UserProfile | null>(null);
 const [weekStats, setWeekStats] = useState<WeekStats>({
@@ -123,9 +123,18 @@ const [weekStats, setWeekStats] = useState<WeekStats>({
       : null;
 
 const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
-  const totalRewardPoints = user?.tokenBalance ?? 0;
+  const totalRewardPoints = user?.totalTokensEarned ?? 0;
   const badgeCount = user?.badges?.length ?? 0;
+function durationStringToMinutes(value: string) {
+  const parts = value.split(":").map(Number);
 
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    return 0;
+  }
+
+  const [hours, minutes] = parts;
+  return hours * 60 + minutes;
+}
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
       <div className="w-full">
@@ -156,7 +165,7 @@ const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
 
                 <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
                   <p className="text-[clamp(2.25rem,6vw,4rem)] font-semibold text-[#235937] dark:text-white">
-                    {user?.tokenBalance ?? 0}
+                    {user?.totalTokensEarned ?? 0}
                   </p>
                   <p className="text-base font-semibold text-[#235937] sm:text-lg dark:text-white">
                     Tokens
@@ -272,7 +281,6 @@ const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
                 }}
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
-                <option value="0:05:00">5 mins</option>
                 <option value="0:10:00">10 mins</option>
                 <option value="0:15:00">15 mins</option>
                 <option value="0:20:00">20 mins</option>
@@ -293,7 +301,7 @@ const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
           <div className="mt-6 flex w-full justify-center">
             <button
               type="button"
-              onClick={() => void startSession()}
+              onClick={() => void startSession(durationStringToMinutes(selectedMinutes))}
               disabled={sessionActionLoading}
               className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
             >

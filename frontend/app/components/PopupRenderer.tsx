@@ -26,15 +26,49 @@ function getPopupImage(popup: {
 }
 
 export default function PopupRenderer() {
-  const { popup } = usePopup();
+  const { popup, closePopup } = usePopup();
 
   if (!popup) return null;
 
   const resolvedImage = getPopupImage(popup);
   const backgroundClass = popup.dimBackground ? "bg-black/30" : "bg-transparent";
 
+  if (popup.type === "sessionCelebration") {
+    return (
+      <div className="fixed inset-0 z-[9999] overflow-hidden">
+        {popup.gifSrc && (
+          <img
+            src={popup.gifSrc}
+            alt={popup.title || "Celebration effect"}
+            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+          />
+        )}
+
+        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none">
+          {resolvedImage && (
+            <img
+              src={resolvedImage}
+              alt={popup.title || "Session complete"}
+              className="w-full max-w-[900px] h-auto object-contain"
+            />
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={closePopup}
+          className="absolute top-4 right-4 z-[10000] rounded-full bg-black/60 px-4 py-2 text-sm font-semibold text-white hover:bg-black/75"
+        >
+          Skip
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className={`fixed inset-0 z-[200] flex items-center justify-center pointer-events-none ${backgroundClass}`}>
+    <div
+      className={`fixed inset-0 z-[200] flex items-center justify-center pointer-events-none ${backgroundClass}`}
+    >
       {popup.gifSrc ? (
         <img
           src={popup.gifSrc}

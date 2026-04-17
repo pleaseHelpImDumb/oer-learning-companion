@@ -1,17 +1,22 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-
+import { useSession } from "../providers/session-provider";
 export default function Home() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [hours, setHours] = useState(0);
+const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [checkins, setCheckins] = useState(0);
-
+const { activeSession, liveStudySeconds } = useSession();
   const [sessionMinutes, setSessionMinutes] = useState(0);
   const [sessionAiHelp, setSessionAiHelp] = useState(0);
   const [sessionPausedMinutes, setSessionPausedMinutes] = useState(0);
-
+const [progressPercent, setProgressPercent] = useState(0);
+const [progressImageIndex, setProgressImageIndex] = useState(1);
+const [completedSessions, setCompletedSessions] = useState(0);
+const [totalStudyMinutes, setTotalStudyMinutes] = useState(0);
+const [totalSessions, setTotalSessions] = useState(0);
+const [currentStreakLength, setCurrentStreakLength] = useState(0);
   const stats = [
     ["Check-Ins", checkins],
     ["Duration Net", `${sessionMinutes} Min`],
@@ -19,64 +24,155 @@ export default function Home() {
     ["With Breaks", `${sessionPausedMinutes} Min`],
   ];
 
+  function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getProgressImageIndex(currentStudyMinutes: number, sessionGoalMinutes: number) {
+  if (sessionGoalMinutes <= 0) return 1;
+
+  const percent = (currentStudyMinutes / sessionGoalMinutes) * 100;
+
+  if (percent >= 100) return 6;
+  if (percent >= 75) return 5;
+  if (percent >= 50) return 4;
+  if (percent >= 25) return 3;
+  if (percent >= 10) return 2;
+  return 1;
+}
+function getMinutesWithBreaks(startTime?: string, endTime?: string, fallbackMinutes = 0) {
+  if (!startTime || !endTime) return fallbackMinutes;
+
+  const start = new Date(startTime).getTime();
+  const end = new Date(endTime).getTime();
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return fallbackMinutes;
+  }
+
+  return Math.floor((end - start) / 1000 / 60);
+}
+function formatMinutesAsHoursAndMinutes(totalMinutes: number) {
+  const safe = Math.max(0, Math.floor(totalMinutes));
+  const hours = Math.floor(safe / 60);
+  const minutes = safe % 60;
+
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
   useEffect(() => {
-    async function loadSummary() {
-      try {
-        const completedSessionId = sessionStorage.getItem("completedSessionId");
+async function loadSummary() {
+  try {
+    const [weekRes, statsRes, sessionsRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/users/week-stats`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      fetch(`${API_BASE_URL}/users/stats`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      fetch(`${API_BASE_URL}/users/sessions`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+    ]);
 
-        const requests = [
-          fetch(`${API_BASE_URL}/users/week-stats`, {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }),
-        ];
+    const weekData = await weekRes.json().catch(() => ({}));
+    const statsData = await statsRes.json().catch(() => ({}));
+    const sessionsData = await sessionsRes.json().catch(() => ({}));
 
-        if (completedSessionId) {
-          requests.push(
-            fetch(`${API_BASE_URL}/sessions/${completedSessionId}`, {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-          );
-        }
+    console.log("[SUMMARY] /users/week-stats response:", weekData);
+    console.log("[SUMMARY] /users/stats response:", statsData);
+    console.log("[SUMMARY] /users/sessions response:", sessionsData);
 
-        const responses = await Promise.all(requests);
-
-        const statsRes = responses[0];
-        const statsData = await statsRes.json();
-
-        if (statsRes.ok) {
-          setHours(statsData?.weeklyMinsStudied ?? 0);
-          setCheckins(statsData?.totalCheckIns ?? 0);
-        }
-
-        const sessionRes = responses[1];
-        if (sessionRes) {
-          const sessionData = await sessionRes.json();
-
-          if (sessionRes.ok) {
-            const session = sessionData?.session ?? sessionData;
-
-            setSessionMinutes(session?.durationMinutes ?? 0);
-            setSessionAiHelp(session?.numAiInteractions ?? 0);
-            setSessionPausedMinutes(session?.totalPausedMinutes ?? 0);
-          }
-        }
-      } catch (error) {
-        console.error("[FETCH ERROR] Failed to fetch summary info:", error);
-      }
+    if (weekRes.ok) {
+      setWeeklyMinutes(Number(weekData?.weeklyMinsStudied ?? 0));
+      setCheckins(Number(weekData?.totalCheckIns ?? 0));
+    } else {
+      console.error("[SUMMARY] week-stats failed:", weekData);
     }
+
+    if (statsRes.ok) {
+      setCompletedSessions(Number(statsData?.stats?.completedSessions ?? 0));
+      setTotalStudyMinutes(Number(statsData?.stats?.totalStudyMinutes ?? 0));
+      setTotalSessions(Number(statsData?.stats?.totalSessions ?? 0));
+      setCurrentStreakLength(Number(statsData?.stats?.currentStreakLength ?? 0));
+    } else {
+      console.log("[SUMMARY] stats status:", statsRes.status, statsRes.statusText);
+      console.warn("[SUMMARY] stats failed:", statsData);
+    }
+
+    if (sessionsRes.ok) {
+      const latestSession = Array.isArray(sessionsData?.sessions)
+        ? sessionsData.sessions[0]
+        : null;
+
+      if (latestSession) {
+        const netMinutes = Number(latestSession?.durationMinutes ?? 0);
+        const aiHelp = Number(latestSession?.numAiInteractions ?? 0);
+        const withBreaks = getMinutesWithBreaks(
+          latestSession?.startTime,
+          latestSession?.endTime,
+          netMinutes
+        );
+
+        setSessionMinutes(Math.max(0, netMinutes));
+        setSessionAiHelp(Math.max(0, aiHelp));
+        setSessionPausedMinutes(Math.max(0, withBreaks));
+      } else {
+        setSessionMinutes(0);
+        setSessionAiHelp(0);
+        setSessionPausedMinutes(0);
+      }
+    } else {
+      console.error("[SUMMARY] sessions failed:", sessionsData);
+    }
+  } catch (error) {
+    console.error("[FETCH ERROR] Failed to fetch summary info:", error);
+  }
+}
 
     if (API_BASE_URL) {
       loadSummary();
     }
   }, [API_BASE_URL]);
+
+useEffect(() => {
+  if (!activeSession || !activeSession.sessionGoalMinutes) {
+    setProgressPercent(0);
+    setProgressImageIndex(1);
+    return;
+  }
+
+  const currentStudyMinutes = Math.floor(liveStudySeconds / 60);
+  const sessionGoalMinutes = Number(activeSession.sessionGoalMinutes);
+
+  const percent = clamp(
+    Math.round((currentStudyMinutes / sessionGoalMinutes) * 100),
+    0,
+    100
+  );
+
+  const nextImageIndex = clamp(
+    getProgressImageIndex(currentStudyMinutes, sessionGoalMinutes),
+    1,
+    6
+  );
+
+  setProgressPercent(percent);
+  setProgressImageIndex(nextImageIndex);
+}, [activeSession, liveStudySeconds]);
 
   return (
     <div className="w-full">
@@ -95,20 +191,19 @@ export default function Home() {
   <div className="flex flex-col md:flex-row md:items-center gap-6">
     {/* Left: image */}
 <div className="w-full max-w-sm sm:max-w-md aspect-square relative shrink-0 md:w-[260px]">
-  <Image
-    src="/assets/progress_circle/1.png"
-    alt="progress: 0%"
-    fill
-    className="object-contain"
-    priority
-  />
+<Image
+  src={`/assets/progress_circle/${progressImageIndex}.png`}
+  alt={`progress: ${progressPercent}%`}
+  fill
+  className="object-contain"
+  priority
+/>
 
-  {/* Centered percentage */}
-  <div className="absolute inset-0 flex items-center justify-center">
-    <span className="text-[#235937] dark:text-white/80 font-bold text-4xl sm:text-5xl">
-      0%
-    </span>
-  </div>
+<div className="absolute inset-0 flex items-center justify-center">
+  <span className="text-[#235937] dark:text-white/80 font-bold text-4xl sm:text-5xl">
+    {progressPercent}%
+  </span>
+</div>
 </div>
 
     {/* Right: title + bars */}
@@ -158,17 +253,17 @@ export default function Home() {
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
                 Study Goals Completed
               </p>
-              <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
-                3
+                <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
+                {completedSessions}
               </p>
             </div>
 
             <div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
               <p className="text-black dark:text-white/80 font-bold text-[clamp(1.1rem,1.6vw,2rem)] leading-tight">
-                Hours Studied This Week
+                Study Time This Week
               </p>
               <p className="text-[#235937] dark:text-[#639e61] font-bold mt-3 text-[clamp(2rem,4vw,4rem)]">
-                {hours}
+                {formatMinutesAsHoursAndMinutes(totalStudyMinutes)}
               </p>
             </div>
             {/*<div className="bg-white dark:bg-[#26314a] rounded-2xl p-4 sm:p-6">
