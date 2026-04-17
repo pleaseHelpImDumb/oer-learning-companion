@@ -25,7 +25,24 @@ app.use(cookieParser());
 app.use(xss()); // Sanitize user input
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        "https://oer-learning-companion.vercel.app",
+      ];
+
+      const isVercelPreview =
+        origin.endsWith(".vercel.app") &&
+        origin.includes("oer-learning-companion");
+
+      if (allowedOrigins.includes(origin) || isVercelPreview) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
