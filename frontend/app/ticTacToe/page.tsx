@@ -10,9 +10,12 @@ export default function TicTacToePage() {
 useEffect(() => {
   async function loadSession() {
     try {
-      const res = await fetch("http://localhost:3000/sessions/active", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/active`,
+        {
+          credentials: "include",
+        }
+      );
 
       const text = await res.text();
       console.log("sessions/active status:", res.status);
@@ -40,15 +43,18 @@ async function spendGameTokens(amount: number): Promise<boolean> {
   try {
     const csrfToken = localStorage.getItem("csrfToken");
 
-    const res = await fetch("http://localhost:3000/sessions/consume-token", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": csrfToken || "",
-      },
-      body: JSON.stringify({ cost: amount }),
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/consume-token`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken || "",
+        },
+        body: JSON.stringify({ cost: amount }),
+      }
+    );
 
     const text = await res.text();
     console.log("consume-token status:", res.status);
