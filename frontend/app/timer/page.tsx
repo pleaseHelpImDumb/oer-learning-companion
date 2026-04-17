@@ -203,9 +203,9 @@ const studySeconds = liveStudySeconds;
     await resumeSession();
   };
 
-  const handleStart = async () => {
-    await startSession();
-  };
+const handleStart = async () => {
+  await startSession(plannedDurationMinutes);
+};
 
   const handleStop = async () => {
     persistLocalTimer(null);
@@ -293,7 +293,7 @@ const studySeconds = liveStudySeconds;
                 )
               ) : (
                 <button
-                  onClick={() => void startSession()}
+                  onClick={() => void startSession(plannedDurationMinutes)}
                   disabled={sessionActionLoading}
                   className="px-5 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow disabled:opacity-60"
                 >
