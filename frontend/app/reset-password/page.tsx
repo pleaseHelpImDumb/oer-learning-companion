@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function Home() {
+function ResetPasswordContent() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -122,5 +122,13 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
