@@ -540,21 +540,36 @@ const getUserStats = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const stats = await prisma.userStats.findUnique({
-      where: { userId },
-      select: {
-        totalStudyMinutes: true,
-        totalSessions: true,
-        currentStreakLength: true,
+    // gets main stats but also # of completed sessions
+    const [stats, completedSessionsCount] = await Promise.all([
+      prisma.userStats.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+        select: {
+          totalStudyMinutes: true,
+          totalSessions: true,
+          currentStreakLength: true,
+        },
+      }),
+      prisma.studySession.count({
+        where: {
+          userId,
+          status: "COMPLETED",
+        },
+      }),
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      stats: {
+        ...stats,
+        completedSessions: completedSessionsCount,
       },
     });
-
-    res.status(StatusCodes.OK).json({ stats });
   } catch (err) {
     next(err);
   }
 };
-
 module.exports = {
   login,
   register,
