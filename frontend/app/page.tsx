@@ -8,8 +8,8 @@ export default function Home() {
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+console.log("API_BASE_URL =", API_BASE_URL);
 async function loginUser(e: React.FormEvent) {
   e.preventDefault();
 
