@@ -529,7 +529,27 @@ const getUserSessions = async (req, res, next) => {
       notes: s.notes,
     }));
 
-    res.status(200).json({ sessions: formatted });
+    res.status(StatusCodes.OK).json({ sessions: formatted });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET user stats
+const getUserStats = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const stats = await prisma.userStats.findUnique({
+      where: { userId },
+      select: {
+        totalStudyMinutes: true,
+        totalSessions: true,
+        currentStreakLength: true,
+      },
+    });
+
+    res.status(StatusCodes.OK).json({ stats });
   } catch (err) {
     next(err);
   }
@@ -546,4 +566,5 @@ module.exports = {
   incrementBreakCount,
   getWeekStats,
   getUserSessions,
+  getUserStats,
 };
