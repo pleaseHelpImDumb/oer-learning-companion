@@ -386,6 +386,7 @@ const getCurrentUser = async (req, res, next) => {
             },
           },
         },
+        userStats: true,
       },
     });
 
@@ -415,7 +416,7 @@ const getCurrentUser = async (req, res, next) => {
         onboardingCompleted: user.onboardingCompleted,
         createdAt: user.createdAt,
         track: user.track,
-        tokenBalance: user.tokenBalance,
+        totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
         badges: badges,
       },
     });
