@@ -80,8 +80,9 @@ const login = async (req, res, next) => {
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
+      path: "/",
       maxAge: 3 * 60 * 60 * 1000,
     });
 
@@ -156,11 +157,12 @@ const register = async (req, res, next) => {
 
     // Set httpOnly cookie
     res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 3 * 60 * 60 * 1000, // 7 days
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+  maxAge: 3 * 60 * 60 * 1000,
+});
     // Return success (without password)
     // Add jwt/csrf security later
     res.status(StatusCodes.CREATED).json({
