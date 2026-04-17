@@ -128,7 +128,7 @@ const chat = async (req, res, next) => {
       prisma.user.findUnique({
         where: { userId: userId },
       }),
-      prisma.aIInteraction.findMany({
+      prisma.AIInteraction.findMany({
         where: { sessionId: session.sessionId },
         orderBy: { createdAt: "asc" },
         take: -10, // < -- take only last 10 messages so context is never huge
@@ -153,9 +153,24 @@ const chat = async (req, res, next) => {
     ];
 
     // generate AI response
-    const model = getTutorModel(user, supportLevel);
-    const result = await model.generateContent({ contents });
-    const aiResponse = result.response.text();
+// generate AI response
+const model = getTutorModel(user, supportLevel);
+
+let aiResponse = "";
+
+try {
+  const result = await model.generateContent({ contents });
+  aiResponse = result.response.text();
+} catch (err) {
+  console.error("AI GENERATION ERROR:", err);
+
+  if (err?.status === 503) {
+    aiResponse =
+      "The study assistant is busy right now because the AI service is under heavy demand. Please try again in a moment.";
+  } else {
+    throw err;
+  }
+}
 
     // store user message and AI message
     await prisma.$transaction(async (tx) => {

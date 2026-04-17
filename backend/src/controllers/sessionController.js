@@ -2,7 +2,7 @@ const { StatusCodes } = require("http-status-codes"); // Status codes
 
 const COST_PER_GAME = 1;
 const MINUTES_PER_TOKEN = 5;
-
+const { sessionSchema } = require("../validation/sessionSchema.js");
 // Database setup
 const { PrismaClient } = require("@prisma/client");
 let opts;
@@ -15,110 +15,132 @@ const prisma = new PrismaClient(opts);
 
 // Start Session
 const startSession = async (req, res, next) => {
-  try {
-    const userId = req.user.id; // get from auth middleware
+ try {
+   const userId = req.user.id; // get from auth middleware
 
-    // check for active session
-    const activeSession = await prisma.studySession.findFirst({
-      where: {
-        userId: userId,
-        status: { in: ["ACTIVE", "PAUSED"] },
-      },
-    });
-    if (activeSession) {
-      return res.status(StatusCodes.CONFLICT).json({
-        error: "You already have an active session. Please end it first.",
-      });
-    }
 
-    // create session
-    const session = await prisma.studySession.create({
-      data: {
-        userId: userId,
-        status: "ACTIVE",
-      },
-    });
+   // check for active session
+   const activeSession = await prisma.studySession.findFirst({
+     where: {
+       userId: userId,
+       status: { in: ["ACTIVE", "PAUSED"] },
+     },
+   });
+   if (activeSession) {
+     return res.status(StatusCodes.CONFLICT).json({
+       error: "You already have an active session. Please end it first.",
+     });
+   }
 
-    res
-      .status(StatusCodes.CREATED)
-      .json({ message: "Study session started!", session });
-  } catch (err) {
-    next(err);
-  }
+
+   const { value, error } = sessionSchema.validate(req.body);
+   if (error) {
+     return res.status(StatusCodes.BAD_REQUEST).json({
+       error: error.details[0].message,
+     });
+   }
+   // create session
+   const session = await prisma.studySession.create({
+     data: {
+       userId: userId,
+       status: "ACTIVE",
+       sessionGoalMinutes: value.sessionGoalMinutes,
+     },
+   });
+
+
+   res
+     .status(StatusCodes.CREATED)
+     .json({ message: "Study session started!", session });
+ } catch (err) {
+   next(err);
+ }
 };
+
 
 // Get Active Session
 const getActiveSession = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const session = await prisma.studySession.findFirst({
-      where: {
-        userId: userId,
-        status: { in: ["ACTIVE", "PAUSED"] },
-      },
-    });
+ try {
+   const userId = req.user.id;
+   const session = await prisma.studySession.findFirst({
+     where: {
+       userId: userId,
+       status: { in: ["ACTIVE", "PAUSED"] },
+     },
+   });
 
-    if (!session) {
-      return res.json({ session: null });
-    }
 
-    // Check if session is abandoned (older than 12 hours)
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+   if (!session) {
+     return res.json({ session: null });
+   }
 
-    if (new Date(session.startTime) < twelveHoursAgo) {
-      // Auto-end abandoned session
-      const totalMinutes = Math.floor(
-        (new Date() - new Date(session.startTime)) / 1000 / 60,
-      );
 
-      await prisma.studySession.update({
-        where: { sessionId: session.sessionId },
-        data: {
-          status: "CANCELLED",
-          endTime: new Date(),
-          durationMinutes: totalMinutes - session.totalPausedMinutes,
-        },
-      });
+   // Check if session is abandoned (older than 12 hours)
+   const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
-      return res.json({
-        session: null,
-        message: "Previous session was automatically ended due to inactivity",
-      });
-    }
 
-    // Calculate current elapsed time
-    const now = new Date();
-    const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 1000 / 60,
-    );
-    const tokensEarned = Math.floor(totalElapsed / MINUTES_PER_TOKEN); // <- 1 token per 5 minutes
-    const tokensAvailable = tokensEarned - session.tokensSpent;
+   if (new Date(session.startTime) < twelveHoursAgo) {
+     // Auto-end abandoned session
+     const totalMinutes = Math.floor(
+       (new Date() - new Date(session.startTime)) / 1000 / 60,
+     );
 
-    let currentPauseDuration = 0;
-    if (session.status === "PAUSED" && session.lastPauseTime) {
-      currentPauseDuration = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000 / 60,
-      );
-    }
 
-    const studyMinutes =
-      totalElapsed - session.totalPausedMinutes - currentPauseDuration;
+     await prisma.studySession.update({
+       where: { sessionId: session.sessionId },
+       data: {
+         status: "CANCELLED",
+         endTime: new Date(),
+         durationMinutes: totalMinutes - session.totalPausedMinutes,
+       },
+     });
 
-    res.json({
-      session: {
-        sessionId: session.sessionId,
-        status: session.status,
-        startTime: session.startTime,
-        lastPauseTime: session.lastPauseTime,
-        totalPausedMinutes: session.totalPausedMinutes,
-        currentStudyMinutes: studyMinutes,
-        tokensAvailable: tokensAvailable,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
+
+     return res.json({
+       session: null,
+       message: "Previous session was automatically ended due to inactivity",
+     });
+   }
+
+
+   // Calculate current elapsed time
+   const now = new Date();
+   const totalElapsed = Math.floor(
+     (now - new Date(session.startTime)) / 1000 / 60,
+   );
+   const tokensEarned = Math.floor(totalElapsed / MINUTES_PER_TOKEN); // <- 1 token per 5 minutes
+   const tokensAvailable = tokensEarned - session.tokensSpent;
+
+
+   let currentPauseDuration = 0;
+   if (session.status === "PAUSED" && session.lastPauseTime) {
+     currentPauseDuration = Math.floor(
+       (now - new Date(session.lastPauseTime)) / 1000 / 60,
+     );
+   }
+
+
+   const studyMinutes =
+     totalElapsed - session.totalPausedMinutes - currentPauseDuration;
+
+
+   res.json({
+     session: {
+       sessionId: session.sessionId,
+       status: session.status,
+       startTime: session.startTime,
+       lastPauseTime: session.lastPauseTime,
+       totalPausedMinutes: session.totalPausedMinutes,
+       currentStudyMinutes: studyMinutes,
+       tokensAvailable: tokensAvailable,
+       sessionGoalMinutes: session.sessionGoalMinutes,
+     },
+   });
+ } catch (err) {
+   next(err);
+ }
 };
+
 
 // Spend Token -- Endpoint for currently spending 1 token (for playing a mini-game)
 const spendToken = async (req, res, next) => {

@@ -386,6 +386,7 @@ const getCurrentUser = async (req, res, next) => {
             },
           },
         },
+        userStats: true,
       },
     });
 
@@ -415,7 +416,7 @@ const getCurrentUser = async (req, res, next) => {
         onboardingCompleted: user.onboardingCompleted,
         createdAt: user.createdAt,
         track: user.track,
-        tokenBalance: user.tokenBalance,
+        totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
         badges: badges,
       },
     });
@@ -503,6 +504,72 @@ const getWeekStats = async (req, res, next) => {
   }
 };
 
+// get last 10 user sessions
+const getUserSessions = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const sessions = await prisma.studySession.findMany({
+      where: { userId },
+      orderBy: {
+        startTime: "desc",
+      },
+      take: 10,
+    });
+
+    const formatted = sessions.map((s) => ({
+      sessionId: s.sessionId,
+      status: s.status,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      durationMinutes: s.durationMinutes,
+      sessionGoalMinutes: s.sessionGoalMinutes,
+      tokensSpent: s.tokensSpent,
+      numAiInteractions: s.numAiInteractions,
+      notes: s.notes,
+    }));
+
+    res.status(StatusCodes.OK).json({ sessions: formatted });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET user stats
+const getUserStats = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // gets main stats but also # of completed sessions
+    const [stats, completedSessionsCount] = await Promise.all([
+      prisma.userStats.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+        select: {
+          totalStudyMinutes: true,
+          totalSessions: true,
+          currentStreakLength: true,
+        },
+      }),
+      prisma.studySession.count({
+        where: {
+          userId,
+          status: "COMPLETED",
+        },
+      }),
+    ]);
+
+    res.status(StatusCodes.OK).json({
+      stats: {
+        ...stats,
+        completedSessions: completedSessionsCount,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 module.exports = {
   login,
   register,
@@ -513,4 +580,6 @@ module.exports = {
   getCurrentUser,
   incrementBreakCount,
   getWeekStats,
+  getUserSessions,
+  getUserStats,
 };
