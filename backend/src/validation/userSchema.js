@@ -18,7 +18,7 @@ const registerSchema = Joi.object({
 
 const loginSchema = Joi.object({
   identity: Joi.string().required(),
-  password: password,
+  password: Joi.string(),
 });
 
 const forgotPasswordSchema = Joi.object({
