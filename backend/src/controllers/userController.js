@@ -157,12 +157,12 @@ const register = async (req, res, next) => {
 
     // Set httpOnly cookie
     res.cookie("jwt", token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  path: "/",
-  maxAge: 3 * 60 * 60 * 1000,
-});
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+      maxAge: 3 * 60 * 60 * 1000,
+    });
     // Return success (without password)
     // Add jwt/csrf security later
     res.status(StatusCodes.CREATED).json({
@@ -219,7 +219,7 @@ const forgotPassword = async (req, res, next) => {
       where: { userId: user.userId },
       data: {
         resetPasswordToken: hashedToken,
-        resetPasswordExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+        resetPasswordExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 min until it expires
       },
     });
 

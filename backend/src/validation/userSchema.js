@@ -1,14 +1,24 @@
 const Joi = require("joi");
+const password = Joi.string()
+  .min(8)
+  .pattern(/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).*$/)
+  .required()
+  .messages({
+    "string.min": "Password must be at least 8 characters",
+    "string.pattern.base":
+      "Password must include at least one number and one symbol",
+    "any.required": "Password is required",
+  });
 
 const registerSchema = Joi.object({
   username: Joi.string().min(2).max(50).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
+  password: password,
 });
 
 const loginSchema = Joi.object({
   identity: Joi.string().required(),
-  password: Joi.string().min(6),
+  password: password,
 });
 
 const forgotPasswordSchema = Joi.object({
@@ -17,7 +27,7 @@ const forgotPasswordSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   token: Joi.string().required(),
-  newPassword: Joi.string().min(6).required(),
+  newPassword: password,
 });
 
 const onboardSchema = Joi.object({
