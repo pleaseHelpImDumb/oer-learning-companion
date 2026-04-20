@@ -360,7 +360,6 @@ export default function SiteHeader() {
                 className="rounded-full border border-white transition hover:scale-105"
               />
             </button>
-
             {open && (
               <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-lg bg-[#D3D3D3] py-2 shadow-md">
                 <div className="w-[80%] flex flex-col items-center justify-center align-center">
