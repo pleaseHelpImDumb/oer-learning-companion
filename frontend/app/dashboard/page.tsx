@@ -44,13 +44,13 @@ export default function Home() {
   const [time, setTime] = useState("0:10:00");
 
   const [user, setUser] = useState<UserProfile | null>(null);
-const [weekStats, setWeekStats] = useState<WeekStats>({
-  weeklyMinsStudied: 0,
-  totalCheckIns: 0,
-  totalMinutes: 0,
-  aiHelpCount: 0,
-  totalBreaks: 0,
-});
+  const [weekStats, setWeekStats] = useState<WeekStats>({
+    weeklyMinsStudied: 0,
+    totalCheckIns: 0,
+    totalMinutes: 0,
+    aiHelpCount: 0,
+    totalBreaks: 0,
+  });
   const [quote, setQuote] = useState("No favorite quote yet.");
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -87,7 +87,7 @@ const [weekStats, setWeekStats] = useState<WeekStats>({
         if (!profileRes.ok) {
           console.error(
             "[PROFILE] request failed:",
-            profileData?.error || "Could not fetch user profile"
+            profileData?.error || "Could not fetch user profile",
           );
         } else {
           const fetchedUser = profileData?.user ?? null;
@@ -98,7 +98,7 @@ const [weekStats, setWeekStats] = useState<WeekStats>({
         if (!statsRes.ok) {
           console.error(
             "[WEEK STATS] request failed:",
-            statsData?.error || "Could not fetch week stats"
+            statsData?.error || "Could not fetch week stats",
           );
         } else {
           setWeekStats(statsData);
@@ -122,26 +122,24 @@ const [weekStats, setWeekStats] = useState<WeekStats>({
         })[0]
       : null;
 
-const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
+  const weeklyHours = (weekStats.totalMinutes / 60).toFixed(1);
   const totalRewardPoints = user?.totalTokensEarned ?? 0;
   const badgeCount = user?.badges?.length ?? 0;
-function durationStringToMinutes(value: string) {
-  const parts = value.split(":").map(Number);
+  function durationStringToMinutes(value: string) {
+    const parts = value.split(":").map(Number);
 
-  if (parts.length !== 3 || parts.some(Number.isNaN)) {
-    return 0;
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
+      return 0;
+    }
+
+    const [hours, minutes] = parts;
+    return hours * 60 + minutes;
   }
-
-  const [hours, minutes] = parts;
-  return hours * 60 + minutes;
-}
   return (
     <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8">
       <div className="w-full">
         <div className="rounded-lg bg-[#ffd36b] dark:bg-[#26314a] px-4 py-4 text-lg font-semibold sm:text-xl">
-          <p className="text-black dark:text-white">
-            {quote}
-          </p>
+          <p className="text-black dark:text-white">{quote}</p>
         </div>
       </div>
 
@@ -249,8 +247,14 @@ function durationStringToMinutes(value: string) {
 
           <div className="mt-5 flex w-full max-w-xs flex-col gap-10">
             <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">Select Number Of</label>
+              <label
+                className="font-medium text-white"
+                htmlFor="numberOfSelect"
+              >
+                Select Number Of
+              </label>
               <select
+                id="numberOfSelect"
                 defaultValue="breaks"
                 className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
@@ -269,10 +273,11 @@ function durationStringToMinutes(value: string) {
             </div>
 
             <div className="flex flex-col gap-2 text-left">
-              <label className="font-medium text-white">
+              <label className="font-medium text-white" htmlFor="breakSelect">
                 Select Session Duration<span className="text-[#ff0000]">*</span>
               </label>
               <select
+                id="breakSelect"
                 value={selectedMinutes}
                 onChange={(e) => {
                   const newValue = e.target.value;
@@ -301,7 +306,9 @@ function durationStringToMinutes(value: string) {
           <div className="mt-6 flex w-full justify-center">
             <button
               type="button"
-              onClick={() => void startSession(durationStringToMinutes(selectedMinutes))}
+              onClick={() =>
+                void startSession(durationStringToMinutes(selectedMinutes))
+              }
               disabled={sessionActionLoading}
               className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
             >
