@@ -3,7 +3,7 @@ const { StatusCodes } = require("http-status-codes");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // SECURITY
 const helmet = require("helmet");
@@ -31,6 +31,7 @@ app.use(
       const allowedOrigins = [
         process.env.FRONTEND_URL,
         "https://oer-learning-companion.vercel.app",
+        "http://localhost:3000",
       ];
 
       const isVercelPreview =

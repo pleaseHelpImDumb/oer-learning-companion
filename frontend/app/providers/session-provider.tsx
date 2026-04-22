@@ -1,7 +1,7 @@
 "use client";
 
 import { usePopup } from "./popup-provider";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type ActiveSession = {
   sessionId: number;
@@ -45,7 +45,11 @@ const [liveStudySeconds, setLiveStudySeconds] = useState(0);
 const [sessionClockKey, setSessionClockKey] = useState<string | null>(null);
 const [clockAnchorMs, setClockAnchorMs] = useState<number | null>(null);
 const [autoCompletingSessionId, setAutoCompletingSessionId] = useState<number | null>(null);
+const actionLockRef = useRef(false);
 const { showPopup } = usePopup();
+const lastToggleAtRef = useRef(0);
+const TOGGLE_COOLDOWN_MS = 1000;
+const [toggleCooldownUntil, setToggleCooldownUntil] = useState(0);
 useEffect(() => {
   if (!activeSession) return;
   if (activeSession.status !== "ACTIVE") return;
@@ -72,7 +76,14 @@ function buildSessionClockKey(session: ActiveSession | null) {
   if (!session) return null;
   return `${session.sessionId}:${session.startTime}`;
 }
-
+function isToggleCoolingDown() {
+  return Date.now() - lastToggleAtRef.current < TOGGLE_COOLDOWN_MS;
+}
+function beginToggleCooldown() {
+  const until = Date.now() + TOGGLE_COOLDOWN_MS;
+  beginToggleCooldown();
+  setToggleCooldownUntil(until);
+}
 function syncLocalClockFromSession(session: ActiveSession | null) {
   const nextKey = buildSessionClockKey(session);
 
@@ -220,13 +231,18 @@ setSessionClockKey(null);
   };
 
 const pauseSession = async () => {
-  if (!activeSession || !API_BASE_URL) {
-    console.log("[SESSION PROVIDER] pauseSession aborted", {
-      hasActiveSession: !!activeSession,
-      API_BASE_URL,
-    });
+  if (
+    !activeSession ||
+    !API_BASE_URL ||
+    sessionActionLoading ||
+    actionLockRef.current ||
+    isToggleCoolingDown()
+  ) {
     return;
   }
+
+  actionLockRef.current = true;
+  beginToggleCooldown();
 
   try {
     setSessionActionLoading(true);
@@ -234,48 +250,63 @@ const pauseSession = async () => {
     const csrfToken =
       typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
-    const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/pause`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-      },
-      body: JSON.stringify({}),
-    });
+    const res = await fetch(
+      `${API_BASE_URL}/sessions/${activeSession.sessionId}/pause`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      }
+    );
 
     const data = await res.json().catch(() => ({}));
-    console.log("[SESSION PROVIDER] pause response:", data);
+
+    if (res.status === 429) {
+      console.warn("Pause request rate-limited");
+      return;
+    }
 
     if (!res.ok) {
       throw new Error(data?.error || data?.message || "Failed to pause session");
     }
-setActiveSession((prev) =>
-  prev
-    ? {
-        ...prev,
-        status: "PAUSED",
-        lastPauseTime: new Date().toISOString(),
-      }
-    : prev
-);
-setClockAnchorMs(null);
+
+    setActiveSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: "PAUSED",
+            lastPauseTime: new Date().toISOString(),
+          }
+        : prev
+    );
+    setClockAnchorMs(null);
+
     await refreshSession();
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to pause session:", error);
   } finally {
     setSessionActionLoading(false);
+    actionLockRef.current = false;
   }
 };
 
 const resumeSession = async () => {
-  if (!activeSession || !API_BASE_URL) {
-    console.log("[SESSION PROVIDER] resumeSession aborted", {
-      hasActiveSession: !!activeSession,
-      API_BASE_URL,
-    });
+  if (
+    !activeSession ||
+    !API_BASE_URL ||
+    sessionActionLoading ||
+    actionLockRef.current ||
+    isToggleCoolingDown()
+  ) {
     return;
   }
+
+  actionLockRef.current = true;
+  beginToggleCooldown();
 
   try {
     setSessionActionLoading(true);
@@ -283,37 +314,47 @@ const resumeSession = async () => {
     const csrfToken =
       typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
-    const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.sessionId}/resume`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-      },
-      body: JSON.stringify({}),
-    });
+    const res = await fetch(
+      `${API_BASE_URL}/sessions/${activeSession.sessionId}/resume`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({}),
+      }
+    );
 
     const data = await res.json().catch(() => ({}));
-    console.log("[SESSION PROVIDER] resume response:", data);
+
+    if (res.status === 429) {
+      console.warn("Resume request rate-limited");
+      return;
+    }
 
     if (!res.ok) {
       throw new Error(data?.error || data?.message || "Failed to resume session");
     }
-setActiveSession((prev) =>
-  prev
-    ? {
-        ...prev,
-        status: "ACTIVE",
-        lastPauseTime: null,
-      }
-    : prev
-);
-setClockAnchorMs(Date.now());
+
+    setActiveSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: "ACTIVE",
+            lastPauseTime: null,
+          }
+        : prev
+    );
+    setClockAnchorMs(Date.now());
+
     await refreshSession();
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to resume session:", error);
   } finally {
     setSessionActionLoading(false);
+    actionLockRef.current = false;
   }
 };
 

@@ -142,15 +142,21 @@ const {
     activeSession?.status,
     activeSession?.currentStudyMinutes,
   ]);
+const plannedDurationMinutes =
+  activeSession?.sessionGoalMinutes && activeSession.sessionGoalMinutes > 0
+    ? activeSession.sessionGoalMinutes
+    : durationMin;
 
-  const plannedDurationMinutes = durationMin;
-  const totalSeconds = plannedDurationMinutes * 60;
+const totalSeconds = plannedDurationMinutes * 60;
 
   const hasSession = !!activeSession;
   const isRunning = localTimer?.status === "ACTIVE";
   const isPaused = localTimer?.status === "PAUSED";
 
-const studySeconds = liveStudySeconds;
+const studySeconds =
+  liveStudySeconds > 0
+    ? liveStudySeconds
+    : (activeSession?.currentStudyMinutes ?? 0) * 60;
 
   const remainingSec = Math.max(0, totalSeconds - studySeconds);
   const display = formatHMS(remainingSec);

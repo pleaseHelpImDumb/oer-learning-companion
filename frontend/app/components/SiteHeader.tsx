@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "../providers/session-provider";
+
 function getAvatarIdFromUrl(url: string | undefined | null) {
   if (!url) return "profile0";
   const match = url.match(/(profile\d+)/);
@@ -12,16 +13,45 @@ export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [avatarUrl, setAvatarUrl] = useState(`profile0`);
   const [username, setUsername] = useState("username");
-  const { activeSession, liveStudySeconds } = useSession();
+
   const [totalTokensEarned, settotalTokensEarned] = useState(0);
-  const TRACKS = {
-    Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
-    Gaming: ["🕹️", "🎮", "🎲", "♟️"],
-    Music: ["🎧", "🎺", "🎸", "🥁"],
-    Pets: ["🐶", "🐱", "🐹", "🐰"],
-    Space: ["🚀", "🌕", "☄️", "👾"],
-    Sports: ["🏀", "⚽", "⚾", "🏈"],
-  } as const;
+const {
+  activeSession,
+  liveStudySeconds,
+  sessionActionLoading,
+  pauseSession,
+  resumeSession,
+  cancelSession,
+} = useSession();
+
+const handleTimerClick = async () => {
+  if (!activeSession || sessionActionLoading) return;
+
+  try {
+    if (activeSession.status === "ACTIVE") {
+      await pauseSession();
+      return;
+    }
+
+    if (activeSession.status === "PAUSED") {
+      await resumeSession();
+      return;
+    }
+  } catch (error) {
+    console.error("Failed to toggle timer:", error);
+  }
+};
+
+const timerIcon = !activeSession
+  ? "/assets/start_button/inactive.png" : activeSession.status === "PAUSED" ? "/assets/start_button/start.png" : "/assets/start_button/pause.png";
+const TRACKS = {
+  Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
+  Gaming: ["🕹️", "🎮", "🎲", "♟️"],
+  Music: ["🎧", "🎺", "🎸", "🥁"],
+  Pets: ["🐶", "🐱", "🐹", "🐰"],
+  Space: ["🚀", "🌕", "☄️", "👾"],
+  Sports: ["🏀", "⚽", "⚾", "🏈"],
+} as const;
 
   const TRACK_ID_TO_NAME: Record<number, TrackName> = {
     1: "Sports",
@@ -156,14 +186,15 @@ export default function SiteHeader() {
       }
     }
 
-    userInfo();
 
-    const handleProfileUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        track?: string;
-        avatarUrl?: string;
-        username?: string;
-      }>;
+
+  userInfo();
+const handleProfileUpdated = (event: Event) => {
+  const customEvent = event as CustomEvent<{
+    track?: string;
+    avatarUrl?: string;
+    username?: string;
+  }>;
 
       const nextTrack = customEvent.detail?.track;
       const nextAvatarUrl = customEvent.detail?.avatarUrl;
@@ -274,14 +305,36 @@ export default function SiteHeader() {
             </span>
           </div>
             */}
-          <div className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 lg:bg-transparent lg:p-0">
+          <div className="flex items-center rounded-md bg-white/5 px-2 py-2 lg:bg-transparent lg:p-0">
+<button
+  type="button"
+  onClick={cancelSession}
+  disabled={!activeSession || sessionActionLoading}
+  className="transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+>
             <Image
-              src="/timer.png"
-              alt="Clock"
-              width={28}
-              height={28}
-              className="rounded-full bg-yellow-500 p-1 sm:h-8 sm:w-8"
-            />
+            src="/assets/start_button/stop.png"
+            alt={"Stop session"}
+            width={70}
+            height={70}
+            className="p-1 sm:h-12 sm:w-12"
+          />
+          </button>
+
+<button
+  type="button"
+  onClick={handleTimerClick}
+  disabled={!activeSession || sessionActionLoading}
+  className="transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+          <Image
+            src={timerIcon}
+            alt={activeSession?.status === "ACTIVE" ? "Pause timer" : "Start timer"}
+            width={70}
+            height={70}
+            className="p-1 sm:h-12 sm:w-12"
+          />
+            </button>
             <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
               {timerDisplay}
             </span>

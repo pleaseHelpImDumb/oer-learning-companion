@@ -106,17 +106,17 @@ async function submitOnboarding(quickstart: boolean) {
 
   if (!quickstart) {
     if (!campus.trim()) {
-      alert("Campus is required for full submit");
+      alert("Campus is required for full submit - quick fail");
       return;
     }
 
     if (!course.trim()) {
-      alert("Course is required for full submit");
+      alert("Course is required for full submit - quick fail");
       return;
     }
 
     if (!customQuote.trim() && !selectedQuote.trim()) {
-      alert("Please either type a favorite quote or select one");
+      alert("Please either type a favorite quote or select one - quick fail");
       return;
     }
   }
@@ -260,7 +260,7 @@ return (
         This site uses cookies for the purpose of ad personalization
       </p>
 
-      <div className="w-full gap-3 pt-6 flex flex-row items-center">
+      {/*<div className="w-full gap-3 pt-6 flex flex-row items-center">
         <button
           type="button"
           onClick={() => submitOnboarding(true)}
@@ -276,7 +276,7 @@ return (
           >
             i
           </span>
-      </div>
+      </div>*/}
 
       <div className="grid w-full grid-cols-1 gap-4 pt-6 md:grid-cols-2">
         <div className="flex flex-col">
@@ -306,6 +306,46 @@ return (
         </div>
       </div>
 
+      <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-[1fr_auto_1fr] md:items-end">
+        <div>
+          <label className="mb-1 flex text-sm sm:text-base" htmlFor="enterQuote">
+            Type in your favorite quote (optional).
+          </label>
+          <input
+            id="enterQuote"
+            value={customQuote}
+            onChange={(e) => setCustomQuote(e.target.value)}
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            placeholder="Type a quote (optional)."
+          />
+        </div>
+
+        <p className="text-center text-sm font-medium">OR</p>
+
+        <div>
+          <label className="mb-1 flex text-sm sm:text-base" htmlFor="selectQuote">
+            Select a quote (optional).
+          </label>
+
+                <select
+                  id="selectQuote"
+                  value={customQuote}
+                  onChange={(e) => setCustomQuote(e.target.value)}
+                  className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                >
+                <option value="You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.">You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.</option>
+                <option value="Everything you want is on the other side of fear.">Everything you want is on the other side of fear.</option>
+                <option value="Success is the sum of small efforts, repeated day in and day out">Success is the sum of small efforts, repeated day in and day out</option>
+                <option value="Education is the passport to the future, for tomorrow belongs to those who prepare for it today.">Education is the passport to the future, for tomorrow belongs to those who prepare for it today.</option>
+                <option value="Life is short. Stop worrying about what might happen. Live in the moment. Follow your heart. Be with good people. Forget what hurt you – but never forget what it taught you.">Life is short. Stop worrying about what might happen. Live in the moment. Follow your heart. Be with good people. Forget what hurt you – but never forget what it taught you.</option>
+                <option value="Failure should be our teacher, not our undertaker. Failure is delay, not defeat. It is a temporary detour, not a dead end. Failure is something we can avoid only by saying nothing, doing nothing, and being nothing.">Failure should be our teacher, not our undertaker. Failure is delay, not defeat. It is a temporary detour, not a dead end. Failure is something we can avoid only by saying nothing, doing nothing, and being nothing.</option>
+                <option value="If you can’t fly, run. If you can’t run, walk. If you can’t walk, crawl. But by all means, keep going.">If you can’t fly, run. If you can’t run, walk. If you can’t walk, crawl. But by all means, keep going.</option>
+                <option value="What I've learned from running is that the time to push hard is when you're hurting like crazy and you want to give up. … Success is often just around the corner.">What I've learned from running is that the time to push hard is when you're hurting like crazy and you want to give up. … Success is often just around the corner.</option>
+                <option value="Taking a new step, uttering a new word, is what people fear most.">Taking a new step, uttering a new word, is what people fear most.</option>
+                <option value="I can see the sun, but even if I cannot see the sun, I know that it exists. And to know that the sun is there - that is living.">I can see the sun, but even if I cannot see the sun, I know that it exists. And to know that the sun is there - that is living.</option>
+          </select>
+        </div>
+      </div>
       <div className="grid w-full grid-cols-1 gap-4 pt-6 md:grid-cols-2">
 
         <div className="flex flex-col">
@@ -376,36 +416,6 @@ return (
           >
             i
           </span>
-        </div>
-      </div>
-
-      <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-[1fr_auto_1fr] md:items-end">
-        <div>
-          <label className="mb-1 flex text-sm sm:text-base" htmlFor="enterQuote">
-            Type in your favorite quote.
-          </label>
-          <input
-            id="enterQuote"
-            value={customQuote}
-            onChange={(e) => setCustomQuote(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Type a quote (optional)."
-          />
-        </div>
-
-        <p className="text-center text-sm font-medium">OR</p>
-
-        <div>
-          <label className="mb-1 flex text-sm sm:text-base" htmlFor="selectQuote">
-            Select a quote.
-          </label>
-          <input
-            id="selectQuote"
-            value={selectedQuote}
-            onChange={(e) => setSelectedQuote(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Select a quote (optional)."
-          />
         </div>
       </div>
 
@@ -509,7 +519,7 @@ return (
       <div className="w-full pt-6">
         <button
           type="button"
-          onClick={() => submitOnboarding(false)}
+          onClick={() => submitOnboarding(true)}
           disabled={loading}
           className="w-full rounded-lg bg-[#235937] px-4 py-4 text-xl font-semibold text-white disabled:opacity-50 sm:py-5 sm:text-3xl"
         >
