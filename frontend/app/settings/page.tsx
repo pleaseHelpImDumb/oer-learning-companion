@@ -103,47 +103,69 @@ async function submitOnboarding() {
     return;
   }
 
+  const checkInMinutes = parseInt(checkInInterval, 10);
+
+  if (Number.isNaN(checkInMinutes)) {
+    alert("Please enter a valid check-in interval");
+    return;
+  }
+
+  if (checkInMinutes < 2 || checkInMinutes > 15) {
+    alert("Check-in interval must be between 2 and 15 minutes");
+    return;
+  }
+
   if (!selectedTrackId) {
     alert("Please select a fun track");
     return;
   }
+
+  if (!nickname.trim()) {
+    alert("Nickname is required");
+    return;
+  }
+
+if (!customQuote.trim() && !selectedQuote.trim()) {
+  alert("Please either type a favorite quote or select one");
+  return;
+}
+
+const finalQuote = customQuote.trim() || selectedQuote.trim();
 
   if (!selectedAvatar) {
     alert("Please select an avatar");
     return;
   }
 
-const trackMap: Record<string, number> = {
-  Sports: 1,
-  Gaming: 2,
-  Art: 3,
-  Pets: 4,
-  Space: 5,
-  Music: 6,
-};
+  const trackMap: Record<string, number> = {
+    Sports: 1,
+    Gaming: 2,
+    Art: 3,
+    Pets: 4,
+    Space: 5,
+    Music: 6,
+  };
 
-const mappedTrackId = trackMap[selectedTrackId];
+  const mappedTrackId = trackMap[selectedTrackId];
 
-if (!mappedTrackId) {
-  alert("Please select a valid fun track");
-  return;
-}
+  if (!mappedTrackId) {
+    alert("Please select a valid fun track");
+    return;
+  }
 
-const avatarMatch = avatars.find((a) => a.id === selectedAvatar);
-const avatarUrl = avatarMatch?.src || "";
+  const avatarMatch = avatars.find((a) => a.id === selectedAvatar);
+  const avatarUrl = avatarMatch?.src || "";
 
-const checkInMinutes = parseInt(checkInInterval, 10);
-const finalQuote = favoriteQuote.trim() || selectedQuote.trim() || "";
 
-const payload = {
-  nickname: nickname.trim(),
-  favoriteQuote: finalQuote,
-  avatarUrl,
-  checkInIntervalMinutes: Number.isNaN(checkInMinutes) ? 15 : checkInMinutes,
-  trackId: mappedTrackId,
-  yearLevel: year || undefined,
-  major: major.trim() || undefined,
-};
+  const payload = {
+    nickname: nickname.trim(),
+    favoriteQuote: finalQuote,
+    avatarUrl,
+    checkInIntervalMinutes: checkInMinutes,
+    trackId: mappedTrackId,
+    yearLevel: year,
+    major: major,
+  };
 
   try {
     setLoading(true);
@@ -166,29 +188,29 @@ const payload = {
     console.log("ONBOARD STATUS:", res.status);
     console.log("ONBOARD RESPONSE:", data);
 
-if (!res.ok) {
-  alert(data.error || data.message || "Failed to save settings");
-  return;
-}
+    if (!res.ok) {
+      alert(data.error || data.message || "Failed to save settings");
+      return;
+    }
 
-localStorage.setItem("selectedTrackName", selectedTrackId || "");
-window.dispatchEvent(new Event("track-updated"));
-window.dispatchEvent(
-  new CustomEvent("profile-updated", {
-    detail: {
-      track: selectedTrackId,
-      avatarUrl,
-      username: nickname.trim(),
-    },
-  })
-);
+    localStorage.setItem("selectedTrackName", selectedTrackId || "");
+    window.dispatchEvent(new Event("track-updated"));
+    window.dispatchEvent(
+      new CustomEvent("profile-updated", {
+        detail: {
+          track: selectedTrackId,
+          avatarUrl,
+          username: nickname.trim(),
+        },
+      })
+    );
 
-showPopup({
-  type: "settingsSaved",
-  trackName: selectedTrackId,
-  message: "Your changes have been successfully made.",
-  autoCloseMs: 2500,
-});
+    showPopup({
+      type: "settingsSaved",
+      trackName: selectedTrackId,
+      message: "Your changes have been successfully made.",
+      autoCloseMs: 2500,
+    });
   } catch (error) {
     console.error("Onboarding/settings save error:", error);
     alert("Something went wrong while saving settings.");
@@ -293,7 +315,7 @@ const inputClass =
   "w-full rounded-md border border-[#c8c2b8] bg-white px-3 py-2 text-sm text-[#1f2937] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#235937] dark:border-white/30 dark:bg-transparent dark:text-white dark:shadow-none dark:focus:ring-[#7cc46b]";
 
 
-const labelClass = "mb-1 text-sm font-medium text-[#235937] dark:text-white";
+const labelClass = "mb-1 text-sm font-medium text-black dark:text-white";
   const currentTracks = darkMode ? tracks_dark : tracks;
 
 return (
@@ -354,6 +376,7 @@ return (
               className={inputClass}
               value={course}
               onChange={(e) => setCourse(e.target.value)}
+              placeholder="Enter course"
             />
           </div>
 
@@ -366,11 +389,23 @@ return (
               className={inputClass}
               value={campus}
               onChange={(e) => setCampus(e.target.value)}
+              placeholder="Enter campus"
             />
           </div>
-
+        <div className="flex flex-col">
+          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
+            Enter Major (optional).
+          </label>
+          <input
+            id="major"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            placeholder="Please enter your major (optional)."
+          />
+        </div>
           <div className="flex items-center gap-3 pt-1">
-            <span className="text-sm font-medium text-[#235937] dark:text-white">
+            <span className="text-sm font-medium text-black dark:text-white">
               Dark Theme
             </span>
             <button
@@ -390,7 +425,7 @@ return (
           </div>
 
           <div className="flex flex-col">
-            <label className={labelClass}>Select a check-in interval.*</label>
+            <label className={labelClass}>Select a check-in interval.</label>
             <select
               value={checkInInterval}
               onChange={(e) => setCheckInInterval(e.target.value)}
@@ -404,7 +439,7 @@ return (
           </div>
 
           <div className="flex flex-col">
-            <label className={labelClass}>Select a break duration.*</label>
+            <label className={labelClass}>Select a break duration.</label>
             <select
               value={breakDuration}
               onChange={(e) => setBreakDuration(e.target.value)}
@@ -421,14 +456,14 @@ return (
       <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-[1fr_auto_1fr] md:items-end">
         <div>
           <label className="mb-1 flex text-sm sm:text-base" htmlFor="enterQuote">
-            Type in your favorite quote (optional).
+            Type in your favorite quote.<span className="text-[#ff0000]">*</span>
           </label>
           <input
             id="enterQuote"
             value={customQuote}
             onChange={(e) => setCustomQuote(e.target.value)}
             className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Type a quote (optional)."
+            placeholder="Type a quote."
           />
         </div>
 
@@ -436,7 +471,7 @@ return (
 
         <div>
           <label className="mb-1 flex text-sm sm:text-base" htmlFor="selectQuote">
-            Select a quote (optional).
+            Select a quote.<span className="text-[#ff0000]">*</span>
           </label>
 
                 <select
@@ -445,7 +480,7 @@ return (
                   onChange={(e) => setCustomQuote(e.target.value)}
                   className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
-                <option value="You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.">You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.</option>
+                <option value="Select a quote.">Select a quote.</option>
                 <option value="Everything you want is on the other side of fear.">Everything you want is on the other side of fear.</option>
                 <option value="Success is the sum of small efforts, repeated day in and day out">Success is the sum of small efforts, repeated day in and day out</option>
                 <option value="Education is the passport to the future, for tomorrow belongs to those who prepare for it today.">Education is the passport to the future, for tomorrow belongs to those who prepare for it today.</option>
@@ -462,13 +497,14 @@ return (
         <div className="max-w-md">
           <div className="flex flex-col">
             <label htmlFor="nickname" className={labelClass}>
-              Select a nickname.
+              Select a nickname<span className="text-[#ff0000]">*</span>.
             </label>
             <input
               id="nickname"
               className={inputClass}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              placeholder="nickname"
             />
           </div>
         </div>
@@ -494,21 +530,9 @@ return (
               </label>
             ))}
           </div>
-        <div className="flex flex-col">
-          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
-            Enter Major.<span className="text-[#ff0000]">*</span>
-          </label>
-          <input
-            id="major"
-            value={major}
-            onChange={(e) => setMajor(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Please enter your course (optional)."
-          />
-        </div>
         </div>
         <div className="pt-2">
-          <span className="text-sm font-medium text-[#235937] dark:text-white">
+          <span className="text-sm font-medium text-black dark:text-white">
             Select your avatar.<span className="text-red-500">*</span>
           </span>
 
@@ -552,7 +576,7 @@ return (
         </div>
 
         <div className="pt-1">
-          <span className="text-sm font-medium text-[#235937] dark:text-white">
+          <span className="text-sm font-medium text-black dark:text-white">
             How do you like to have fun?<span className="text-red-500">*</span>
           </span>
 

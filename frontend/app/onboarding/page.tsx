@@ -104,24 +104,30 @@ async function submitOnboarding(quickstart: boolean) {
     return;
   }
 
+  if (!nickname.trim()) {
+    alert("Nickname is required");
+    return;
+  }
+
+  if (!customQuote.trim() && !selectedQuote.trim()) {
+    alert("Please either type a favorite quote or select one");
+    return;
+  }
+
   if (!quickstart) {
     if (!campus.trim()) {
-      alert("Campus is required for full submit - quick fail");
+      alert("Campus is required for full submit");
       return;
     }
 
     if (!course.trim()) {
-      alert("Course is required for full submit - quick fail");
-      return;
-    }
-
-    if (!customQuote.trim() && !selectedQuote.trim()) {
-      alert("Please either type a favorite quote or select one - quick fail");
+      alert("Course is required for full submit");
       return;
     }
   }
 
-  const favoriteQuote = customQuote.trim() || selectedQuote.trim() || "";
+  const favoriteQuote = customQuote.trim() || selectedQuote.trim();
+
   const trackMap: Record<string, number> = {
     sports: 1,
     games: 2,
@@ -140,6 +146,7 @@ async function submitOnboarding(quickstart: boolean) {
     yearLevel: year,
     major: major,
   };
+
 
   try {
     setLoading(true);
@@ -305,18 +312,29 @@ return (
           />
         </div>
       </div>
-
+              <div className="flex flex-col">
+          <label htmlFor="major" className="mb-1 text-sm sm:text-base p-t-2">
+            Enter Major.
+          </label>
+          <input
+            id="major"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            placeholder="Please enter your major."
+          />
+        </div>
       <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-[1fr_auto_1fr] md:items-end">
         <div>
           <label className="mb-1 flex text-sm sm:text-base" htmlFor="enterQuote">
-            Type in your favorite quote (optional).
+            Type in your favorite quote.<span className="text-[#ff0000]">*</span>
           </label>
           <input
             id="enterQuote"
             value={customQuote}
             onChange={(e) => setCustomQuote(e.target.value)}
             className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Type a quote (optional)."
+            placeholder="Type a quote."
           />
         </div>
 
@@ -324,7 +342,7 @@ return (
 
         <div>
           <label className="mb-1 flex text-sm sm:text-base" htmlFor="selectQuote">
-            Select a quote (optional).
+            Select a quote.<span className="text-[#ff0000]">*</span>
           </label>
 
                 <select
@@ -333,7 +351,7 @@ return (
                   onChange={(e) => setCustomQuote(e.target.value)}
                   className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
-                <option value="You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.">You have to set goals that are almost out of reach. If you set a goal that is attainable without much work or thought, you are stuck with something below your true talent and potential.</option>
+                <option value="Select a quote.">Select a quote.</option>
                 <option value="Everything you want is on the other side of fear.">Everything you want is on the other side of fear.</option>
                 <option value="Success is the sum of small efforts, repeated day in and day out">Success is the sum of small efforts, repeated day in and day out</option>
                 <option value="Education is the passport to the future, for tomorrow belongs to those who prepare for it today.">Education is the passport to the future, for tomorrow belongs to those who prepare for it today.</option>
@@ -347,19 +365,6 @@ return (
         </div>
       </div>
       <div className="grid w-full grid-cols-1 gap-4 pt-6 md:grid-cols-2">
-
-        <div className="flex flex-col">
-          <label htmlFor="major" className="mb-1 text-sm sm:text-base">
-            Enter Major.<span className="text-[#ff0000]">*</span>
-          </label>
-          <input
-            id="major"
-            value={major}
-            onChange={(e) => setMajor(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Please enter your major."
-          />
-        </div>
                 <div className="flex flex-col">
           <label htmlFor="year" className="mb-1 text-sm sm:text-base">
             Enter Year.<span className="text-[#ff0000]">*</span>
@@ -455,7 +460,7 @@ return (
       </div>
 
           <div className="pt-2">
-            <span className="text-sm font-medium text-[#235937] dark:text-white">
+            <span className="text-sm font-medium text-black dark:text-white">
               Select your avatar.<span className="text-red-500">*</span>
             </span>
 
@@ -488,7 +493,7 @@ return (
           </div>
 
           <div className="pt-1">
-            <span className="text-sm font-medium text-[#235937] dark:text-white">
+            <span className="text-sm font-medium text-black dark:text-white">
               How do you like to have fun?<span className="text-red-500">*</span>
             </span>
 
