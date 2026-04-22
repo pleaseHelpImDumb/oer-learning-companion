@@ -357,7 +357,7 @@ return (
             value={major}
             onChange={(e) => setMajor(e.target.value)}
             className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
-            placeholder="Please enter your course (optional)."
+            placeholder="Please enter your major."
           />
         </div>
                 <div className="flex flex-col">
