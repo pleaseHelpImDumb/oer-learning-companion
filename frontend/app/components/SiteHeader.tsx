@@ -9,22 +9,25 @@ function getAvatarIdFromUrl(url: string | undefined | null) {
   const match = url.match(/(profile\d+)/);
   return match ? match[1] : "profile0";
 }
+
 export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [avatarUrl, setAvatarUrl] = useState(`profile0`);
   const [username, setUsername] = useState("username");
 
   const [totalTokensEarned, settotalTokensEarned] = useState(0);
-const {
+  const {
   activeSession,
-  liveStudySeconds,
   sessionActionLoading,
+  liveStudySeconds,
   pauseSession,
   resumeSession,
   cancelSession,
 } = useSession();
-
-const handleTimerClick = async () => {
+const baseTokens = activeSession?.tokensAvailable ?? 0;
+const earnedSinceMount = Math.floor(liveStudySeconds / 300);
+const sessionTokensAvailable = activeSession?.tokensAvailable ?? 0;
+  const handleTimerClick = async () => {
   if (!activeSession || sessionActionLoading) return;
 
   try {
@@ -146,10 +149,10 @@ const TRACKS = {
           setTrack(userTrack as TrackName);
         }
 
-        const tokens = userData.user?.totalTokensEarned;
+        {/*const tokens = userData.user?.totalTokensEarned;
         if (typeof tokens === "number") {
           settotalTokensEarned(Math.max(0, tokens));
-        }
+        }*/}
 
         const rawUserBadges = userData.user?.userBadges;
 
@@ -226,7 +229,11 @@ const handleProfileUpdated = (event: Event) => {
         handleProfileUpdated as EventListener,
       );
     };
-  }, [API_BASE_URL, activeSession?.sessionId]);
+  }, [
+  API_BASE_URL,
+  activeSession?.sessionId,
+  activeSession?.status,
+]);
   const timerDisplay = activeSession
     ? formatElapsedSeconds(liveStudySeconds)
     : "0:00:00";
@@ -360,17 +367,17 @@ const handleProfileUpdated = (event: Event) => {
               </span>
 
               <div className="flex items-center gap-1 text-xl leading-none sm:text-2xl">
-                {TRACKS[track]
-                  .slice(0, Math.min(totalTokensEarned, 4))
-                  .map((emoji, i) => (
-                    <span key={i}>{emoji}</span>
-                  ))}
+{TRACKS[track]
+  .slice(0, Math.min(sessionTokensAvailable, 4))
+  .map((emoji, i) => (
+    <span key={i}>{emoji}</span>
+  ))}
 
-                {totalTokensEarned > 4 && (
-                  <span className="ml-1 text-sm font-semibold text-yellow-300 sm:text-base">
-                    +({totalTokensEarned - 4})
-                  </span>
-                )}
+{sessionTokensAvailable > 4 && (
+  <span className="ml-1 text-sm font-semibold text-yellow-300 sm:text-base">
+    +({sessionTokensAvailable - 4})
+  </span>
+)}
               </div>
             </div>
           </div>

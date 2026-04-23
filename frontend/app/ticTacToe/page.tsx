@@ -2,49 +2,55 @@
 
 import { useEffect, useState } from "react";
 import TicTacToe from "@/app/components/ticTacToe";
-
+import { useSession } from "@/app/providers/session-provider";
 export default function TicTacToePage() {
+  const { refreshSession } = useSession();
+  const GAME_COST = 4;
+
   const [tokensAvailable, setTokensAvailable] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/active`,
+          {
+            credentials: "include",
+          }
+        );
 
-useEffect(() => {
-  async function loadSession() {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/active`,
-        {
-          credentials: "include",
+        const text = await res.text();
+        console.log("sessions/active status:", res.status);
+        console.log("sessions/active raw response:", text);
+
+        if (!res.ok) {
+          setTokensAvailable(0);
+          return;
         }
-      );
 
-      const text = await res.text();
-      console.log("sessions/active status:", res.status);
-      console.log("sessions/active raw response:", text);
-
-      if (!res.ok) {
+        const data = JSON.parse(text);
+        setTokensAvailable(Number(data?.session?.tokensAvailable ?? 0));
+        setSessionId(data?.session?.sessionId ?? null);
+      } catch (error) {
+        console.error("Failed to load session:", error);
         setTokensAvailable(0);
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      const data = JSON.parse(text);
-      setTokensAvailable(Number(data?.session?.tokensAvailable ?? 0));
-    } catch (error) {
-      console.error("Failed to load session:", error);
-      setTokensAvailable(0);
-    } finally {
-      setLoading(false);
     }
-  }
 
-  loadSession();
-}, []);
+    loadSession();
+  }, []);
 
 async function spendGameTokens(amount: number): Promise<boolean> {
   try {
+    if (!sessionId) return false;
+
     const csrfToken = localStorage.getItem("csrfToken");
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/consume-token`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/${sessionId}/consume-token`,
       {
         method: "POST",
         credentials: "include",
@@ -65,7 +71,13 @@ async function spendGameTokens(amount: number): Promise<boolean> {
     }
 
     const data = JSON.parse(text);
-    setTokensAvailable(Number(data?.session?.tokensAvailable ?? 0));
+
+    if (!data?.session) {
+      return false;
+    }
+
+    setTokensAvailable(Number(data.session.tokensAvailable ?? 0));
+    await refreshSession(); // <- add this
     return true;
   } catch (error) {
     console.error("Failed to spend tokens:", error);
@@ -84,7 +96,7 @@ async function spendGameTokens(amount: number): Promise<boolean> {
   return (
     <TicTacToe
       availableTokens={tokensAvailable}
-      requiredTokens={4}
+      requiredTokens={GAME_COST}
       onSpendTokens={spendGameTokens}
     />
   );

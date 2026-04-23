@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
 type Cell = "X" | "O" | null;
 
 type TicTacToeProps = {
@@ -34,7 +33,10 @@ export default function TicTacToe({
   const [isProcessingUnlock, setIsProcessingUnlock] = useState(false);
   const [unlockError, setUnlockError] = useState("");
   const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
+const [isProcessingReset, setIsProcessingReset] = useState(false);
+const lastResetAtRef = useRef(0);
 
+const RESET_COOLDOWN_MS = 1000;
   const hasEnoughTokens = availableTokens >= requiredTokens;
   const isLocked = !isUnlocked;
 
@@ -227,11 +229,46 @@ export default function TicTacToe({
     setIsUnlocked(false);
   }
 
-  function resetGame() {
+async function resetGame() {
+  if (isProcessingReset || isProcessingUnlock) return;
+
+  const now = Date.now();
+  if (now - lastResetAtRef.current < RESET_COOLDOWN_MS) return;
+
+  if (!hasEnoughTokens) {
+    setUnlockError(`You need at least ${requiredTokens} tokens to reset.`);
+    return;
+  }
+
+  lastResetAtRef.current = now;
+  setIsProcessingReset(true);
+  setUnlockError("");
+
+  try {
+    let success = true;
+
+    if (onSpendTokens) {
+      const result = await onSpendTokens(requiredTokens);
+      success = Boolean(result);
+    }
+
+    if (!success) {
+      setUnlockError("Could not spend tokens. Please try again.");
+      return;
+    }
+
     setBoard(Array(9).fill(null));
     setIsPlayerTurn(true);
+    setIsUnlocked(true);
+    setShowEntryModal(false);
+
     setTimeout(() => focusCell(0), 0);
+  } catch (error) {
+    setUnlockError("Could not spend tokens. Please try again.");
+  } finally {
+    setIsProcessingReset(false);
   }
+}
 
   function getCellLabel(cell: Cell, index: number) {
     const cellNumber = index + 1;
@@ -314,13 +351,18 @@ export default function TicTacToe({
           Use mouse clicks, Tab, Enter, Space, and arrow keys to play.
         </p>
 
-        <button
-          type="button"
-          onClick={resetGame}
-          className="mt-6 w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 dark:bg-emerald-600 dark:text-slate-950 dark:hover:bg-emerald-500"
-        >
-          Reset Game
-        </button>
+<button
+  type="button"
+  onClick={resetGame}
+  disabled={isProcessingReset || isProcessingUnlock || !hasEnoughTokens}
+  className="mt-6 w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-emerald-600 dark:text-slate-950 dark:hover:bg-emerald-500"
+>
+  {isProcessingReset
+    ? "Resetting..."
+    : hasEnoughTokens
+      ? `Reset Game (-${requiredTokens})`
+      : `Need ${requiredTokens} tokens to reset`}
+</button>
       </div>
 
       {showEntryModal && (

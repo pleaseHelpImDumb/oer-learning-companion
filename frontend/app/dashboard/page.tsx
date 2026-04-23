@@ -55,7 +55,6 @@ export default function Home() {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   const { startSession, sessionActionLoading } = useSession();
-
   const renderCount = useRef(0);
   renderCount.current += 1;
 

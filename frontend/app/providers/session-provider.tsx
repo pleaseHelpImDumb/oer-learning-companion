@@ -50,6 +50,15 @@ const { showPopup } = usePopup();
 const lastToggleAtRef = useRef(0);
 const TOGGLE_COOLDOWN_MS = 1000;
 const [toggleCooldownUntil, setToggleCooldownUntil] = useState(0);
+const displayTokensAvailable = useMemo(() => {
+  if (!activeSession) return 0;
+
+  const earnedTokens = Math.floor(liveStudySeconds / 300);
+  const spentTokens =
+    Math.max(0, earnedTokens - (activeSession.tokensAvailable ?? 0));
+
+  return Math.max(0, earnedTokens - spentTokens);
+}, [activeSession, liveStudySeconds]);
 useEffect(() => {
   if (!activeSession) return;
   if (activeSession.status !== "ACTIVE") return;
