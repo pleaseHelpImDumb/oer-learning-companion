@@ -10,6 +10,7 @@ type ActiveSession = {
   lastPauseTime?: string | null;
   totalPausedMinutes: number;
   currentStudyMinutes?: number;
+  currentStudySeconds?: number;
   tokensAvailable?: number;
   tokensSpent?: number;
   sessionGoalMinutes?: number | null;
@@ -96,7 +97,6 @@ function beginToggleCooldown() {
 }
 function syncLocalClockFromSession(session: ActiveSession | null) {
   const nextKey = buildSessionClockKey(session);
-
   if (!session) {
     setSessionClockKey(null);
     setLiveStudySeconds(0);
@@ -104,17 +104,19 @@ function syncLocalClockFromSession(session: ActiveSession | null) {
     return;
   }
 
-  const coarseSeconds = (session.currentStudyMinutes ?? 0) * 60;
+  const restoredSeconds =
+    session.currentStudySeconds ??
+    (session.currentStudyMinutes ?? 0) * 60;
 
   setSessionClockKey((prevKey) => {
     const isSameSession = prevKey === nextKey;
 
     if (!isSameSession) {
       // brand new session: initialize from backend
-      setLiveStudySeconds(coarseSeconds);
+      setLiveStudySeconds(restoredSeconds);
     } else {
       // same session: NEVER let backend minute rounding pull time backward
-      setLiveStudySeconds((prevSeconds) => Math.max(prevSeconds, coarseSeconds));
+      setLiveStudySeconds((prevSeconds) => Math.max(prevSeconds, restoredSeconds));
     }
 
     return nextKey;

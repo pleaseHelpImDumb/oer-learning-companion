@@ -105,19 +105,25 @@ const getActiveSession = async (req, res, next) => {
 
    // Calculate current elapsed time
     const now = new Date();
-    const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 1000 / 60,
+    const totalElapsedSeconds = Math.floor(
+      (now - new Date(session.startTime)) / 1000,
     );
 
-    let currentPauseDuration = 0;
+    let currentPauseSeconds = 0;
     if (session.status === "PAUSED" && session.lastPauseTime) {
-      currentPauseDuration = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000 / 60,
+      currentPauseSeconds = Math.floor(
+        (now - new Date(session.lastPauseTime)) / 1000,
       );
     }
 
-    const studyMinutes =
-      totalElapsed - session.totalPausedMinutes - currentPauseDuration;
+    const totalPausedSeconds = (session.totalPausedMinutes || 0) * 60;
+
+    const studySeconds = Math.max(
+      0,
+      totalElapsedSeconds - totalPausedSeconds - currentPauseSeconds,
+    );
+
+    const studyMinutes = Math.floor(studySeconds / 60);
 
     const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
     const tokensAvailable = Math.max(0, tokensEarned - session.tokensSpent);
@@ -131,6 +137,7 @@ const getActiveSession = async (req, res, next) => {
        lastPauseTime: session.lastPauseTime,
        totalPausedMinutes: session.totalPausedMinutes,
        currentStudyMinutes: studyMinutes,
+       currentStudySeconds: studySeconds,
        tokensAvailable: tokensAvailable,
        sessionGoalMinutes: session.sessionGoalMinutes,
      },
