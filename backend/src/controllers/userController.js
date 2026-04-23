@@ -372,7 +372,6 @@ const onboard = async (req, res, next) => {
 const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
-
     const user = await prisma.user.findUnique({
       where: { userId },
       include: {
@@ -390,11 +389,6 @@ const getCurrentUser = async (req, res, next) => {
           },
         },
         userStats: true,
-        userTracks: {
-          include: {
-            hobbyTrack: true,
-          },
-        },
       },
     });
 
@@ -411,9 +405,6 @@ const getCurrentUser = async (req, res, next) => {
       iconUrl: ub.badge.iconUrl,
       unlockedAt: ub.unlockedAt,
     }));
-
-    const track = user.userTracks?.[0]?.hobbyTrack ?? null;
-
     res.status(StatusCodes.OK).json({
       user: {
         userId: user.userId,
@@ -426,9 +417,9 @@ const getCurrentUser = async (req, res, next) => {
         checkinIntervalMinutes: user.checkinIntervalMinutes,
         onboardingCompleted: user.onboardingCompleted,
         createdAt: user.createdAt,
-        track,
+        track: user.track,
         totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
-        badges,
+        badges: badges,
       },
     });
   } catch (err) {
