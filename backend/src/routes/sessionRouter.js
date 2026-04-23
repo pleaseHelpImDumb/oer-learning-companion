@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../middleware/jwtMiddleware.js");
 
 const {
   startSession,
@@ -27,6 +28,6 @@ router.get("/:id/notes", getSessionNotes); // get notes
 
 router.post("/:id/break", createWellnessCheck); // wellness check
 
-router.post("/:id/consume-token", spendToken); // end early, no rewards
+router.post("/:id/consume-token", authMiddleware, spendToken);
 
 module.exports = router;

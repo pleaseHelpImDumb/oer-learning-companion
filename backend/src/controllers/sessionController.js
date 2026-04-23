@@ -146,49 +146,77 @@ const getActiveSession = async (req, res, next) => {
 const spendToken = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const sessionId = Number(req.params.id);
+    const requestedCost = Number(req.body?.cost ?? 0);
+
+    if (!Number.isInteger(sessionId) || sessionId <= 0) {
+      return res.status(400).json({ message: "Invalid session id" });
+    }
+
+    if (!Number.isInteger(requestedCost) || requestedCost <= 0) {
+      return res.status(400).json({ message: "Invalid token cost" });
+    }
+
     const session = await prisma.studySession.findFirst({
       where: {
+        sessionId,
         userId,
         status: { in: ["ACTIVE", "PAUSED"] },
       },
     });
 
     if (!session) {
-      return res.json({ message: "No session found", session: null });
+      return res.status(404).json({ message: "No matching active session found" });
     }
 
     const now = new Date();
     const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 60000,
+      (now - new Date(session.startTime)) / 1000 / 60
     );
 
-    const tokensEarned = Math.floor(totalElapsed / 5);
-    const tokensAvailable = tokensEarned - session.tokensSpent;
+    let currentPauseDuration = 0;
+    if (session.status === "PAUSED" && session.lastPauseTime) {
+      currentPauseDuration = Math.floor(
+        (now - new Date(session.lastPauseTime)) / 1000 / 60
+      );
+    }
 
-    if (tokensAvailable < COST_PER_GAME) {
-      return res.json({ message: "Not enough tokens" });
+    const studyMinutes =
+      totalElapsed - session.totalPausedMinutes - currentPauseDuration;
+
+    const tokensEarned = Math.floor(studyMinutes / 5);
+    const tokensAvailable = Math.max(0, tokensEarned - session.tokensSpent);
+
+    if (tokensAvailable < requestedCost) {
+      return res.status(400).json({
+        message: "Not enough tokens",
+        session: {
+          sessionId: session.sessionId,
+          status: session.status,
+          tokensAvailable,
+        },
+      });
     }
 
     const updatedSession = await prisma.studySession.update({
-      where: {
-        id: session.id,
-      },
+      where: { sessionId: session.sessionId },
       data: {
         tokensSpent: {
-          increment: 1,
+          increment: requestedCost,
         },
       },
     });
 
     return res.json({
-      message: "Token spent",
+      message: "Tokens spent",
       session: {
-        sessionId: updatedSession.id,
+        sessionId: updatedSession.sessionId,
         status: updatedSession.status,
-        tokensAvailable: tokensAvailable - 1,
+        tokensAvailable: tokensAvailable - requestedCost,
       },
     });
   } catch (err) {
+    console.error("spendToken error:", err);
     next(err);
   }
 };
