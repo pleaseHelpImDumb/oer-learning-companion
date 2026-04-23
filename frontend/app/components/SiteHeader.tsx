@@ -16,17 +16,19 @@ export default function SiteHeader() {
   const [username, setUsername] = useState("username");
 
   const [totalTokensEarned, settotalTokensEarned] = useState(0);
-  const {
+const {
   activeSession,
   sessionActionLoading,
   liveStudySeconds,
+  displayTokensAvailable,
   pauseSession,
   resumeSession,
   cancelSession,
 } = useSession();
+
+const sessionTokensAvailable = activeSession ? displayTokensAvailable : 0;
 const baseTokens = activeSession?.tokensAvailable ?? 0;
 const earnedSinceMount = Math.floor(liveStudySeconds / 300);
-const sessionTokensAvailable = activeSession?.tokensAvailable ?? 0;
   const handleTimerClick = async () => {
   if (!activeSession || sessionActionLoading) return;
 
@@ -240,7 +242,7 @@ const handleProfileUpdated = (event: Event) => {
   useEffect(() => {
     const syncTrackFromStorage = () => {
       const savedTrack = localStorage.getItem("selectedTrackName");
-
+      console.log(`"TRACK: ${savedTrack}"`)
       if (
         savedTrack &&
         (savedTrack === "Sports" ||

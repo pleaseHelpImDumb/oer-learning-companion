@@ -11,6 +11,7 @@ type ActiveSession = {
   totalPausedMinutes: number;
   currentStudyMinutes?: number;
   tokensAvailable?: number;
+  tokensSpent?: number;
   sessionGoalMinutes?: number | null;
 };
 
@@ -19,6 +20,7 @@ type SessionContextType = {
   loading: boolean;
   sessionActionLoading: boolean;
   liveStudySeconds: number;
+  displayTokensAvailable: number;
   refreshSession: () => Promise<void>;
   startSession: (sessionGoalMinutes: number) => Promise<void>;
   cancelSession: () => Promise<void>;
@@ -53,9 +55,8 @@ const [toggleCooldownUntil, setToggleCooldownUntil] = useState(0);
 const displayTokensAvailable = useMemo(() => {
   if (!activeSession) return 0;
 
+  const spentTokens = activeSession.tokensSpent ?? 0;
   const earnedTokens = Math.floor(liveStudySeconds / 300);
-  const spentTokens =
-    Math.max(0, earnedTokens - (activeSession.tokensAvailable ?? 0));
 
   return Math.max(0, earnedTokens - spentTokens);
 }, [activeSession, liveStudySeconds]);
@@ -89,8 +90,8 @@ function isToggleCoolingDown() {
   return Date.now() - lastToggleAtRef.current < TOGGLE_COOLDOWN_MS;
 }
 function beginToggleCooldown() {
+  lastToggleAtRef.current = Date.now();
   const until = Date.now() + TOGGLE_COOLDOWN_MS;
-  beginToggleCooldown();
   setToggleCooldownUntil(until);
 }
 function syncLocalClockFromSession(session: ActiveSession | null) {
@@ -484,6 +485,7 @@ const value = useMemo(
     loading,
     sessionActionLoading,
     liveStudySeconds,
+    displayTokensAvailable,
     refreshSession,
     startSession,
     cancelSession,
@@ -491,7 +493,13 @@ const value = useMemo(
     resumeSession,
     completeSession,
   }),
-  [activeSession, loading, sessionActionLoading, liveStudySeconds]
+  [
+    activeSession,
+    loading,
+    sessionActionLoading,
+    liveStudySeconds,
+    displayTokensAvailable,
+  ]
 );
 
   console.log("[SESSION PROVIDER] context value", value);
