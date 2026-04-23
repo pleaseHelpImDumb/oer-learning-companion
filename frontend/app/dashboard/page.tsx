@@ -246,32 +246,6 @@ export default function Home() {
 
           <div className="mt-5 flex w-full max-w-xs flex-col gap-10">
             <div className="flex flex-col gap-2 text-left">
-              <label
-                className="font-medium text-white"
-                htmlFor="numberOfSelect"
-              >
-                Select Number Of
-              </label>
-              <select
-                id="numberOfSelect"
-                defaultValue="breaks"
-                className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="breaks">Breaks</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-2 text-left">
               <label className="font-medium text-white" htmlFor="breakSelect">
                 Select Session Duration<span className="text-[#ff0000]">*</span>
               </label>
@@ -294,6 +268,31 @@ export default function Home() {
                 <option value="1:20:00">80 mins</option>
                 <option value="1:40:00">100 mins</option>
                 <option value="2:00:00">120 mins</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 text-left">
+              <label
+                className="font-medium text-white"
+                htmlFor="numberOfSelect"
+              >
+                Select Number Of
+              </label>
+              <select
+                id="numberOfSelect"
+                defaultValue="breaks"
+                className="w-full appearance-none rounded-md border border-white/40 bg-[#1f2a3a] px-4 py-3 text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="breaks">Breaks</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
               </select>
             </div>
           </div>
