@@ -1,21 +1,13 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
+import { useState} from "react";
 import { useSession } from "../providers/session-provider";
-
-function getAvatarIdFromUrl(url: string | undefined | null) {
-  if (!url) return "profile0";
-  const match = url.match(/(profile\d+)/);
-  return match ? match[1] : "profile0";
-}
+import { useUser } from "../providers/user-provider";
 
 export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const [avatarUrl, setAvatarUrl] = useState(`profile0`);
-  const [username, setUsername] = useState("username");
-
-  const [totalTokensEarned, settotalTokensEarned] = useState(0);
+const { track, avatarUrl, username, latestBadge } = useUser();
 const {
   activeSession,
   sessionActionLoading,
@@ -58,46 +50,7 @@ const TRACKS = {
   Sports: ["🏀", "⚽", "⚾", "🏈"],
 } as const;
 
-  const TRACK_ID_TO_NAME: Record<number, TrackName> = {
-    1: "Sports",
-    2: "Gaming",
-    3: "Art",
-    4: "Pets",
-    5: "Space",
-    6: "Music",
-  };
-
-  function normalizeTrack(user: any): TrackName | null {
-    const rawTrack = user?.track;
-
-    if (typeof rawTrack === "string" && rawTrack in TRACKS) {
-      return rawTrack as TrackName;
-    }
-
-    if (
-      rawTrack &&
-      typeof rawTrack === "object" &&
-      typeof rawTrack.name === "string" &&
-      rawTrack.name in TRACKS
-    ) {
-      return rawTrack.name as TrackName;
-    }
-
-    if (typeof user?.trackId === "number" && TRACK_ID_TO_NAME[user.trackId]) {
-      return TRACK_ID_TO_NAME[user.trackId];
-    }
-
-    return null;
-  }
-
-  type TrackName = keyof typeof TRACKS;
-
-  const [track, setTrack] = useState<TrackName>("Space");
   const [open, setOpen] = useState(false);
-  const [latestBadge, setLatestBadge] = useState<{
-    emoji: string;
-    name: string;
-  } | null>(null);
 
   function formatElapsedSeconds(totalSeconds: number) {
     const safe = Math.max(0, Math.floor(totalSeconds));
@@ -108,166 +61,13 @@ const TRACKS = {
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
-  useEffect(() => {
-    async function userInfo() {
-      try {
-        const userRes = await fetch(`${API_BASE_URL}/users/profile`, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        const userData = await userRes.json();
-
-        console.log("[HEADER] full profile response:", userData);
-        console.log(
-          "[HEADER] totalTokensEarned from backend:",
-          userData.user?.totalTokensEarned,
-        );
-
-        if (!userRes.ok) {
-          console.log("response not ok");
-          return;
-        }
-
-        const user = userData.user;
-        const userTrack = normalizeTrack(user);
-
-        const rawAvatarUrl = userData.user?.avatarUrl;
-        const name =
-          userData.user?.nickname ||
-          userData.user?.displayName ||
-          userData.user?.username;
-        setAvatarUrl(getAvatarIdFromUrl(rawAvatarUrl));
-
-        if (typeof name === "string" && name.trim() !== "") {
-          setUsername(name);
-        }
-
-        if (userTrack && userTrack in TRACKS) {
-          setTrack(userTrack as TrackName);
-        }
-
-        {/*const tokens = userData.user?.totalTokensEarned;
-        if (typeof tokens === "number") {
-          settotalTokensEarned(Math.max(0, tokens));
-        }*/}
-
-        const rawUserBadges = userData.user?.userBadges;
-
-        if (Array.isArray(rawUserBadges) && rawUserBadges.length > 0) {
-          const sortedBadges = [...rawUserBadges].sort((a, b) => {
-            const aTime = a?.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
-            const bTime = b?.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
-            return bTime - aTime;
-          });
-
-          const newestBadge = sortedBadges[0]?.badge;
-
-          if (
-            newestBadge &&
-            typeof newestBadge.emoji === "string" &&
-            newestBadge.emoji.trim() !== ""
-          ) {
-            setLatestBadge({
-              emoji: newestBadge.emoji,
-              name:
-                typeof newestBadge.name === "string" &&
-                newestBadge.name.trim() !== ""
-                  ? newestBadge.name
-                  : "Latest Badge",
-            });
-          } else {
-            setLatestBadge(null);
-          }
-        } else {
-          setLatestBadge(null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
-      }
-    }
-
-
-
-  userInfo();
-const handleProfileUpdated = (event: Event) => {
-  const customEvent = event as CustomEvent<{
-    track?: string;
-    avatarUrl?: string;
-    username?: string;
-  }>;
-
-      const nextTrack = customEvent.detail?.track;
-      const nextAvatarUrl = customEvent.detail?.avatarUrl;
-      const nextUsername = customEvent.detail?.username;
-
-      if (nextTrack && nextTrack in TRACKS) {
-        setTrack(nextTrack as TrackName);
-      }
-
-      if (nextAvatarUrl) {
-        setAvatarUrl(getAvatarIdFromUrl(nextAvatarUrl));
-      }
-
-      if (nextUsername && nextUsername.trim() !== "") {
-        setUsername(nextUsername);
-      }
-
-      void userInfo();
-    };
-
-    window.addEventListener(
-      "profile-updated",
-      handleProfileUpdated as EventListener,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "profile-updated",
-        handleProfileUpdated as EventListener,
-      );
-    };
-  }, [
-  API_BASE_URL,
-  activeSession?.sessionId,
-  activeSession?.status,
-]);
   const timerDisplay = activeSession
     ? formatElapsedSeconds(liveStudySeconds)
     : "0:00:00";
-  useEffect(() => {
-    const syncTrackFromStorage = () => {
-      const savedTrack = localStorage.getItem("selectedTrackName");
-      console.log(`"TRACK: ${savedTrack}"`)
-      if (
-        savedTrack &&
-        (savedTrack === "Sports" ||
-          savedTrack === "Gaming" ||
-          savedTrack === "Art" ||
-          savedTrack === "Pets" ||
-          savedTrack === "Space" ||
-          savedTrack === "Music")
-      ) {
-        setTrack(savedTrack);
-      }
-    };
 
-    syncTrackFromStorage();
-
-    window.addEventListener("track-updated", syncTrackFromStorage);
-
-    return () => {
-      window.removeEventListener("track-updated", syncTrackFromStorage);
-    };
-  }, []);
-  useEffect(() => {
-    console.log("[HEADER] totalTokensEarned state:", totalTokensEarned);
-  }, [totalTokensEarned]);
-
+const resolvedTrack = track ?? "Sports";
+const resolvedAvatarUrl = avatarUrl || "profile0";
+const resolvedUsername = username || "username";
   return (
     <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#000d2a] text-white">
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-3 sm:px-6 items-center lg:grid lg:grid-cols-[220px_minmax(0,1fr)_220px] lg:items-center lg:gap-6">
@@ -282,7 +82,7 @@ const handleProfileUpdated = (event: Event) => {
               onClick={() => setOpen(!open)}
             >
               <Image
-                src={`/assets/profiles/${avatarUrl}.png`}
+                src={`/assets/profiles/${resolvedAvatarUrl}.png`}
                 alt="Profile Icon"
                 width={60}
                 height={60}
@@ -354,7 +154,7 @@ const handleProfileUpdated = (event: Event) => {
               My Goals
             </span>
             <Image
-              src={`/assets/progress_header/${track}/0.png`}
+              src={`/assets/progress_header/${resolvedTrack}/0.png`}
               alt="Progress: 0%"
               width={260}
               height={52}
@@ -369,7 +169,7 @@ const handleProfileUpdated = (event: Event) => {
               </span>
 
               <div className="flex items-center gap-1 text-xl leading-none sm:text-2xl">
-{TRACKS[track]
+{TRACKS[resolvedTrack]
   .slice(0, Math.min(sessionTokensAvailable, 4))
   .map((emoji, i) => (
     <span key={i}>{emoji}</span>
@@ -407,7 +207,7 @@ const handleProfileUpdated = (event: Event) => {
 
         <div className="flex items-center justify-center align-center">
           <Link className="pr-[5%]" href="/dashboard">
-            {username}
+            {resolvedUsername}
           </Link>
           <div className="relative hidden lg:flex lg:justify-end">
             <button
@@ -415,7 +215,7 @@ const handleProfileUpdated = (event: Event) => {
               onClick={() => setOpen(!open)}
             >
               <Image
-                src={`/assets/profiles/${avatarUrl}.png`}
+                src={`/assets/profiles/${resolvedAvatarUrl}.png`}
                 alt="Profile Icon"
                 width={60}
                 height={60}
@@ -429,7 +229,7 @@ const handleProfileUpdated = (event: Event) => {
                     className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200"
                     href="/dashboard"
                   >
-                    {username}
+                    {resolvedUsername}
                   </Link>
                   <Link
                     href="/settings"

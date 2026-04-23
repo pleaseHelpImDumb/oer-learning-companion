@@ -13,6 +13,7 @@ import LayoutInner from "./LayoutInner";
 import CheckInController from "./CheckInController";
 import SessionResumeModalController from "./SessionResumeModalController";
 import { PopupProvider } from "../providers/popup-provider";
+import { UserProvider } from "../providers/user-provider";
 export default function LayoutWrapper({
   children,
 }: {
@@ -116,9 +117,10 @@ useEffect(() => {
     };
   }, [hideLayout]);
 
-  return (
-    <PopupProvider>
-      <SessionProvider shouldCheckSession={!hideLayout}>
+return (
+  <PopupProvider>
+    <SessionProvider shouldCheckSession={!hideLayout}>
+      <UserProvider>
         <StuckAssistantProvider>
           <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
 
@@ -126,7 +128,8 @@ useEffect(() => {
           {!hideLayout && <SessionResumeModalController />}
           {!hideLayout && <PopupRenderer />}
         </StuckAssistantProvider>
-      </SessionProvider>
-    </PopupProvider>
-  );
+      </UserProvider>
+    </SessionProvider>
+  </PopupProvider>
+);
 }

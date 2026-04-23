@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import { useUser } from "../providers/user-provider";
 export default function Home() {
+  const { refreshUser } = useUser();
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -136,17 +137,17 @@ async function submitOnboarding(quickstart: boolean) {
     space: 5,
     music: 6,
   };
-
-  const payload = {
-    nickname: nickname.trim(),
-    favoriteQuote,
-    avatarUrl: selectedAvatar || "",
-    checkInIntervalMinutes: minutes,
-    trackId: trackMap[selectedTrackId],
-    yearLevel: year,
-    major: major,
-  };
-
+const avatarMatch = avatars.find((a) => a.id === selectedAvatar);
+const avatarUrl = avatarMatch?.src || "";
+const payload = {
+  nickname: nickname.trim(),
+  favoriteQuote,
+  avatarUrl,
+  checkInIntervalMinutes: minutes,
+  trackId: trackMap[selectedTrackId],
+  yearLevel: year,
+  major: major,
+};
 
   try {
     setLoading(true);
@@ -171,7 +172,8 @@ async function submitOnboarding(quickstart: boolean) {
       alert(data.error || data.message || "Onboarding failed");
       return;
     }
-
+      await refreshUser();
+      router.push("/dashboard");
     // optional: use returned data
     console.log("Updated user:", data.user);
     console.log("Selected track:", data.selectedTrack);

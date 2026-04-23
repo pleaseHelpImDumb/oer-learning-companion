@@ -372,25 +372,26 @@ const onboard = async (req, res, next) => {
 const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const user = await prisma.user.findUnique({
-      where: { userId },
-      include: {
-        userBadges: {
+const user = await prisma.user.findUnique({
+  where: { userId },
+  include: {
+    userBadges: {
+      select: {
+        unlockedAt: true,
+        badge: {
           select: {
-            unlockedAt: true,
-            badge: {
-              select: {
-                badgeId: true,
-                name: true,
-                description: true,
-                iconUrl: true,
-              },
-            },
+            badgeId: true,
+            name: true,
+            description: true,
+            iconUrl: true,
           },
         },
-        userStats: true,
       },
-    });
+    },
+    userStats: true,
+    track: true,
+  },
+});
 
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -405,23 +406,31 @@ const getCurrentUser = async (req, res, next) => {
       iconUrl: ub.badge.iconUrl,
       unlockedAt: ub.unlockedAt,
     }));
-    res.status(StatusCodes.OK).json({
-      user: {
-        userId: user.userId,
-        username: user.username,
-        displayName: user.nickname,
-        email: user.email,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        favoriteQuote: user.favoriteQuote,
-        checkinIntervalMinutes: user.checkinIntervalMinutes,
-        onboardingCompleted: user.onboardingCompleted,
-        createdAt: user.createdAt,
-        track: user.track,
-        totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
-        badges: badges,
-      },
-    });
+res.status(StatusCodes.OK).json({
+  user: {
+    userId: user.userId,
+    username: user.username,
+    displayName: user.nickname,
+    nickname: user.nickname,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    favoriteQuote: user.favoriteQuote,
+    checkinIntervalMinutes: user.checkinIntervalMinutes,
+    onboardingCompleted: user.onboardingCompleted,
+    createdAt: user.createdAt,
+    trackId: user.trackId,
+    track: user.hobbyTrack
+      ? {
+          id: user.hobbyTrack.trackId,
+          name: user.hobbyTrack.name,
+          description: user.hobbyTrack.description,
+        }
+      : null,
+    totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
+    badges: user.badges,
+  },
+});
   } catch (err) {
     next(err);
   }
