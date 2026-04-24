@@ -22,7 +22,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
 router.post("/onboard", authMiddleware, onboard);
-router.post("/logout", authMiddleware, logout);
+router.post("/logout", logout);
 router.get("/profile", authMiddleware, getCurrentUser);
 
 router.post("/add-break", authMiddleware, incrementBreakCount);

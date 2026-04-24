@@ -286,10 +286,14 @@ export default function SiteHeader() {
                   <button
                     onClick={async () => {
                       try {
-                        await fetch(`${API_BASE_URL}/users/logout`, {
-                          method: "POST",
-                          credentials: "include",
-                        });
+                        const res = await fetch(
+                          `${API_BASE_URL}/users/logout`,
+                          {
+                            method: "POST",
+                            credentials: "include",
+                          },
+                        );
+                        console.log(res);
                       } catch (err) {
                         console.error("Logout error:", err);
                       } finally {

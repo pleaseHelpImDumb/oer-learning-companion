@@ -80,12 +80,6 @@ export default function Home() {
           }),
         ]);
 
-        // redirect away if no profile
-        if (!profileRes.ok) {
-          window.location.href = "/";
-          return;
-        }
-
         const profileData = await profileRes.json().catch(() => null);
         const statsData = await statsRes.json().catch(() => null);
 
