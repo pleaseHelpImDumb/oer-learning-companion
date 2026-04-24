@@ -14,10 +14,10 @@ const sendPasswordResetEmail = async (email, resetUrl) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: "Password Reset Request - Motivational Learning Companion",
+    subject: "Password Reset Request - Achievo",
     html: `
       <h2>Password Reset Request</h2>
-      <p>You requested a password reset for your MLC account.</p>
+      <p>You requested a password reset for your Achievo account.</p>
       <p>Click the link below to reset your password:</p>
       <a href="${resetUrl}" style="
         display: inline-block;
@@ -30,8 +30,9 @@ const sendPasswordResetEmail = async (email, resetUrl) => {
       <p>Or copy this link: ${resetUrl}</p>
       <p><strong>This link expires in 30 minutes.</strong></p>
       <p>If you didn't request this, please ignore this email.</p>
+      <p>This is an automated message. Please do not reply.</p>
       <hr>
-      <small>Motivational Learning Companion></small>
+      <small>Achievo</small>
     `,
   };
 
