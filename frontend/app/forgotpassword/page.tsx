@@ -1,10 +1,10 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -23,26 +23,21 @@ export default function ResetPasswordPage() {
     setStatus(null);
 
     if (!API_BASE_URL) {
-      setStatus({
-        type: "error",
-        message: "API is not configured.",
-      });
+      setStatus({ type: "error", message: "API is not configured." });
       return;
     }
 
     if (!token) {
       setStatus({
         type: "error",
-        message: "This reset link is missing its token. Please request a new password reset link.",
+        message:
+          "This reset link is missing its token. Please request a new password reset link.",
       });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setStatus({
-        type: "error",
-        message: "Passwords do not match.",
-      });
+      setStatus({ type: "error", message: "Passwords do not match." });
       return;
     }
 
@@ -77,8 +72,7 @@ export default function ResetPasswordPage() {
       setStatus({
         type: "success",
         message:
-          data.message ||
-          "Password reset successful. You can now log in.",
+          data.message || "Password reset successful. You can now log in.",
       });
     } catch (err) {
       console.error(err);
@@ -161,5 +155,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading reset page...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
