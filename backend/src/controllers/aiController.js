@@ -91,11 +91,27 @@ This student needs significant help. Provide a thorough, step-by-step teaching r
     `;
       break;
   }
-  //console.log("This is the system instructions:\n", systemInstruction);
-  return genAI.getGenerativeModel({
-    model: aiModel, // <-- MODEL SELECT HERE (see google ai studio)
-    systemInstruction: systemInstruction,
-  });
+  const isGemma = aiModel.toLowerCase().includes("gemma"); // test for gemma
+
+  if (isGemma) {
+    return genAI.getGenerativeModel({
+      model: aiModel,
+      systemInstruction: systemInstruction,
+      generationConfig: {
+        // <--- for gemma, removes returning internal reasoning
+        thinkingConfig: {
+          thinkingLevel: "minimal",
+          includeThoughts: false,
+        },
+      },
+    });
+  } else {
+    // <-- for something like Gemini-2.5-flash, no generation config
+    return genAI.getGenerativeModel({
+      model: aiModel,
+      systemInstruction: systemInstruction,
+    });
+  }
 }
 
 // Main Chat Endpoint
