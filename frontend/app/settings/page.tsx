@@ -400,7 +400,7 @@ return (
             id="major"
             value={major}
             onChange={(e) => setMajor(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            className={inputClass}
             placeholder="Please enter your major (optional)."
           />
         </div>
@@ -462,7 +462,7 @@ return (
             id="enterQuote"
             value={customQuote}
             onChange={(e) => setCustomQuote(e.target.value)}
-            className="w-full rounded border border-black bg-white p-2 dark:bg-[#2E2A57]"
+            className={inputClass}
             placeholder="Type a quote."
           />
         </div>
