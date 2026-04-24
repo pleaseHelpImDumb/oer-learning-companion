@@ -2,6 +2,7 @@ require("dotenv").config();
 const { StatusCodes } = require("http-status-codes"); // Status codes
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = process.env.GEMINI_AI_MODEL;
 
 // Database setup
 const { PrismaClient } = require("@prisma/client");
@@ -92,7 +93,7 @@ This student needs significant help. Provide a thorough, step-by-step teaching r
   }
   //console.log("This is the system instructions:\n", systemInstruction);
   return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash", // <-- MODEL SELECT HERE (see google ai studio)
+    model: aiModel, // <-- MODEL SELECT HERE (see google ai studio)
     systemInstruction: systemInstruction,
   });
 }
@@ -153,24 +154,24 @@ const chat = async (req, res, next) => {
     ];
 
     // generate AI response
-// generate AI response
-const model = getTutorModel(user, supportLevel);
+    // generate AI response
+    const model = getTutorModel(user, supportLevel);
 
-let aiResponse = "";
+    let aiResponse = "";
 
-try {
-  const result = await model.generateContent({ contents });
-  aiResponse = result.response.text();
-} catch (err) {
-  console.error("AI GENERATION ERROR:", err);
+    try {
+      const result = await model.generateContent({ contents });
+      aiResponse = result.response.text();
+    } catch (err) {
+      console.error("AI GENERATION ERROR:", err);
 
-  if (err?.status === 503) {
-    aiResponse =
-      "The study assistant is busy right now because the AI service is under heavy demand. Please try again in a moment.";
-  } else {
-    throw err;
-  }
-}
+      if (err?.status === 503) {
+        aiResponse =
+          "The study assistant is busy right now because the AI service is under heavy demand. Please try again in a moment.";
+      } else {
+        throw err;
+      }
+    }
 
     // store user message and AI message
     await prisma.$transaction(async (tx) => {
