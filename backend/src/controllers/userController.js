@@ -180,7 +180,12 @@ const register = async (req, res, next) => {
 };
 // LOGOUT (Clear Cookie)
 const logout = (req, res) => {
-  res.clearCookie("jwt");
+  res.clearCookie("jwt", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
   res.status(StatusCodes.OK).json({ message: "Logged out" });
 };
 
@@ -276,9 +281,9 @@ const resetPassword = async (req, res, next) => {
       },
     });
 
-return res.status(StatusCodes.OK).json({
-  message: "Password reset successful. You can now log in.",
-});
+    return res.status(StatusCodes.OK).json({
+      message: "Password reset successful. You can now log in.",
+    });
   } catch (err) {
     next(err);
   }
@@ -372,26 +377,26 @@ const onboard = async (req, res, next) => {
 const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
-const user = await prisma.user.findUnique({
-  where: { userId },
-  include: {
-    userBadges: {
-      select: {
-        unlockedAt: true,
-        badge: {
+    const user = await prisma.user.findUnique({
+      where: { userId },
+      include: {
+        userBadges: {
           select: {
-            badgeId: true,
-            name: true,
-            description: true,
-            iconUrl: true,
+            unlockedAt: true,
+            badge: {
+              select: {
+                badgeId: true,
+                name: true,
+                description: true,
+                iconUrl: true,
+              },
+            },
           },
         },
+        userStats: true,
+        track: true,
       },
-    },
-    userStats: true,
-    track: true,
-  },
-});
+    });
 
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -406,31 +411,31 @@ const user = await prisma.user.findUnique({
       iconUrl: ub.badge.iconUrl,
       unlockedAt: ub.unlockedAt,
     }));
-res.status(StatusCodes.OK).json({
-  user: {
-    userId: user.userId,
-    username: user.username,
-    displayName: user.nickname,
-    nickname: user.nickname,
-    email: user.email,
-    role: user.role,
-    avatarUrl: user.avatarUrl,
-    favoriteQuote: user.favoriteQuote,
-    checkinIntervalMinutes: user.checkinIntervalMinutes,
-    onboardingCompleted: user.onboardingCompleted,
-    createdAt: user.createdAt,
-    trackId: user.trackId,
-    track: user.hobbyTrack
-      ? {
-          id: user.hobbyTrack.trackId,
-          name: user.hobbyTrack.name,
-          description: user.hobbyTrack.description,
-        }
-      : null,
-    totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
-    badges: user.badges,
-  },
-});
+    res.status(StatusCodes.OK).json({
+      user: {
+        userId: user.userId,
+        username: user.username,
+        displayName: user.nickname,
+        nickname: user.nickname,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        favoriteQuote: user.favoriteQuote,
+        checkinIntervalMinutes: user.checkinIntervalMinutes,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt,
+        trackId: user.trackId,
+        track: user.hobbyTrack
+          ? {
+              id: user.hobbyTrack.trackId,
+              name: user.hobbyTrack.name,
+              description: user.hobbyTrack.description,
+            }
+          : null,
+        totalTokensEarned: user.userStats?.totalTokensEarned ?? 0,
+        badges: user.badges,
+      },
+    });
   } catch (err) {
     next(err);
   }
