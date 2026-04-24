@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-
+import Image from "next/image";
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -85,77 +85,84 @@ function ResetPasswordContent() {
     }
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-96 rounded-xl bg-white p-6 shadow-lg">
-        <h1 className="mb-2 text-2xl font-semibold">Reset Password</h1>
+return (
+  <div className="relative flex min-h-screen w-full items-center justify-center font-sans">
+    <Image
+      src="/login_background.jpg"
+      alt="Background"
+      fill
+      className="object-cover -z-10"
+    />
 
-        <p className="mb-4 text-sm text-gray-600">
-          Enter your new password below.
-        </p>
+    <div className="w-96 rounded-xl bg-white p-6 shadow-lg">
+      <h1 className="mb-2 text-2xl font-semibold">Reset Password</h1>
 
-        {status && (
-          <div
-            className={`mb-4 rounded-md border px-3 py-2 text-sm ${
-              status.type === "success"
-                ? "border-green-600 bg-green-50 text-green-800"
-                : "border-red-600 bg-red-50 text-red-800"
-            }`}
-          >
-            {status.message}
-          </div>
-        )}
+      <p className="mb-4 text-sm text-gray-600">
+        Enter your new password below.
+      </p>
 
-        {!token && (
-          <div className="mb-4 rounded-md border border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">
-            This reset link is missing its token. Please request a new one.
-          </div>
-        )}
+      {status && (
+        <div
+          className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+            status.type === "success"
+              ? "border-green-600 bg-green-50 text-green-800"
+              : "border-red-600 bg-red-50 text-red-800"
+          }`}
+        >
+          {status.message}
+        </div>
+      )}
 
-        <form onSubmit={resetPassword}>
-          <label htmlFor="newPassword" className="mb-1 block">
-            New Password
-          </label>
-          <input
-            id="newPassword"
-            type="password"
-            value={newPassword}
-            required
-            disabled={!token || isLoading}
-            className="mb-3 w-full rounded border border-black p-2"
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
+      {!token && (
+        <div className="mb-4 rounded-md border border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">
+          This reset link is missing its token. Please request a new one.
+        </div>
+      )}
 
-          <label htmlFor="confirmPassword" className="mb-1 block">
-            Confirm Password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            required
-            disabled={!token || isLoading}
-            className="mb-4 w-full rounded border border-black p-2"
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+      <form onSubmit={resetPassword}>
+        <label htmlFor="newPassword" className="mb-1 block">
+          New Password
+        </label>
+        <input
+          id="newPassword"
+          type="password"
+          value={newPassword}
+          required
+          disabled={!token || isLoading}
+          className="mb-3 w-full rounded border border-black p-2"
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
 
-          <button
-            type="submit"
-            disabled={!token || isLoading}
-            className="w-full rounded-lg bg-[#235937] py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isLoading ? "Resetting password..." : "Reset password"}
-          </button>
-        </form>
+        <label htmlFor="confirmPassword" className="mb-1 block">
+          Confirm Password
+        </label>
+        <input
+          id="confirmPassword"
+          type="password"
+          value={confirmPassword}
+          required
+          disabled={!token || isLoading}
+          className="mb-4 w-full rounded border border-black p-2"
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
 
-        {status?.type === "success" && (
-          <Link href="/" className="mt-4 block text-center text-sm underline">
-            Go back to login
-          </Link>
-        )}
-      </div>
+        <button
+          type="submit"
+          disabled={!token || isLoading}
+          className="w-full rounded-lg bg-[#235937] py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? "Resetting password..." : "Reset password"}
+        </button>
+      </form>
+
+      {status?.type === "success" && (
+        <Link href="/" className="mt-4 block text-center text-sm underline">
+          Go back to login
+        </Link>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default function ResetPasswordPage() {
