@@ -1,0 +1,4 @@
+ALTER TABLE "StudySession"
+ADD COLUMN "totalPausedSeconds" INTEGER NOT NULL DEFAULT 0;
+
+
