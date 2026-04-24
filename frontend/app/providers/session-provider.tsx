@@ -2,7 +2,6 @@
 
 import { usePopup } from "./popup-provider";
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-
 type ActiveSession = {
   sessionId: number;
   status: "ACTIVE" | "PAUSED";
@@ -40,6 +39,8 @@ export function SessionProvider({
   children,
   shouldCheckSession = true,
 }: SessionProviderProps) {
+const refreshInFlightRef = useRef(false);
+
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 const [loading, setLoading] = useState<boolean>(shouldCheckSession);
@@ -53,6 +54,7 @@ const { showPopup } = usePopup();
 const lastToggleAtRef = useRef(0);
 const TOGGLE_COOLDOWN_MS = 1000;
 const [toggleCooldownUntil, setToggleCooldownUntil] = useState(0);
+const PAUSED_SECONDS_KEY = "activeSessionPausedSeconds";
 const displayTokensAvailable = useMemo(() => {
   if (!activeSession) return 0;
 
@@ -95,8 +97,39 @@ function beginToggleCooldown() {
   const until = Date.now() + TOGGLE_COOLDOWN_MS;
   setToggleCooldownUntil(until);
 }
+{/*function syncLocalClockFromSession(session: ActiveSession | null) {
+  const nextKey = buildSessionClockKey(session);
+
+  if (!session) {
+    localStorage.removeItem(PAUSED_SECONDS_KEY);
+    setSessionClockKey(null);
+    setLiveStudySeconds(0);
+    setClockAnchorMs(null);
+    return;
+  }
+
+  const localPausedSeconds = Number(
+    localStorage.getItem(`${PAUSED_SECONDS_KEY}:${nextKey}`) ?? 0
+  );
+
+  const restoredSeconds =
+    session.currentStudySeconds ??
+    (session.currentStudyMinutes ?? 0) * 60;
+
+  const correctedSeconds = Math.max(0, restoredSeconds - localPausedSeconds);
+
+  setSessionClockKey(nextKey);
+  setLiveStudySeconds(correctedSeconds);
+
+  if (session.status === "ACTIVE") {
+    setClockAnchorMs(Date.now());
+  } else {
+    setClockAnchorMs(null);
+  }
+}*/}
 function syncLocalClockFromSession(session: ActiveSession | null) {
   const nextKey = buildSessionClockKey(session);
+
   if (!session) {
     setSessionClockKey(null);
     setLiveStudySeconds(0);
@@ -108,19 +141,8 @@ function syncLocalClockFromSession(session: ActiveSession | null) {
     session.currentStudySeconds ??
     (session.currentStudyMinutes ?? 0) * 60;
 
-  setSessionClockKey((prevKey) => {
-    const isSameSession = prevKey === nextKey;
-
-    if (!isSameSession) {
-      // brand new session: initialize from backend
-      setLiveStudySeconds(restoredSeconds);
-    } else {
-      // same session: NEVER let backend minute rounding pull time backward
-      setLiveStudySeconds((prevSeconds) => Math.max(prevSeconds, restoredSeconds));
-    }
-
-    return nextKey;
-  });
+  setSessionClockKey(nextKey);
+  setLiveStudySeconds(Math.max(0, restoredSeconds));
 
   if (session.status === "ACTIVE") {
     setClockAnchorMs(Date.now());
@@ -128,41 +150,53 @@ function syncLocalClockFromSession(session: ActiveSession | null) {
     setClockAnchorMs(null);
   }
 }
-  const refreshSession = async () => {
-    if (!API_BASE_URL || !shouldCheckSession) {
-      setLoading(false);
-      setActiveSession(null);
+const refreshSession = async () => {
+  if (refreshInFlightRef.current) return;
+
+  if (!API_BASE_URL || !shouldCheckSession) {
+    setLoading(false);
+    setActiveSession(null);
+    return;
+  }
+
+  refreshInFlightRef.current = true;
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(`${API_BASE_URL}/sessions/active`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[SESSION PROVIDER] refreshSession response:", data);
+
+    if (res.status === 429) {
+      console.warn("[SESSION PROVIDER] refresh rate-limited; keeping previous session state");
       return;
     }
 
-    try {
-      setLoading(true);
-
-      const res = await fetch(`${API_BASE_URL}/sessions/active`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await res.json().catch(() => ({}));
-      console.log("[SESSION PROVIDER] refreshSession response:", data);
-
-      if (!res.ok) {
-        setActiveSession(null);
-        return;
-      }
-
-const nextSession = data?.session || null;
-setActiveSession(nextSession);
-syncLocalClockFromSession(nextSession);    } catch (error) {
-      console.error("[SESSION PROVIDER ERROR]", error);
+    if (!res.ok) {
+      console.error("[SESSION PROVIDER] non-OK response", res.status);
       setActiveSession(null);
-    } finally {
-      setLoading(false);
+      syncLocalClockFromSession(null);
+      return;
     }
-  };
+
+    const nextSession = data?.session || null;
+    setActiveSession(nextSession);
+    syncLocalClockFromSession(nextSession);
+  } catch (error) {
+    console.error("[SESSION PROVIDER ERROR]", error);
+  } finally {
+    refreshInFlightRef.current = false;
+    setLoading(false);
+  }
+};
 const startSession = async (sessionGoalMinutes: number) => {
   if (!API_BASE_URL) {
     console.log("[SESSION PROVIDER] startSession aborted", {
@@ -282,9 +316,17 @@ const pauseSession = async () => {
       return;
     }
 
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || "Failed to pause session");
-    }
+if (!res.ok) {
+  if (
+    data?.error === "Session is not active" ||
+    data?.message === "Session is not active"
+  ) {
+    await refreshSession();
+    return;
+  }
+
+  throw new Error(data?.error || data?.message || "Failed to pause session");
+}
 
     setActiveSession((prev) =>
       prev
@@ -295,9 +337,13 @@ const pauseSession = async () => {
           }
         : prev
     );
+    if (activeSession) {
+  const key = `${PAUSED_SECONDS_KEY}:${buildSessionClockKey(activeSession)}`;
+  localStorage.setItem(key, String(liveStudySeconds));
+}
     setClockAnchorMs(null);
 
-    await refreshSession();
+    //await refreshSession();
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to pause session:", error);
   } finally {
@@ -359,9 +405,13 @@ const resumeSession = async () => {
           }
         : prev
     );
-    setClockAnchorMs(Date.now());
+if (activeSession) {
+  const key = `${PAUSED_SECONDS_KEY}:${buildSessionClockKey(activeSession)}`;
+  localStorage.setItem(key, String(liveStudySeconds));
+}
 
-    await refreshSession();
+setClockAnchorMs(Date.now());
+    //await refreshSession();
   } catch (error) {
     console.error("[SESSION PROVIDER] Failed to resume session:", error);
   } finally {
@@ -407,12 +457,10 @@ const completeSession = async () => {
       throw new Error(data?.error || data?.message || "Failed to complete session");
     }
 
-    setLiveStudySeconds(0);
-    setClockAnchorMs(null);
-    setSessionClockKey(null);
-    setAutoCompletingSessionId(null);
-
-    await refreshSession();
+  setLiveStudySeconds(0);
+  setClockAnchorMs(null);
+  setSessionClockKey(null);
+  await refreshSession();
     
     const newTokenCount =
   data?.session?.tokensAvailable ??

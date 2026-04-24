@@ -23,7 +23,12 @@ type UserContextType = {
   loading: boolean;
   refreshUser: () => Promise<void>;
 };
-
+type CachedUserProfile = {
+  track: TrackName | null;
+  avatarUrl: string;
+  username: string;
+  latestBadge: LatestBadge;
+};
 type UserProviderProps = {
   children: React.ReactNode;
 };
@@ -47,7 +52,6 @@ const TRACK_ID_TO_NAME: Record<number, TrackName> = {
 };
 
 const UserContext = createContext<UserContextType | null>(null);
-
 function getAvatarIdFromUrl(url: string | undefined | null) {
   if (!url) return "profile0";
   const match = url.match(/(profile\d+)/);
@@ -83,6 +87,7 @@ function normalizeTrack(user: any): TrackName | null {
 }
 
 export function UserProvider({ children }: UserProviderProps) {
+  const USER_CACHE_KEY = "oer_user_profile_cache";
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [track, setTrack] = useState<TrackName | null>(null);
@@ -92,6 +97,7 @@ export function UserProvider({ children }: UserProviderProps) {
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
+ 
     if (!API_BASE_URL) {
       console.error("[USER PROVIDER] NEXT_PUBLIC_API_BASE_URL is not set");
       setLoading(false);
@@ -113,67 +119,103 @@ export function UserProvider({ children }: UserProviderProps) {
       const data = await res.json().catch(() => ({}));
       console.log("[USER PROVIDER] profile response:", data);
 
-      if (!res.ok) {
-        console.error("[USER PROVIDER] profile request failed:", data);
-        return;
-      }
+if (res.status === 429) {
+  console.warn("[USER PROVIDER] profile rate-limited; using cached user");
+  loadCachedUser();
+  return;
+}
 
-      const user = data?.user;
-      if (!user) {
-        console.warn("[USER PROVIDER] No user object returned");
-        return;
-      }
+if (!res.ok) {
+  console.warn("[USER PROVIDER] profile request failed:", {
+    status: res.status,
+    data,
+  });
 
-      const normalizedTrack = normalizeTrack(user);
-      if (normalizedTrack) {
-        setTrack(normalizedTrack);
-      }
+  loadCachedUser();
+  return;
+}
+console.log("[USER PROVIDER] profile status:", res.status);
+const user = data?.user;
+const normalizedTrack = normalizeTrack(user);
+const nextAvatarUrl = getAvatarIdFromUrl(user?.avatarUrl);
 
-      setAvatarUrl(getAvatarIdFromUrl(user?.avatarUrl));
+const name = user?.nickname || user?.displayName || user?.username;
+const nextUsername =
+  typeof name === "string" && name.trim() !== ""
+    ? name
+    : "username";
 
-      const name = user?.nickname || user?.displayName || user?.username;
-      if (typeof name === "string" && name.trim() !== "") {
-        setUsername(name);
-      }
+let nextLatestBadge: LatestBadge = null;
 
-      const rawBadges = user?.userBadges ?? user?.badges;
+const rawBadges = user?.userBadges ?? user?.badges;
 
-      if (Array.isArray(rawBadges) && rawBadges.length > 0) {
-        const newest = [...rawBadges].sort((a, b) => {
-          const aTime = a?.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
-          const bTime = b?.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
-          return bTime - aTime;
-        })[0]?.badge;
+if (Array.isArray(rawBadges) && rawBadges.length > 0) {
+  const newestEntry = [...rawBadges].sort((a, b) => {
+    const aTime = a?.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
+    const bTime = b?.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
+    return bTime - aTime;
+  })[0];
 
-        if (
-          newest &&
-          typeof newest.emoji === "string" &&
-          newest.emoji.trim() !== ""
-        ) {
-          setLatestBadge({
-            emoji: newest.emoji,
-            name:
-              typeof newest.name === "string" && newest.name.trim() !== ""
-                ? newest.name
-                : "Latest Badge",
-          });
-        } else {
-          setLatestBadge(null);
-        }
-      } else {
-        setLatestBadge(null);
-      }
+  const newest = newestEntry?.badge ?? newestEntry;
+
+  if (newest && typeof newest.name === "string") {
+    nextLatestBadge = {
+      emoji:
+        typeof newest.emoji === "string" && newest.emoji.trim() !== ""
+          ? newest.emoji
+          : "🏅",
+      name: newest.name.trim() || "Latest Badge",
+    };
+  }
+}
+
+const nextProfile: CachedUserProfile = {
+  track: normalizedTrack,
+  avatarUrl: nextAvatarUrl,
+  username: nextUsername,
+  latestBadge: nextLatestBadge,
+};
+
+applyCachedUser(nextProfile);
+saveCachedUser(nextProfile);
     } catch (err) {
       console.error("[USER PROVIDER] User fetch failed:", err);
     } finally {
       setLoading(false);
     }
   };
+function applyCachedUser(cached: CachedUserProfile) {
+  setTrack(cached.track);
+  setAvatarUrl(cached.avatarUrl);
+  setUsername(cached.username);
+  setLatestBadge(cached.latestBadge);
+}
 
+function loadCachedUser() {
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    if (!raw) return;
+
+    const cached = JSON.parse(raw) as CachedUserProfile;
+    applyCachedUser(cached);
+  } catch (err) {
+    console.warn("[USER PROVIDER] Failed to load cached user:", err);
+  }
+}
+
+function saveCachedUser(cached: CachedUserProfile) {
+  try {
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cached));
+  } catch (err) {
+    console.warn("[USER PROVIDER] Failed to save cached user:", err);
+  }
+}
   useEffect(() => {
     void refreshUser();
   }, [API_BASE_URL]);
-
+useEffect(() => {
+  loadCachedUser();
+}, []);
   const value = useMemo<UserContextType>(
     () => ({
       track,

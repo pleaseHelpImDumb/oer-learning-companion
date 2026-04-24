@@ -304,9 +304,9 @@ export default function Home() {
           <div className="mt-6 flex w-full justify-center">
             <button
               type="button"
-              onClick={() =>
-                void startSession(durationStringToMinutes(selectedMinutes))
-              }
+              onClick={async () => {
+                await startSession(durationStringToMinutes(selectedMinutes));
+              }}
               disabled={sessionActionLoading}
               className="w-full max-w-md rounded-2xl bg-[#D0A234] px-4 py-4 text-lg font-semibold text-white sm:text-xl disabled:opacity-60"
             >

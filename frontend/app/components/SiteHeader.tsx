@@ -1,10 +1,9 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState} from "react";
+import { useRef, useState } from "react";
 import { useSession } from "../providers/session-provider";
 import { useUser } from "../providers/user-provider";
-
 export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const { track, avatarUrl, username, latestBadge } = useUser();
@@ -21,8 +20,10 @@ const {
 const sessionTokensAvailable = activeSession ? displayTokensAvailable : 0;
 const baseTokens = activeSession?.tokensAvailable ?? 0;
 const earnedSinceMount = Math.floor(liveStudySeconds / 300);
-  const handleTimerClick = async () => {
-  if (!activeSession || sessionActionLoading) return;
+const handleTimerClick = async () => {
+  if (!activeSession || sessionActionLoading || headerActionLockRef.current) return;
+
+  headerActionLockRef.current = true;
 
   try {
     if (activeSession.status === "ACTIVE") {
@@ -36,9 +37,27 @@ const earnedSinceMount = Math.floor(liveStudySeconds / 300);
     }
   } catch (error) {
     console.error("Failed to toggle timer:", error);
+  } finally {
+    window.setTimeout(() => {
+      headerActionLockRef.current = false;
+    }, 1000);
   }
 };
+const handleCancelClick = async () => {
+  if (!activeSession || sessionActionLoading || headerActionLockRef.current) return;
 
+  headerActionLockRef.current = true;
+
+  try {
+    await cancelSession();
+  } catch (error) {
+    console.error("Failed to cancel session:", error);
+  } finally {
+    window.setTimeout(() => {
+      headerActionLockRef.current = false;
+    }, 1000);
+  }
+};
 const timerIcon = !activeSession
   ? "/assets/start_button/inactive.png" : activeSession.status === "PAUSED" ? "/assets/start_button/start.png" : "/assets/start_button/pause.png";
 const TRACKS = {
@@ -51,7 +70,7 @@ const TRACKS = {
 } as const;
 
   const [open, setOpen] = useState(false);
-
+const headerActionLockRef = useRef(false);
   function formatElapsedSeconds(totalSeconds: number) {
     const safe = Math.max(0, Math.floor(totalSeconds));
     const hours = Math.floor(safe / 3600);
@@ -68,6 +87,19 @@ const TRACKS = {
 const resolvedTrack = track ?? "Sports";
 const resolvedAvatarUrl = avatarUrl || "profile0";
 const resolvedUsername = username || "username";
+const SESSION_GOAL_SECONDS = 10 * 60; // 10 minute session
+
+const progressPercent = activeSession
+  ? Math.min(100, (liveStudySeconds / SESSION_GOAL_SECONDS) * 100)
+  : 0;
+
+const progressImagePercent =
+  progressPercent >= 100 ? 100 :
+  progressPercent >= 80 ? 80 :
+  progressPercent >= 50 ? 50 :
+  progressPercent >= 30 ? 30 :
+  progressPercent >= 10 ? 10 :
+  0;
   return (
     <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#000d2a] text-white">
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-3 sm:px-6 items-center lg:grid lg:grid-cols-[220px_minmax(0,1fr)_220px] lg:items-center lg:gap-6">
@@ -117,7 +149,7 @@ const resolvedUsername = username || "username";
           <div className="flex items-center rounded-md bg-white/5 px-2 py-2 lg:bg-transparent lg:p-0">
 <button
   type="button"
-  onClick={cancelSession}
+  onClick={handleCancelClick}
   disabled={!activeSession || sessionActionLoading}
   className="transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 >
@@ -153,13 +185,13 @@ const resolvedUsername = username || "username";
             <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
               My Goals
             </span>
-            <Image
-              src={`/assets/progress_header/${resolvedTrack}/0.png`}
-              alt="Progress: 0%"
-              width={260}
-              height={52}
-              className="h-auto w-[200px] sm:w-[260px] lg:w-[220px]"
-            />
+              <Image
+                src={`/assets/progress_header/${resolvedTrack}/${progressImagePercent}.png`}
+                alt={`Progress: ${progressImagePercent}%`}
+                width={260}
+                height={52}
+                className="h-auto w-[200px] sm:w-[260px] lg:w-[220px]"
+              />
           </div>
 
           <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">

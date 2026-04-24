@@ -100,6 +100,7 @@ model StudySession {
   sessionGoalMinutes Int? 
   group Group?
   notes String?
+  totalPausedSeconds Int @default(0)
 
   // Foreign Keys
   user User @relation(fields:[userId], references:[userId])
