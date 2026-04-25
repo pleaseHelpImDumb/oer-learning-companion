@@ -614,12 +614,15 @@ return (
             {loading ? "Saving..." : "Save"}
           </button>
 
+          <Link href="/dashboard">
           <button
             type="button"
             className="min-w-[170px] rounded-md bg-[#d6cec2] px-8 py-3 text-2xl font-semibold text-[#235937] transition hover:brightness-105 dark:bg-[#bfbfbf] dark:text-[#0b1633]"
           >
             Cancel
           </button>
+          </Link>
+
         </div>
       </div>
     </div>

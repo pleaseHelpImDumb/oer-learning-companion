@@ -228,7 +228,7 @@ export default function Home() {
                 </div>
 
                 <Link
-                  href="/activity"
+                  href="/ticTacToe"
                   className="flex flex-col items-center rounded-xl bg-[#ffd36b] dark:bg-[#fdae3f] px-4 py-5 text-center"
                 >
                   <p className="text-[clamp(1.75rem,6vw,3rem)] font-semibold text-white dark:text-black">

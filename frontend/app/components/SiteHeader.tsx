@@ -255,61 +255,48 @@ export default function SiteHeader() {
           <Link className="pr-[5%]" href="/dashboard">
             {resolvedUsername}
           </Link>
-          <div className="relative hidden lg:flex lg:justify-end">
-            <button
-              className="flex items-center"
-              onClick={() => setOpen(!open)}
-            >
-              <Image
-                src={`/assets/profiles/${resolvedAvatarUrl}.png`}
-                alt="Profile Icon"
-                width={60}
-                height={60}
-                className="rounded-full border border-white transition hover:scale-105"
-              />
-            </button>
-            {open && (
-              <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-lg bg-[#D3D3D3] py-2 shadow-md">
-                <div className="w-[80%] flex flex-col items-center justify-center align-center">
-                  <Link
-                    className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200"
-                    href="/dashboard"
-                  >
-                    {resolvedUsername}
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200 border-y-1 border-black"
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(
-                          `${API_BASE_URL}/users/logout`,
-                          {
-                            method: "POST",
-                            credentials: "include",
-                          },
-                        );
-                        console.log(res);
-                      } catch (err) {
-                        console.error("Logout error:", err);
-                      } finally {
-                        localStorage.removeItem("oer_user_profile_cache");
-                        localStorage.removeItem("csrfToken");
-                        window.location.href = "/";
-                      }
-                    }}
-                    className="block px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200 border-b-1 border-black w-full text-left"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+<div className="group relative inline-block">
+  <Link href="/dashboard">
+    <Image
+      src={`/assets/profiles/${resolvedAvatarUrl}.png`}
+      alt="Profile Icon"
+      width={60}
+      height={60}
+      className="rounded-full border border-white transition hover:scale-105"
+    />
+  </Link>
+
+  <div className="absolute right-0 top-full z-50 pt-2 hidden group-hover:block">
+    <div className="min-w-[140px] rounded-lg bg-[#D3D3D3] py-2 shadow-md">
+      <Link
+        href="/settings"
+        className="block border-y border-black px-4 py-2 text-sm text-[#0000FF] hover:bg-gray-200"
+      >
+        Settings
+      </Link>
+
+      <button
+        onClick={async () => {
+          try {
+            await fetch(`${API_BASE_URL}/users/logout`, {
+              method: "POST",
+              credentials: "include",
+            });
+          } catch (err) {
+            console.error("Logout error:", err);
+          } finally {
+            localStorage.removeItem("oer_user_profile_cache");
+            localStorage.removeItem("csrfToken");
+            window.location.href = "/";
+          }
+        }}
+        className="block w-full border-b border-black px-4 py-2 text-left text-sm text-[#0000FF] hover:bg-gray-200"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
         </div>
       </div>
     </header>
