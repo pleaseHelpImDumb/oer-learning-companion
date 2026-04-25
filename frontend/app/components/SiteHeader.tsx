@@ -92,7 +92,9 @@ export default function SiteHeader() {
   const resolvedTrack = track ?? "Sports";
   const resolvedAvatarUrl = avatarUrl || "profile0";
   const resolvedUsername = username || "username";
-  const SESSION_GOAL_SECONDS = 10 * 60; // 10 minute session
+const SESSION_GOAL_SECONDS = activeSession?.sessionGoalMinutes
+  ? activeSession.sessionGoalMinutes * 60
+  : 0;
 
   const progressPercent = activeSession
     ? Math.min(100, (liveStudySeconds / SESSION_GOAL_SECONDS) * 100)
