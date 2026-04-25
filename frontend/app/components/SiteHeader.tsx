@@ -210,8 +210,14 @@ export default function SiteHeader() {
 
           <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
             <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
+                    <span
+                      className=""
+                      title="The number of tokens you have earned this session"
+                    >
+                      ⓘ
+                    </span>
               <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
-                My Tokens
+                Current Session Tokens
               </span>
 
               <div className="flex items-center gap-1 text-xl leading-none sm:text-2xl">

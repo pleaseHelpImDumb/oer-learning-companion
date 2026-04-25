@@ -385,16 +385,23 @@ async function resetGame() {
               id="tictactoe-modal-description"
               className="mt-3 text-sm text-slate-600 dark:text-slate-300"
             >
+              <span
+                      className=""
+                      title="You may only spend tokens that you have earned in this study session!"
+                    >
+                      ⓘ
+                    </span>
               Starting a game will cost <span className="font-semibold">{requiredTokens}</span>{" "}
-              tokens.
+              session tokens.
               <br />
-              You currently have <span className="font-semibold">{availableTokens}</span> tokens.
+              You currently have <span className="font-semibold">{availableTokens}</span> session tokens.
             </p>
 
             {!hasEnoughTokens && (
               <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
                 You do not have enough tokens to play.
               </div>
+              
             )}
 
             {unlockError && (

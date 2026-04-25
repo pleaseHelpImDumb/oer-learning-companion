@@ -171,8 +171,14 @@ export default function Home() {
                     {user?.totalTokensEarned ?? 0}
                   </p>
                   <p className="text-base font-semibold text-[#235937] sm:text-lg dark:text-white">
-                    Tokens
+                    Lifetime Tokens
                   </p>
+                                      <span
+                      className=""
+                      title="The number of tokens you have earned across all of your study sessions"
+                    >
+                      ⓘ
+                    </span>
                 </div>
 
                 <div className="flex flex-col items-center rounded-xl bg-[#fbeabd] dark:bg-[#26314a] px-4 py-5 text-center">
