@@ -164,28 +164,46 @@ components={{
     className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
   />
 
-  {[
-    { level: "1", base: "hint" },
-    { level: "2", base: "stuck" },
-    { level: "3", base: "struggle" },
-  ].map(({ level, base }) => (
+  <div className="relative">
     <button
-      key={level}
       type="button"
-      onClick={() => send()}
-      className="rounded-lg transition hover:scale-105"
-      aria-label={`Send with ${base} support`}
+      onClick={() => setOpen(!open)}
+      className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
+      aria-label="Choose support level"
     >
-      <Image
-        src={`/${base}.png`}
-        alt={base}
-        width={90}
-        height={38}
-        className="h-[38px] w-auto object-contain"
-        draggable={false}
-      />
+      ↩︎
     </button>
-  ))}
+
+    {open && (
+      <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-lg border border-black/20 bg-white p-2 shadow-lg dark:border-white/20 dark:bg-[#0B0B26]">
+        {[
+          { level: "1", base: "hint" },
+          { level: "2", base: "stuck" },
+          { level: "3", base: "struggle" },
+        ].map(({ level, base }) => (
+          <button
+            key={level}
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              send();
+            }}
+            className="rounded-md transition hover:scale-105"
+            aria-label={`Send with ${base} support`}
+          >
+            <Image
+              src={`/${base}.png`}
+              alt={base}
+              width={120}
+              height={50}
+              className="h-[50px] w-auto object-contain"
+              draggable={false}
+            />
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
 </div>
 
 {/*<div className="mt-3 flex flex-wrap gap-3">
