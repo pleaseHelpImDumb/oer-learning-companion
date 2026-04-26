@@ -36,11 +36,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       }
     >
       <SideBar
-        snapped={snapped}
-        setSnapped={setSnapped}
         hidden={hidden}
         setHidden={setHidden}
-        headerOffset={headerHeight}
       />
 
       <main className="flex-1 min-w-0">
