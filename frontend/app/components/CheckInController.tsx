@@ -92,10 +92,10 @@ export default function CheckInController() {
             "Content-Type": "application/json",
             ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
           },
-          body: JSON.stringify({
-            feelingGood,
-            helpChosen,
-          }),
+body: JSON.stringify({
+  feelingGood,
+  helpChosen: helpChosen ? "true" : "false",
+}),
         }
       );
 
