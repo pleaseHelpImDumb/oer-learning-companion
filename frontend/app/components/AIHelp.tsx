@@ -13,6 +13,18 @@ export default function StuckModal() {
   const router = useRouter();
   const { state, closeAssistant, setTab, setInput, setSupportLevel, send } =
     useStuckAssistant();  const [open, setOpen] = useState(false);
+const [supportMenuOpen, setSupportMenuOpen] = useState(false);
+const [selectedSupport, setSelectedSupport] = useState<"1" | "2" | "3">("1");
+
+const supportOptions = [
+  { level: "1", base: "hint" },
+  { level: "2", base: "stuck" },
+  { level: "3", base: "struggle" },
+] as const;
+
+const selectedOption = supportOptions.find(
+  (option) => option.level === selectedSupport
+)!;
 
   if (!state.open) return null;
 
@@ -164,39 +176,57 @@ components={{
     className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
   />
 
-<div className="flex items-end gap-2">
-  <input
-    value={state.input}
-    onChange={(e) => setInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") send();
-    }}
-    placeholder="What’s hard to understand?"
-    className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
-  />
+  <button
+    type="button"
+    onClick={() => send()}
+    className="rounded-lg transition hover:scale-105"
+    aria-label={`Send with ${selectedOption.base} support`}
+  >
+    <Image
+      src={`/${selectedOption.base}.png`}
+      alt={selectedOption.base}
+      width={120}
+      height={50}
+      className="h-[38px] w-auto object-contain"
+      draggable={false}
+    />
+  </button>
 
-  {[
-    { level: "1", base: "hint" },
-    { level: "2", base: "stuck" },
-    { level: "3", base: "struggle" },
-  ].map(({ level, base }) => (
+  <div className="relative">
     <button
-      key={level}
       type="button"
-      onClick={() => send()}
-      className="rounded-lg transition hover:scale-105"
-      aria-label={`Send with ${base} support`}
+      onClick={() => setSupportMenuOpen((prev) => !prev)}
+      className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
+      aria-label="Choose support level"
     >
-      <Image
-        src={`/${base}.png`}
-        alt={base}
-        width={90}
-        height={38}
-        className="h-[38px] w-auto object-contain"
-        draggable={false}
-      />
+      ▼
     </button>
-  ))}
+
+    {supportMenuOpen && (
+      <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-lg border border-black/20 bg-white p-2 shadow-lg dark:border-white/20 dark:bg-[#0B0B26]">
+        {supportOptions.map(({ level, base }) => (
+          <button
+            key={level}
+            type="button"
+            onClick={() => {
+              setSelectedSupport(level);
+              setSupportMenuOpen(false);
+            }}
+            className="rounded-md transition hover:scale-105"
+          >
+<Image
+  src={`/${base}.png`}
+  alt={base}
+  width={160}
+  height={55}
+  className="h-auto w-[160px] max-w-none object-contain"
+  draggable={false}
+/>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
 </div>
 </div>
 
@@ -234,6 +264,5 @@ components={{
 </div>*/}
 </div>
       </div>
-    </div>
   );
 }
