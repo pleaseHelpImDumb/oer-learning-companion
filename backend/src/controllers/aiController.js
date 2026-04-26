@@ -226,5 +226,34 @@ const chat = async (req, res, next) => {
     res.status(500).json({ error: "AI request failed" });
   }
 };
+const getChatHistory = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
 
-module.exports = { chat };
+    const session = await prisma.studySession.findFirst({
+      where: {
+        userId,
+        status: { in: ["ACTIVE", "PAUSED"] },
+      },
+    });
+
+    if (!session) {
+      return res.json({ history: [] });
+    }
+
+    const history = await prisma.AIInteraction.findMany({
+      where: {
+        sessionId: session.sessionId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return res.json({ history });
+  } catch (error) {
+    console.error("AI HISTORY ERROR:", error);
+    return res.status(500).json({ error: "Could not load AI history" });
+  }
+};
+module.exports = { chat, getChatHistory };
