@@ -29,13 +29,14 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
         <div className="flex items-center justify-center gap-10">
 
           {/* Thumbs Down */}
-          <button
-            onClick={() => {
-              onSelect?.("down");
-              onClose();
-            }}
-            className="transition transform hover:scale-110"
-          >
+<button
+  onClick={() => {
+    localStorage.setItem("freeGameTokens", "4");
+    onSelect?.("down");
+    onClose();
+  }}
+  className="transition transform hover:scale-110"
+>
             <Image
               src="/Thumbs down.png"
               alt="Thumbs Down"

@@ -112,6 +112,7 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
 
   const [open, setOpen] = useState(false);
   const headerActionLockRef = useRef(false);
+
   function formatElapsedSeconds(totalSeconds: number) {
     const safe = Math.max(0, Math.floor(totalSeconds));
     const hours = Math.floor(safe / 3600);
@@ -121,17 +122,20 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
-  const timerDisplay = activeSession
-    ? formatElapsedSeconds(liveStudySeconds)
-    : "0:00:00";
-
-  const resolvedTrack = track ?? "Sports";
-  const resolvedAvatarUrl = avatarUrl || "profile0";
-  const resolvedUsername = username || "username";
 const SESSION_GOAL_SECONDS = activeSession?.sessionGoalMinutes
   ? activeSession.sessionGoalMinutes * 60
   : 0;
 
+const remainingSeconds = activeSession
+  ? Math.max(0, SESSION_GOAL_SECONDS - liveStudySeconds)
+  : 0;
+
+const timerDisplay = activeSession
+  ? formatElapsedSeconds(remainingSeconds)
+  : "0:00:00";
+const resolvedTrack = (track ?? "Sports") as keyof typeof TRACKS;
+const resolvedAvatarUrl = avatarUrl || "profile0";
+const resolvedUsername = username || "username";
   const progressPercent = activeSession
     ? Math.min(100, (liveStudySeconds / SESSION_GOAL_SECONDS) * 100)
     : 0;

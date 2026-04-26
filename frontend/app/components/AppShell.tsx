@@ -5,9 +5,9 @@ import SideBar from "./SideBar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [snapped, setSnapped] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  // measure <header> height so the *top bar* can sit right under it
   useEffect(() => {
     const headerEl = document.querySelector("header");
     if (!headerEl) return;
@@ -25,26 +25,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  /**
-   * Layout rules:
-   * - NOT snapped: 2 columns => [sidebar | main]
-   * - snapped: 2 rows => [topbar] then [main]
-   *
-   * We reserve space using:
-   * - width when vertical (w-14 / w-16)
-   * - height when horizontal (h-14 / h-16)
-   */
   return (
     <div
       className={
-        snapped
-          ? "flex flex-col flex-1"          // top bar then main
-          : "flex flex-row flex-1"          // sidebar then main
+        hidden
+          ? "flex flex-row flex-1"
+          : snapped
+            ? "flex flex-col flex-1"
+            : "flex flex-row flex-1"
       }
     >
       <SideBar
         snapped={snapped}
         setSnapped={setSnapped}
+        hidden={hidden}
+        setHidden={setHidden}
         headerOffset={headerHeight}
       />
 

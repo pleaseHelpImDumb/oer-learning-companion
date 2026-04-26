@@ -37,7 +37,11 @@ const [isProcessingReset, setIsProcessingReset] = useState(false);
 const lastResetAtRef = useRef(0);
 
 const RESET_COOLDOWN_MS = 1000;
-  const hasEnoughTokens = availableTokens >= requiredTokens;
+  const freeTokens =
+  typeof window !== "undefined"
+    ? Number(localStorage.getItem("freeGameTokens") || "0")
+    : 0;
+  const hasEnoughTokens = availableTokens + freeTokens >= requiredTokens;
   const isLocked = !isUnlocked;
 
   function calculateWinner(currentBoard: Cell[]): "X" | "O" | null {
@@ -201,10 +205,14 @@ const RESET_COOLDOWN_MS = 1000;
     try {
       let success = true;
 
-      if (onSpendTokens) {
-        const result = await onSpendTokens(requiredTokens);
-        success = Boolean(result);
-      }
+if (freeTokens >= requiredTokens) {
+  localStorage.setItem("freeGameTokens", String(freeTokens - requiredTokens));
+} else {
+  if (onSpendTokens) {
+    const result = await onSpendTokens(requiredTokens);
+    success = Boolean(result);
+  }
+}
 
       if (!success) {
         setUnlockError("Could not spend tokens. Please try again.");
@@ -247,10 +255,14 @@ async function resetGame() {
   try {
     let success = true;
 
-    if (onSpendTokens) {
-      const result = await onSpendTokens(requiredTokens);
-      success = Boolean(result);
-    }
+if (freeTokens >= requiredTokens) {
+  localStorage.setItem("freeGameTokens", String(freeTokens - requiredTokens));
+} else {
+  if (onSpendTokens) {
+    const result = await onSpendTokens(requiredTokens);
+    success = Boolean(result);
+  }
+}
 
     if (!success) {
       setUnlockError("Could not spend tokens. Please try again.");

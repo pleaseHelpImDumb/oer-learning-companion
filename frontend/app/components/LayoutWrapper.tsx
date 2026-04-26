@@ -125,7 +125,6 @@ return (
         <UserProvider>
           <StuckAssistantProvider>
             <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
-
             {!hideLayout && <CheckInController />}
             {!hideLayout && <SessionResumeModalController />}
             {!hideLayout && <PopupRenderer />}

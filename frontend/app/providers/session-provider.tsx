@@ -245,6 +245,12 @@ const refreshSession = async () => {
   }
 };
 const startSession = async (sessionGoalMinutes: number) => {
+
+  if (activeSession) {
+    console.log("[SESSION PROVIDER] startSession ignored: already active");
+    return;
+  }
+
   if (!API_BASE_URL) {
     console.log("[SESSION PROVIDER] startSession aborted", {
       API_BASE_URL,
@@ -539,21 +545,47 @@ if (newTokenCount === 4) {
     setSessionActionLoading(false);
   }
 };
-
-  useEffect(() => {
-    void refreshSession();
-  }, [API_BASE_URL, shouldCheckSession]);
-  useEffect(() => {
-  if (!activeSession || activeSession.status !== "ACTIVE" || clockAnchorMs === null) {
+useEffect(() => {
+  void refreshSession();
+}, [API_BASE_URL, shouldCheckSession]);
+useEffect(() => {
+  if (!activeSession) {
+    setLiveStudySeconds(0);
     return;
   }
 
+  const calculateSeconds = () => {
+    const restoredSeconds =
+      activeSession.currentStudySeconds ??
+      (activeSession.currentStudyMinutes ?? 0) * 60;
+
+    if (activeSession.status !== "ACTIVE" || clockAnchorMs === null) {
+      return restoredSeconds;
+    }
+
+    const secondsSinceAnchor = Math.floor(
+      (Date.now() - clockAnchorMs) / 1000
+    );
+
+    return Math.max(0, restoredSeconds + secondsSinceAnchor);
+  };
+
+  setLiveStudySeconds(calculateSeconds());
+
+  if (activeSession.status !== "ACTIVE" || clockAnchorMs === null) return;
+
   const interval = window.setInterval(() => {
-    setLiveStudySeconds((prev) => prev + 1);
+    setLiveStudySeconds(calculateSeconds());
   }, 1000);
 
   return () => window.clearInterval(interval);
-}, [activeSession?.sessionId, activeSession?.status, clockAnchorMs]);
+}, [
+  activeSession?.sessionId,
+  activeSession?.status,
+  activeSession?.currentStudySeconds,
+  activeSession?.currentStudyMinutes,
+  clockAnchorMs,
+]);
   useEffect(() => {
   if (!activeSession) return;
   if (activeSession.status !== "ACTIVE") return;

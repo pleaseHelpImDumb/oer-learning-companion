@@ -50,10 +50,18 @@ type Badge = {
 type Props = {
   snapped: boolean;
   setSnapped: (v: boolean) => void;
+  hidden: boolean;
+  setHidden: (v: boolean) => void;
   headerOffset: number;
 };
 
-export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
+export default function SideBar({
+  snapped,
+  setSnapped,
+  hidden,
+  setHidden,
+  headerOffset,
+}: Props) {
   const [stuckOpen, setStuckOpen] = useState(false);
   const { openAssistant } = useStuckAssistant();
   useEffect(() => {
@@ -90,9 +98,9 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
 
     loadDashboardData();
   }, [API_BASE_URL]);
-  const asideClass = snapped
-    ? "z-30 w-full h-10 sm:h-12 bg-[#235937] dark:bg-[#23314c] border-b border-white/20 grid grid-cols-11"
-    : "z-30 w-10 sm:w-12 bg-[#235937] dark:bg-[#23314c] border-r border-white/20 flex flex-col items-center py-3";
+const asideClass = snapped
+  ? "z-30 w-full h-10 sm:h-12 bg-[#235937] dark:bg-[#23314c] border-b border-white/20 grid grid-cols-11"
+  : "z-30 w-10 sm:w-12 h-[calc(100vh-var(--header-height))] bg-[#235937] dark:bg-[#23314c] border-r border-white/20 flex flex-col items-center py-3";
   const cellClass = snapped
     ? "relative flex h-full w-full items-center justify-center transition-colors hover:bg-white/5"
     : "relative flex h-11 w-full items-center justify-center transition-all duration-150 hover:bg-white/5";
@@ -102,8 +110,26 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
 
   return (
     <>
-      <aside className={asideClass} style={{ top: headerOffset }}>
-        {icons.map((icon) => {
+<aside
+  className={`
+    ${asideClass}
+    fixed left-0 transition-transform duration-300
+    ${
+      hidden
+        ? snapped
+          ? "-translate-y-full"
+          : "-translate-x-full"
+        : "translate-x-0 translate-y-0"
+    }
+  `}
+  style={
+    {
+      top: snapped && hidden ? 0 : headerOffset,
+      "--header-height": `${headerOffset}px`,
+    } as React.CSSProperties
+  }
+>
+      {icons.map((icon) => {
           const isStuck = icon.alt === "stuck";
           const isTop = icon.alt === "Top";
           const isBack = icon.alt === "Back";
@@ -210,6 +236,37 @@ export default function SideBar({ snapped, setSnapped, headerOffset }: Props) {
             </div>
           );
         })}
+<button
+  type="button"
+  onClick={() => setHidden(!hidden)}
+  className={
+    snapped
+      ? `
+        absolute left-1/2 top-full z-50
+        flex h-6 w-12 -translate-x-1/2
+        items-center justify-center
+        rounded-b-md
+        bg-[#235937] text-white shadow-md
+        hover:brightness-110
+        dark:bg-[#23314c]
+      `
+      : `
+        absolute left-full top-1/2 z-50
+        flex h-12 w-6 -translate-y-1/2
+        items-center justify-center
+        rounded-r-md
+        bg-[#235937] text-white shadow-md
+        hover:brightness-110
+        dark:bg-[#23314c]
+      `
+  }
+  aria-label={hidden ? "Show sidebar" : "Hide sidebar"}
+  title={hidden ? "Show menu" : "Hide menu"}
+>
+  <span className="text-lg font-bold leading-none">
+    {snapped ? (hidden ? "▼" : "▲") : hidden ? "▶" : "◀"}
+  </span>
+</button>
       </aside>
 
       <StuckModal

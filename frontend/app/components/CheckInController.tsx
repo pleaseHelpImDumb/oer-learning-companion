@@ -5,6 +5,7 @@ import QuickCheckInModal from "./QuickCheckInModal";
 import StuckModal from "./StuckModal";
 import { useStuckAssistant } from "../providers/stuck-assistance-provider";
 import { useSession } from "../providers/session-provider";
+import CheckInBrowserAlert from "./CheckInBrowserAlert";
 
 export default function CheckInController() {
   const [open, setOpen] = useState(false);
@@ -109,39 +110,41 @@ export default function CheckInController() {
     }
   }
 
-  return (
-    <>
-      <QuickCheckInModal
-        open={open}
-        onClose={() => setOpen(false)}
-        onSelect={async (value) => {
-          console.log("Check-in value:", value);
+return (
+  <>
+    <CheckInBrowserAlert active={open || stuckOpen} />
 
-          if (value === "up") {
-            await saveWellnessCheck("up", false);
-            setOpen(false);
-            return;
-          }
+    <QuickCheckInModal
+      open={open}
+      onClose={() => setOpen(false)}
+      onSelect={async (value) => {
+        console.log("Check-in value:", value);
 
-          if (value === "down") {
-            setOpen(false);
-            setStuckOpen(true);
-          }
-        }}
-      />
+        if (value === "up") {
+          await saveWellnessCheck("up", false);
+          setOpen(false);
+          return;
+        }
 
-      <StuckModal
-        open={stuckOpen}
-        onClose={async () => {
-          await saveWellnessCheck("down", false);
-          setStuckOpen(false);
-        }}
-        onHelp={async () => {
-          await saveWellnessCheck("down", true);
-          setStuckOpen(false);
-          openAssistant();
-        }}
-      />
-    </>
-  );
+        if (value === "down") {
+          setOpen(false);
+          setStuckOpen(true);
+        }
+      }}
+    />
+
+    <StuckModal
+      open={stuckOpen}
+      onClose={async () => {
+        await saveWellnessCheck("down", false);
+        setStuckOpen(false);
+      }}
+      onHelp={async () => {
+        await saveWellnessCheck("down", true);
+        setStuckOpen(false);
+        openAssistant();
+      }}
+    />
+  </>
+);
 }
