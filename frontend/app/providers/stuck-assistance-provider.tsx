@@ -68,7 +68,7 @@ type Ctx = {
   setTab: (t: State["tab"]) => void;
   setInput: (s: string) => void;
   setSupportLevel: (level: State["supportLevel"]) => void;
-  send: () => Promise<void>;
+  send: (levelOverride?: State["supportLevel"]) => Promise<void>;
 };
 
 const StuckAssistantContext = createContext<Ctx | null>(null);
@@ -90,7 +90,7 @@ export function StuckAssistantProvider({
       setSupportLevel: (level) =>
         dispatch({ type: "SET_SUPPORT_LEVEL", supportLevel: level }),
 
-      send: async () => {
+      send: async (levelOverride) => {
         const text = state.input.trim();
         if (!text || state.loading) return;
 
@@ -122,7 +122,7 @@ const res = await fetch(`${API_BASE_URL}/ai/chat`, {
             },
             body: JSON.stringify({
               message: text,
-              supportLevel: Number(state.supportLevel),
+              supportLevel: Number(levelOverride ?? state.supportLevel),
             }),
           });
 
