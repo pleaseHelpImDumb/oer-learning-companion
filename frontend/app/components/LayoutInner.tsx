@@ -39,6 +39,16 @@ export default function LayoutInner({
       <SiteHeader />
       <StuckAssistantProvider>
         <AppShell>
+
+          {children}
+        </AppShell>
+        <Robot />
+      </StuckAssistantProvider>
+      {/*<SiteFooter />*/}
+    </div>
+  );
+}
+
           {/*{loading && (
             <div className="mx-4 mt-4 rounded-xl border border-[#d8d8d8] bg-[#fdf5e7] px-4 py-3 text-sm font-medium text-[#235937] shadow-sm">
               Checking active session...
@@ -85,12 +95,3 @@ export default function LayoutInner({
               </div>
             </div>
           )}*/}
-
-          {children}
-        </AppShell>
-        <Robot />
-      </StuckAssistantProvider>
-      {/*<SiteFooter />*/}
-    </div>
-  );
-}

@@ -1,25 +1,60 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "../providers/session-provider";
 import { useUser } from "../providers/user-provider";
+import { useRecentSessions } from "../providers/recent-session-provider";
 export default function SiteHeader() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { track, avatarUrl, username, latestBadge } = useUser();
+const { sessions24hrs, tokensAvailable24hrs, refreshSessions24hrs } =
+  useRecentSessions();
+
   const {
     activeSession,
     sessionActionLoading,
     liveStudySeconds,
-    displayTokensAvailable,
+    //displayTokensAvailable,
     pauseSession,
     resumeSession,
     cancelSession,
   } = useSession();
 
-  const sessionTokensAvailable = activeSession ? displayTokensAvailable : 0;
-  const baseTokens = activeSession?.tokensAvailable ?? 0;
-  const earnedSinceMount = Math.floor(liveStudySeconds / 300);
+const currentSessionSpent =
+  sessions24hrs.find(
+    (s) => s.status === "ACTIVE" || s.status === "PAUSED"
+  )?.tokensSpent ?? 0;
+
+const liveCurrentSessionTokens = activeSession
+  ? Math.max(0, Math.floor(liveStudySeconds / 300) - currentSessionSpent)
+  : 0;
+
+const completed24hrTokens = sessions24hrs
+  .filter((s) => s.status === "COMPLETED")
+  .reduce((sum, s: any) => {
+    const earned = s.tokensEarned ?? 0;
+    const spent = s.tokensSpent ?? 0;
+    return sum + Math.max(0, earned - spent);
+  }, 0);
+
+const sessionTokensAvailable = completed24hrTokens + liveCurrentSessionTokens;
+  const liveTokenBucket = Math.floor(liveStudySeconds / 300);
+
+  useEffect(() => {
+  if (!activeSession) return;
+
+  refreshSessions24hrs();
+
+  const intervalId = window.setInterval(() => {
+    refreshSessions24hrs();
+  }, 60_000);
+
+  return () => window.clearInterval(intervalId);
+}, [activeSession?.sessionId, activeSession?.status, liveTokenBucket]);
+console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
+  //const baseTokens = activeSession?.tokensAvailable ?? 0;
+  //const earnedSinceMount = Math.floor(liveStudySeconds / 300);
   const handleTimerClick = async () => {
     if (!activeSession || sessionActionLoading || headerActionLockRef.current)
       return;
@@ -52,6 +87,7 @@ export default function SiteHeader() {
 
     try {
       await cancelSession();
+      await refreshSessions24hrs();
     } catch (error) {
       console.error("Failed to cancel session:", error);
     } finally {

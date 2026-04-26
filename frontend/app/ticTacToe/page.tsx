@@ -1,101 +1,74 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import TicTacToe from "@/app/components/ticTacToe";
+import { useRecentSessions } from "@/app/providers/recent-session-provider";
 import { useSession } from "@/app/providers/session-provider";
+
 export default function TicTacToePage() {
-  const { refreshSession } = useSession();
   const GAME_COST = 4;
 
-  const [tokensAvailable, setTokensAvailable] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [sessionId, setSessionId] = useState<number | null>(null);
-  useEffect(() => {
-    async function loadSession() {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/active`,
-          {
-            credentials: "include",
-          }
-        );
+  const { activeSession, liveStudySeconds } = useSession();
 
-        const text = await res.text();
-        console.log("sessions/active status:", res.status);
-        console.log("sessions/active raw response:", text);
+  const {
+    sessions24hrs,
+    refreshSessions24hrs,
+  } = useRecentSessions();
 
-        if (!res.ok) {
-          setTokensAvailable(0);
-          return;
+  const currentSessionSpent =
+    sessions24hrs.find(
+      (s) => s.status === "ACTIVE" || s.status === "PAUSED"
+    )?.tokensSpent ?? 0;
+
+  const liveCurrentSessionTokens = activeSession
+    ? Math.max(0, Math.floor(liveStudySeconds / 300) - currentSessionSpent)
+    : 0;
+
+  const completed24hrTokens = sessions24hrs
+    .filter((s) => s.status === "COMPLETED")
+    .reduce((sum, s) => {
+      const earned = s.tokensEarned ?? 0;
+      const spent = s.tokensSpent ?? 0;
+      return sum + Math.max(0, earned - spent);
+    }, 0);
+
+  const availableTokens = completed24hrTokens + liveCurrentSessionTokens;
+
+  async function spendGameTokens(amount: number): Promise<boolean> {
+    try {
+      const csrfToken = localStorage.getItem("csrfToken");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/consume-token-24hrs`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": csrfToken || "",
+          },
+          body: JSON.stringify({ cost: amount }),
         }
+      );
 
-        const data = JSON.parse(text);
-        setTokensAvailable(Number(data?.session?.tokensAvailable ?? 0));
-        setSessionId(data?.session?.sessionId ?? null);
-      } catch (error) {
-        console.error("Failed to load session:", error);
-        setTokensAvailable(0);
-      } finally {
-        setLoading(false);
-      }
-    }
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
 
-    loadSession();
-  }, []);
+      console.log("consume-token-24hrs status:", res.status);
+      console.log("consume-token-24hrs response:", data);
 
-async function spendGameTokens(amount: number): Promise<boolean> {
-  try {
-    if (!sessionId) return false;
+      if (!res.ok) return false;
 
-    const csrfToken = localStorage.getItem("csrfToken");
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/sessions/${sessionId}/consume-token`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken || "",
-        },
-        body: JSON.stringify({ cost: amount }),
-      }
-    );
-
-    const text = await res.text();
-    console.log("consume-token status:", res.status);
-    console.log("consume-token raw response:", text);
-
-    if (!res.ok) {
+      refreshSessions24hrs();
+      return true;
+    } catch (error) {
+      console.error("Failed to spend tokens:", error);
       return false;
     }
-
-    const data = JSON.parse(text);
-
-    if (!data?.session) {
-      return false;
-    }
-
-    setTokensAvailable(Number(data.session.tokensAvailable ?? 0));
-    await refreshSession(); // <- add this
-    return true;
-  } catch (error) {
-    console.error("Failed to spend tokens:", error);
-    return false;
-  }
-}
-
-  if (loading) {
-    return (
-      <div className="p-6 text-slate-900 dark:text-slate-100">
-        Loading...
-      </div>
-    );
   }
 
   return (
     <TicTacToe
-      availableTokens={tokensAvailable}
+      availableTokens={availableTokens}
       requiredTokens={GAME_COST}
       onSpendTokens={spendGameTokens}
     />

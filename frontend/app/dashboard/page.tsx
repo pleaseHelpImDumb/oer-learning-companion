@@ -173,7 +173,7 @@ export default function Home() {
                   <p className="text-base font-semibold text-[#235937] sm:text-lg dark:text-white">
                     Lifetime Tokens
                   </p>
-                                      <span
+                      <span
                       className=""
                       title="The number of tokens you have earned across all of your study sessions"
                     >

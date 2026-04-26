@@ -27,6 +27,7 @@ type SessionContextType = {
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
   completeSession: () => Promise<void>;
+  spendGameTokens: (amount: number) => Promise<boolean>;
 };
 
 type SessionProviderProps = {
@@ -150,6 +151,52 @@ function syncLocalClockFromSession(session: ActiveSession | null) {
     setClockAnchorMs(null);
   }
 }
+
+const spendGameTokens = async (amount: number): Promise<boolean> => {
+  if (!activeSession || !API_BASE_URL) return false;
+
+  try {
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(
+      `${API_BASE_URL}/sessions/${activeSession.sessionId}/consume-token`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+        },
+        body: JSON.stringify({ cost: amount }),
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data?.session) {
+      return false;
+    }
+
+    setActiveSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            tokensSpent: Number(data.session.tokensSpent ?? prev.tokensSpent ?? 0),
+            tokensAvailable: Number(
+              data.session.tokensAvailable ?? prev.tokensAvailable ?? 0
+            ),
+          }
+        : prev
+    );
+
+    return true;
+  } catch (error) {
+    console.error("[SESSION PROVIDER] Failed to spend tokens:", error);
+    return false;
+  }
+};
+
 const refreshSession = async () => {
   if (refreshInFlightRef.current) return;
 
@@ -542,6 +589,7 @@ const value = useMemo(
     pauseSession,
     resumeSession,
     completeSession,
+    spendGameTokens,
   }),
   [
     activeSession,

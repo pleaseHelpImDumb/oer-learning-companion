@@ -8,6 +8,7 @@ import AppShell from "../components/AppShell";
 import Robot from "../components/RobotEmoji";
 import { StuckAssistantProvider } from "../providers/stuck-assistance-provider";
 import { SessionProvider } from "../providers/session-provider";
+import { RecentSessionsProvider } from "../providers/recent-session-provider";
 import PopupRenderer from "./PopupRenderer";
 import LayoutInner from "./LayoutInner";
 import CheckInController from "./CheckInController";
@@ -120,15 +121,17 @@ useEffect(() => {
 return (
   <PopupProvider>
     <SessionProvider shouldCheckSession={!hideLayout}>
-      <UserProvider>
-        <StuckAssistantProvider>
-          <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
+      <RecentSessionsProvider shouldFetch={!hideLayout}>
+        <UserProvider>
+          <StuckAssistantProvider>
+            <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
 
-          {!hideLayout && <CheckInController />}
-          {!hideLayout && <SessionResumeModalController />}
-          {!hideLayout && <PopupRenderer />}
-        </StuckAssistantProvider>
-      </UserProvider>
+            {!hideLayout && <CheckInController />}
+            {!hideLayout && <SessionResumeModalController />}
+            {!hideLayout && <PopupRenderer />}
+          </StuckAssistantProvider>
+        </UserProvider>
+      </RecentSessionsProvider>
     </SessionProvider>
   </PopupProvider>
 );

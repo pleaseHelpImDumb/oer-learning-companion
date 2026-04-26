@@ -17,7 +17,7 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
 
         {/* Top text */}
         <p className="text-sm text-gray-300 mb-2 font-bold">
-          Quick Check-in (optional)
+          Quick Check-in
         </p>
 
         {/* Main question */}
