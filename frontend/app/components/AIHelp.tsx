@@ -15,7 +15,8 @@ export default function StuckModal() {
     useStuckAssistant();  const [open, setOpen] = useState(false);
 const [supportMenuOpen, setSupportMenuOpen] = useState(false);
 const [selectedSupport, setSelectedSupport] = useState<"1" | "2" | "3">("1");
-
+const [history, setHistory] = useState<any[]>([]);
+const [historyLoading, setHistoryLoading] = useState(false);
 const supportOptions = [
   { level: "1", base: "hint" },
   { level: "2", base: "stuck" },
@@ -82,8 +83,10 @@ const selectedOption = supportOptions.find(
             Chat
           </button>
           <button
-            onClick={() => setTab("history")}
-            className={`px-3 py-1 border-b-2 transition-colors ${
+onClick={() => {
+  setSupportMenuOpen(false);
+  setTab("history");
+}}            className={`px-3 py-1 border-b-2 transition-colors ${
               state.tab === "history"
                 ? "border-[#0077B6] text-[#0077B6]"
                 : "border-transparent hover:border-[#0077B6] hover:text-[#0077B6]"
@@ -94,141 +97,142 @@ const selectedOption = supportOptions.find(
         </div>
 
         <div className="w-full h-px bg-black/30 dark:bg-white/80" />
+{state.tab === "history" ? (
+  <div className="flex-1 overflow-y-auto py-4">
+    <div className="text-sm opacity-70">History will go here.</div>
+  </div>
+) : (
+  <>
+    <div className="flex-1 overflow-y-auto py-4">
+      <div className="space-y-3">
+        {state.messages.map((m) => (
+          <div
+            key={m.id}
+            className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+              m.role === "user" ? "ml-auto bg-black/10" : "mr-auto bg-black/5"
+            }`}
+          >
+            {m.role === "assistant" ? (
+              <div className="prose prose-sm prose-code:bg-transparent prose-code:px-0 prose-code:py-0">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                  components={{
+                    pre({ children }) {
+                      return (
+                        <pre className="overflow-x-auto rounded-lg bg-black/10 p-3">
+                          {children}
+                        </pre>
+                      );
+                    },
+                    code({ inline, children, ...props }: any) {
+                      const text = String(children);
 
-        <div className="flex-1 overflow-y-auto py-4">
-          {state.tab === "history" ? (
-            <div className="text-sm opacity-70">History will go here.</div>
-          ) : (
-            <div className="space-y-3">
-              {state.messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
-                    m.role === "user"
-                      ? "ml-auto bg-black/10"
-                      : "mr-auto bg-black/5"
-                  }`}
+                      if (inline && /^[a-zA-Z]$/.test(text)) {
+                        return <span className="italic">{text}</span>;
+                      }
+
+                      if (inline && /[=+\-*/^]/.test(text)) {
+                        return <span className="font-mono">{text}</span>;
+                      }
+
+                      if (inline) {
+                        return (
+                          <code
+                            className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]"
+                            {...props}
+                          >
+                            {children}
+                          </code>
+                        );
+                      }
+
+                      return <code {...props}>{children}</code>;
+                    },
+                  }}
                 >
-                  {m.role === "assistant" ? (
-                    <div className="prose prose-sm prose-code:bg-transparent prose-code:px-0 prose-code:py-0">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-components={{
-  pre({ children }) {
-    return (
-      <pre className="overflow-x-auto rounded-lg bg-black/10 p-3">
-        {children}
-      </pre>
-    );
-  },
-  code({ inline, children, ...props }: any) {
-    const text = String(children);
+                  {cleanAssistantText(m.text)}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div>{m.text}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
 
-    if (inline && /^[a-zA-Z]$/.test(text)) {
-      return <span className="italic">{text}</span>;
-    }
+    <div className="pt-3 border-t border-black/20 dark:border-white/20">
+      <p className="mb-2 text-xs italic opacity-70">
+        This tool supports learning—it won&apos;t do the work for you.
+      </p>
 
-    if (inline && /[=+\-*/^]/.test(text)) {
-      return <span className="font-mono">{text}</span>;
-    }
+      <div className="flex items-end gap-2">
+        <input
+          value={state.input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") send();
+          }}
+          placeholder="What’s hard to understand?"
+          className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
+        />
 
-    if (inline) {
-      return (
-        <code
-          className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]"
-          {...props}
+        <button
+          type="button"
+          onClick={() => send()}
+          className="rounded-lg transition hover:scale-105"
+          aria-label={`Send with ${selectedOption.base} support`}
         >
-          {children}
-        </code>
-      );
-    }
+          <Image
+            src={`/${selectedOption.base}.png`}
+            alt={selectedOption.base}
+            width={120}
+            height={50}
+            className="h-[38px] w-auto object-contain"
+            draggable={false}
+          />
+        </button>
 
-    return <code {...props}>{children}</code>;
-  },
-}}
-                      >
-                        {cleanAssistantText(m.text)}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <div>{m.text}</div>
-                  )}
-                </div>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setSupportMenuOpen((prev) => !prev)}
+            className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
+            aria-label="Choose support level"
+          >
+            ▼
+          </button>
+
+          {supportMenuOpen && (
+            <div className="absolute bottom-full right-0 mb-2 flex w-max flex-col gap-2 rounded-lg border border-black/20 bg-white p-2 shadow-lg dark:border-white/20 dark:bg-[#0B0B26]">
+              {supportOptions.map(({ level, base }) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSupport(level);
+                    setSupportMenuOpen(false);
+                  }}
+                  className="rounded-md transition hover:scale-105"
+                >
+                  <Image
+                    src={`/${base}.png`}
+                    alt={base}
+                    width={160}
+                    height={55}
+                    className="h-auto w-[160px] max-w-none object-contain"
+                    draggable={false}
+                  />
+                </button>
               ))}
             </div>
           )}
         </div>
-
-<div className="pt-3 border-t border-black/20 dark:border-white/20">
-  <p className="mb-2 text-xs italic opacity-70">
-    This tool supports learning—it won&apos;t do the work for you.
-  </p>
-
-<div className="flex items-end gap-2">
-  <input
-    value={state.input}
-    onChange={(e) => setInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") send();
-    }}
-    placeholder="What’s hard to understand?"
-    className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
-  />
-
-  <button
-    type="button"
-    onClick={() => send()}
-    className="rounded-lg transition hover:scale-105"
-    aria-label={`Send with ${selectedOption.base} support`}
-  >
-    <Image
-      src={`/${selectedOption.base}.png`}
-      alt={selectedOption.base}
-      width={120}
-      height={50}
-      className="h-[38px] w-auto object-contain"
-      draggable={false}
-    />
-  </button>
-
-  <div className="relative">
-    <button
-      type="button"
-      onClick={() => setSupportMenuOpen((prev) => !prev)}
-      className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
-      aria-label="Choose support level"
-    >
-      ▼
-    </button>
-
-    {supportMenuOpen && (
-      <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-lg border border-black/20 bg-white p-2 shadow-lg dark:border-white/20 dark:bg-[#0B0B26]">
-        {supportOptions.map(({ level, base }) => (
-          <button
-            key={level}
-            type="button"
-            onClick={() => {
-              setSelectedSupport(level);
-              setSupportMenuOpen(false);
-            }}
-            className="rounded-md transition hover:scale-105"
-          >
-<Image
-  src={`/${base}.png`}
-  alt={base}
-  width={160}
-  height={55}
-  className="h-auto w-[160px] max-w-none object-contain"
-  draggable={false}
-/>
-          </button>
-        ))}
       </div>
-    )}
-  </div>
-</div>
-</div>
+    </div>
+  </>
+)}
 
 {/*<div className="mt-3 flex flex-wrap gap-3">
   {[
