@@ -46,7 +46,34 @@ const selectedOption = supportOptions.find(
       .replace(/[ \t]+/g, " ")
       .trim();
   };
+async function loadHistory() {
+  try {
+    setHistoryLoading(true);
 
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/ai/history`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("History failed:", data);
+      setHistory([]);
+      return;
+    }
+
+    setHistory(data.history ?? []);
+  } catch (err) {
+    console.error("Could not load AI history:", err);
+    setHistory([]);
+  } finally {
+    setHistoryLoading(false);
+  }
+}
   return (
     <div
       className="fixed inset-0 z-50 bg-black/13 flex items-center justify-end p-4"
@@ -86,7 +113,9 @@ const selectedOption = supportOptions.find(
 onClick={() => {
   setSupportMenuOpen(false);
   setTab("history");
-}}            className={`px-3 py-1 border-b-2 transition-colors ${
+  loadHistory();
+}} 
+           className={`px-3 py-1 border-b-2 transition-colors ${
               state.tab === "history"
                 ? "border-[#0077B6] text-[#0077B6]"
                 : "border-transparent hover:border-[#0077B6] hover:text-[#0077B6]"
