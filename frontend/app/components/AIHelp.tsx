@@ -11,8 +11,7 @@ import { useState } from "react";
 import Image from "next/image";
 export default function StuckModal() {
   const router = useRouter();
-  const { state, closeAssistant, setTab, setInput, setSupportLevel, send } =
-    useStuckAssistant();  const [open, setOpen] = useState(false);
+  const { state, closeAssistant, setTab, setInput, send } = useStuckAssistant();  
 const [supportMenuOpen, setSupportMenuOpen] = useState(false);
 const [selectedSupport, setSelectedSupport] = useState<"1" | "2" | "3">("1");
 const [history, setHistory] = useState<any[]>([]);
@@ -128,7 +127,29 @@ onClick={() => {
         <div className="w-full h-px bg-black/30 dark:bg-white/80" />
 {state.tab === "history" ? (
   <div className="flex-1 overflow-y-auto py-4">
-    <div className="text-sm opacity-70">History will go here.</div>
+    <div className="space-y-3">
+      {historyLoading ? (
+        <div className="text-sm opacity-70">Loading history...</div>
+      ) : history.length === 0 ? (
+        <div className="text-sm opacity-70">No AI history yet.</div>
+      ) : (
+        history.map((m) => (
+          <div
+            key={m.interactionId}
+            className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+              m.role === "USER"
+                ? "ml-auto bg-black/10 dark:bg-white/10"
+                : "mr-auto bg-black/5 dark:bg-white/5"
+            }`}
+          >
+            <div className="mb-1 text-[10px] uppercase opacity-50">
+              {m.role === "USER" ? "You" : "AI"}
+            </div>
+            <div>{m.message}</div>
+          </div>
+        ))
+      )}
+    </div>
   </div>
 ) : (
   <>
@@ -201,7 +222,7 @@ onClick={() => {
           value={state.input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") send();
+            if (e.key === "Enter") send(selectedSupport);
           }}
           placeholder="What’s hard to understand?"
           className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
@@ -209,7 +230,7 @@ onClick={() => {
 
         <button
           type="button"
-          onClick={() => send()}
+          onClick={() => send(selectedSupport)}
           className="rounded-lg transition hover:scale-105"
           aria-label={`Send with ${selectedOption.base} support`}
         >
