@@ -474,6 +474,7 @@ const incrementBreakCount = async (req, res, next) => {
 const getWeekStats = async (req, res, next) => {
   try {
     const userId = req.user.id;
+
     const user = await prisma.userStats.findUnique({
       where: { userId },
     });
@@ -487,7 +488,6 @@ const getWeekStats = async (req, res, next) => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // get hours for the past week
     const weeklyStudy = await prisma.studySession.aggregate({
       where: {
         userId,
@@ -500,26 +500,101 @@ const getWeekStats = async (req, res, next) => {
         durationMinutes: true,
       },
     });
-    // get lifetime stats
-    const stats = await prisma.userStats.findUnique({
-      where: { userId },
-    });
 
-    res.status(StatusCodes.OK).json({
-      // weekly
+    return res.status(StatusCodes.OK).json({
       weeklyMinsStudied: weeklyStudy._sum.durationMinutes || 0,
-      // lifetime
-      totalCheckIns: stats.totalWellnessChecks,
-      totalMinutes: stats.totalStudyMinutes,
-      aiHelpCount: stats.totalAiInteractions,
-      totalBreaks: stats.totalBreaks,
+      totalCheckIns: user.totalWellnessChecks,
+      totalMinutes: user.totalStudyMinutes,
+      aiHelpCount: user.totalAiInteractions,
+      totalBreaks: user.totalBreaks,
     });
-    res.status(StatusCodes.OK).json({});
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
+const consumeToken24hrs = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const cost = Number(req.body.cost);
 
+    if (!Number.isInteger(cost) || cost <= 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: "Invalid token cost",
+      });
+    }
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+const sessions = await prisma.studySession.findMany({
+  where: {
+    userId,
+    startTime: {
+      gte: oneDayAgo,
+    },
+    status: {
+      in: ["ACTIVE", "PAUSED", "COMPLETED"],
+    },
+  },
+  orderBy: {
+    startTime: "desc",
+  },
+});
+
+    const sessionTokenData = sessions.map((session) => {
+      const tokenData = calculateSessionTokenData(session);
+
+      return {
+        session,
+        tokensAvailable: tokenData.tokensAvailable,
+      };
+    });
+
+    const totalAvailable = sessionTokenData.reduce(
+      (sum, item) => sum + item.tokensAvailable,
+      0
+    );
+
+    if (totalAvailable < cost) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: "Not enough 24-hour tokens",
+        tokensAvailable24hrs: totalAvailable,
+      });
+    }
+
+    let remainingCost = cost;
+
+    for (const item of sessionTokenData) {
+      if (remainingCost <= 0) break;
+
+      const spendFromThisSession = Math.min(
+        item.tokensAvailable,
+        remainingCost
+      );
+
+      if (spendFromThisSession <= 0) continue;
+
+      await prisma.studySession.update({
+        where: {
+          sessionId: item.session.sessionId,
+        },
+        data: {
+          tokensSpent: {
+            increment: spendFromThisSession,
+          },
+        },
+      });
+
+      remainingCost -= spendFromThisSession;
+    }
+
+    return res.status(StatusCodes.OK).json({
+      message: "Tokens spent successfully",
+      tokensSpent: cost,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
 // get last 10 user sessions
 const getUserSessions = async (req, res, next) => {
   try {
@@ -548,6 +623,150 @@ const getUserSessions = async (req, res, next) => {
     res.status(StatusCodes.OK).json({ sessions: formatted });
   } catch (err) {
     next(err);
+  }
+};
+
+const MINUTES_PER_TOKEN = 5; // or whatever you're using
+
+const calculateSessionTokenData = (session) => {
+  console.log("calculateSessionTokenData input:", {
+    sessionId: session.sessionId,
+    status: session.status,
+    durationMinutes: session.durationMinutes,
+    startTime: session.startTime,
+    totalPausedMinutes: session.totalPausedMinutes,
+    lastPauseTime: session.lastPauseTime,
+    tokensSpent: session.tokensSpent,
+  });
+
+  let studyMinutes = session.durationMinutes || 0;
+
+  if (session.status === "ACTIVE" || session.status === "PAUSED") {
+    const now = new Date();
+
+    const totalElapsedSeconds = Math.floor(
+      (now - new Date(session.startTime)) / 1000
+    );
+
+    let currentPauseSeconds = 0;
+
+    if (session.status === "PAUSED" && session.lastPauseTime) {
+      currentPauseSeconds = Math.floor(
+        (now - new Date(session.lastPauseTime)) / 1000
+      );
+    }
+
+    const totalPausedSeconds = (session.totalPausedMinutes || 0) * 60;
+
+    const studySeconds = Math.max(
+      0,
+      totalElapsedSeconds - totalPausedSeconds - currentPauseSeconds
+    );
+
+    studyMinutes = Math.floor(studySeconds / 60);
+
+    console.log("live session math:", {
+      totalElapsedSeconds,
+      totalPausedSeconds,
+      currentPauseSeconds,
+      studySeconds,
+      studyMinutes,
+    });
+  }
+
+  const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
+  const tokensSpent = session.tokensSpent || 0;
+  const tokensAvailable = Math.max(0, tokensEarned - tokensSpent);
+
+  console.log("calculateSessionTokenData output:", {
+    studyMinutes,
+    tokensEarned,
+    tokensSpent,
+    tokensAvailable,
+  });
+
+  return {
+    studyMinutes,
+    tokensEarned,
+    tokensSpent,
+    tokensAvailable,
+  };
+};
+
+const getUserSessionsEOD = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const sessions = await prisma.studySession.findMany({
+      where: {
+        userId,
+        status: {
+  in: ["ACTIVE", "PAUSED", "COMPLETED"],
+},
+        startTime: {
+          gte: oneDayAgo,
+        },
+      },
+      orderBy: {
+        startTime: "desc",
+      },
+    });
+
+const formatted = sessions.map((s) => {
+  let tokensEarned = 0;
+
+  if (s.status === "COMPLETED") {
+    tokensEarned = s.tokensEarned ?? Math.floor((s.durationMinutes || 0) / MINUTES_PER_TOKEN);
+  }
+
+  if (s.status === "ACTIVE" || s.status === "PAUSED") {
+    const tokenData = calculateSessionTokenData(s);
+    tokensEarned = tokenData.tokensEarned;
+  }
+
+  const tokensSpent = s.tokensSpent || 0;
+  const tokensAvailable = Math.max(0, tokensEarned - tokensSpent);
+
+  return {
+    sessionId: s.sessionId,
+    status: s.status,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    durationMinutes: s.durationMinutes,
+    sessionGoalMinutes: s.sessionGoalMinutes,
+    tokensEarned,
+    tokensSpent,
+    tokensAvailable,
+    numAiInteractions: s.numAiInteractions,
+    notes: s.notes,
+  };
+});
+
+    const tokensEarned24hrs = formatted.reduce(
+      (sum, s) => sum + s.tokensEarned,
+      0
+    );
+
+    const tokensSpent24hrs = formatted.reduce(
+      (sum, s) => sum + s.tokensSpent,
+      0
+    );
+
+    const tokensAvailable24hrs = Math.max(
+      0,
+      tokensEarned24hrs - tokensSpent24hrs
+    );
+
+    return res.status(StatusCodes.OK).json({
+      sessions: formatted,
+      tokensEarned24hrs,
+      tokensSpent24hrs,
+      tokensAvailable24hrs,
+    });
+  } catch (err) {
+    console.error("getUserSessionsEOD error:", err);
+    return next(err);
   }
 };
 
@@ -597,5 +816,7 @@ module.exports = {
   incrementBreakCount,
   getWeekStats,
   getUserSessions,
+  getUserSessionsEOD,
+  consumeToken24hrs,
   getUserStats,
 };

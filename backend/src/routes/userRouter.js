@@ -13,6 +13,8 @@ const {
   incrementBreakCount,
   getWeekStats,
   getUserSessions,
+  getUserSessionsEOD,
+  consumeToken24hrs,
   getUserStats,
 } = require("../controllers/userController.js");
 
@@ -30,6 +32,9 @@ router.post("/add-break", authMiddleware, incrementBreakCount);
 router.get("/week-stats", authMiddleware, getWeekStats);
 
 router.get("/sessions", authMiddleware, getUserSessions);
+router.get("/sessions24hrs", authMiddleware, getUserSessionsEOD);
+router.post("/consume-token-24hrs", authMiddleware, consumeToken24hrs);
+
 router.get("/stats", authMiddleware, getUserStats);
 
 module.exports = router;
