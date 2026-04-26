@@ -153,27 +153,42 @@ components={{
     This tool supports learning—it won&apos;t do the work for you.
   </p>
 
-  <div className="flex items-end gap-2">
-    <input
-      value={state.input}
-      onChange={(e) => setInput(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") send();
-      }}
-      placeholder="What’s hard to understand?"
-      className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
-    />
+<div className="flex items-end gap-2">
+  <input
+    value={state.input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") send();
+    }}
+    placeholder="What’s hard to understand?"
+    className="flex-1 rounded-md border border-black/30 px-3 py-2 text-sm outline-none focus:border-black/60 dark:border-white/30 dark:bg-[#0B0B26] dark:text-white dark:placeholder:text-white/50"
+  />
 
+  {[
+    { level: "1", base: "hint" },
+    { level: "2", base: "stuck" },
+    { level: "3", base: "struggle" },
+  ].map(({ level, base }) => (
     <button
-      onClick={send}
-      className="rounded-md border border-black/30 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/30 dark:text-white dark:hover:bg-white/10"
-      aria-label="Send"
+      key={level}
+      type="button"
+      onClick={() => send()}
+      className="rounded-lg transition hover:scale-105"
+      aria-label={`Send with ${base} support`}
     >
-      ↩︎
+      <Image
+        src={`/${base}.png`}
+        alt={base}
+        width={90}
+        height={38}
+        className="h-[38px] w-auto object-contain"
+        draggable={false}
+      />
     </button>
-  </div>
+  ))}
+</div>
 
-<div className="mt-3 flex flex-wrap gap-3">
+{/*<div className="mt-3 flex flex-wrap gap-3">
   {[
     { level: "1", base: "hint" },
     { level: "2", base: "stuck" },
@@ -204,7 +219,7 @@ components={{
       </button>
     );
   })}
-</div>
+</div>*/}
 </div>
       </div>
     </div>
