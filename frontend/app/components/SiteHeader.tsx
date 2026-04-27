@@ -254,7 +254,7 @@ const resolvedUsername = username || "username";
             <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
                     <span
                       className=""
-                      title="The number of tokens you have earned this session"
+                      title="These are the number of tokens you have earned in the past 24 hours"
                     >
                       ⓘ
                     </span>

@@ -17,6 +17,11 @@ const [completedSessions, setCompletedSessions] = useState(0);
 const [totalStudyMinutes, setTotalStudyMinutes] = useState(0);
 const [totalSessions, setTotalSessions] = useState(0);
 const [currentStreakLength, setCurrentStreakLength] = useState(0);
+const [latestSessionId, setLatestSessionId] = useState<number | null>(null);
+const [sessionNotes, setSessionNotes] = useState("");
+const [savingNotes, setSavingNotes] = useState(false);
+const [notesSaved, setNotesSaved] = useState(false);
+const [showNotesToast, setShowNotesToast] = useState(false);
   const stats = [
     ["Check-Ins", checkins],
     ["Duration Net", `${sessionMinutes} Min`],
@@ -120,6 +125,8 @@ async function loadSummary() {
 
       if (latestSession) {
         const netMinutes = Number(latestSession?.durationMinutes ?? 0);
+        setLatestSessionId(Number(latestSession.sessionId));
+        setSessionNotes(latestSession.notes ?? "");
         const aiHelp = Number(latestSession?.numAiInteractions ?? 0);
         const withBreaks = getMinutesWithBreaks(
           latestSession?.startTime,
@@ -173,9 +180,60 @@ useEffect(() => {
   setProgressPercent(percent);
   setProgressImageIndex(nextImageIndex);
 }, [activeSession, liveStudySeconds]);
+async function saveSessionNotes() {
+  if (!API_BASE_URL || !latestSessionId) {
+    console.warn("[SUMMARY] No session available for notes");
+    return;
+  }
 
+  try {
+    setSavingNotes(true);
+    setNotesSaved(false);
+
+    const csrfToken =
+      typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+    const res = await fetch(`${API_BASE_URL}/sessions/${latestSessionId}/notes`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+      },
+      body: JSON.stringify({
+        sessionNotes,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error("[SUMMARY] Failed to save notes:", data);
+      return;
+    }
+
+    console.log("[SUMMARY] Notes saved:", data);
+setNotesSaved(true);
+setShowNotesToast(true);
+
+setTimeout(() => {
+  setShowNotesToast(false);
+}, 2500);
+  } catch (err) {
+    console.error("[SUMMARY] Notes save error:", err);
+  } finally {
+    setSavingNotes(false);
+  }
+}
   return (
     <div className="w-full">
+{showNotesToast && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+    <div className="rounded-2xl bg-[#235937] px-10 py-6 text-xl sm:text-2xl font-bold text-white shadow-2xl animate-fade-in">
+      Notes saved successfully!
+    </div>
+  </div>
+)}
       {/* page padding + max width so things don't stretch weirdly on ultrawide */}
       <div className="mx-auto w-full max-w-12xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="mb-4 border-b border-gray-300 pb-3">
@@ -240,10 +298,38 @@ useEffect(() => {
                 ☰ Add a note about this study session...
               </p>
 
-              <textarea
-                className="border border-gray-300 w-full rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black p-3 min-h-[140px] sm:min-h-[200px] resize-none dark:text-white/80"
-                placeholder="What do you want to remember or reflect upon for next time..."
-              />
+<textarea
+  value={sessionNotes}
+onChange={(e) => {
+  const value = e.target.value;
+
+  setSessionNotes(value);
+  setNotesSaved(false);
+
+  if (latestSessionId) {
+    localStorage.setItem(`sessionNotes:${latestSessionId}`, value);
+  }
+}}
+  className="border border-gray-300 w-full rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black p-3 min-h-[140px] sm:min-h-[200px] resize-none dark:text-white/80 dark:bg-[#0B0B26]"
+  placeholder="What do you want to remember or reflect upon for next time..."
+/>
+
+<div className="mt-3 flex items-center gap-3">
+  <button
+    type="button"
+    onClick={saveSessionNotes}
+    disabled={savingNotes || !latestSessionId}
+    className="rounded-md bg-[#235937] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    {savingNotes ? "Saving..." : "Save Notes"}
+  </button>
+
+  {notesSaved && (
+    <span className="text-sm text-[#235937] dark:text-[#639e61]">
+      Saved
+    </span>
+  )}
+</div>
             </div>
           </div>
 

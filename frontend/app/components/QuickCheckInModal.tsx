@@ -62,14 +62,14 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
           </button>
 
           {/* Not now */}
-          <button
+          {/*<button
             onClick={() => {
               onSelect?.("skip");
             }}
             className="rounded-full border border-green-400 px-6 py-2 text-green-400 transition hover:bg-green-400 hover:text-black"
           >
             Not now
-          </button>
+          </button>*/}
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ type SessionContextType = {
   cancelSession: () => Promise<void>;
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
-  completeSession: () => Promise<void>;
+  completeSession: (sessionNotes?: string) => Promise<void>;
   spendGameTokens: (amount: number) => Promise<boolean>;
 };
 
@@ -56,6 +56,7 @@ const lastToggleAtRef = useRef(0);
 const TOGGLE_COOLDOWN_MS = 1000;
 const [toggleCooldownUntil, setToggleCooldownUntil] = useState(0);
 const PAUSED_SECONDS_KEY = "activeSessionPausedSeconds";
+
 const displayTokensAvailable = useMemo(() => {
   if (!activeSession) return 0;
 
@@ -472,8 +473,44 @@ setClockAnchorMs(Date.now());
     actionLockRef.current = false;
   }
 };
+async function saveNotesBeforeComplete(sessionId: number, sessionNotes?: string) {
+  if (!API_BASE_URL) return;
 
-const completeSession = async () => {
+  const notesFromArg = sessionNotes?.trim();
+  const notesFromStorage =
+    typeof window !== "undefined"
+      ? localStorage.getItem(`sessionNotes:${sessionId}`)?.trim()
+      : "";
+
+  const notesToSave = notesFromArg || notesFromStorage;
+
+  if (!notesToSave) return;
+
+  const csrfToken =
+    typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
+
+  const res = await fetch(`${API_BASE_URL}/sessions/${sessionId}/notes`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+    },
+    body: JSON.stringify({
+      sessionNotes: notesToSave,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    console.error("[SESSION PROVIDER] Failed to save notes before complete:", data);
+    return;
+  }
+
+  console.log("[SESSION PROVIDER] Notes saved before complete:", data);
+}
+const completeSession = async (sessionNotes?: string) => {
   if (!activeSession || !API_BASE_URL) {
     console.log("[SESSION PROVIDER] completeSession aborted", {
       hasActiveSession: !!activeSession,
@@ -486,7 +523,7 @@ const completeSession = async () => {
     setSessionActionLoading(true);
 
     const completedSessionId = activeSession.sessionId;
-
+await saveNotesBeforeComplete(completedSessionId, sessionNotes);
     const csrfToken =
       typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
 
@@ -506,9 +543,13 @@ const completeSession = async () => {
     const data = await res.json().catch(() => ({}));
     console.log("[SESSION PROVIDER] complete response:", data);
 
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || "Failed to complete session");
-    }
+if (!res.ok) {
+  throw new Error(data?.error || data?.message || "Failed to complete session");
+}
+
+if (typeof window !== "undefined") {
+  localStorage.removeItem(`sessionNotes:${completedSessionId}`);
+}
 
   setLiveStudySeconds(0);
   setClockAnchorMs(null);
