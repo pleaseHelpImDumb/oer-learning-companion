@@ -252,12 +252,13 @@ const resolvedUsername = username || "username";
 
           <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
             <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
-                    <span
-                      className=""
-                      title="These are the number of tokens you have earned in the past 24 hours"
-                    >
-                      ⓘ
-                    </span>
+<div className="relative group">
+  <span className="cursor-pointer">ⓘ</span>
+
+  <div className="absolute left-1/2 top-full z-50 mt-2 w-56 -translate-x-1/2 rounded-md bg-black px-3 py-2 text-xs text-white opacity-0 transition group-hover:opacity-100">
+    Tokens are earned during study sessions and expire after 24 hours.
+  </div>
+</div>
               <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
                 Current Session Tokens
               </span>
