@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
+import { useCheckIn } from "@/app/providers/checkin-provider";
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -9,7 +9,8 @@ type Props = {
 };
 
 export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
-  if (!open) return null;
+  const { checkInOpen, setCheckInOpen, submitCheckIn } = useCheckIn();
+  if (!checkInOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -30,10 +31,13 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
 
           {/* Thumbs Down */}
 <button
-  onClick={() => {
-    localStorage.setItem("freeGameTokens", "4");
-    onSelect?.("down");
-  }}
+onClick={async () => {
+  localStorage.setItem("freeGameTokens", "4");
+  await submitCheckIn("down");
+
+  // whatever opened stuck before needs to happen here now
+  onSelect?.("down");
+}}
   className="transition transform hover:scale-110"
 >
             <Image
@@ -47,9 +51,9 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
 
           {/* Thumbs Up */}
           <button
-            onClick={() => {
-              onSelect?.("up");
-            }}
+onClick={async () => {
+  await submitCheckIn("up");
+}}
             className="transition transform hover:scale-110"
           >
             <Image

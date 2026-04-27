@@ -6,12 +6,13 @@ import { useState, useEffect } from "react";
 import StuckModal from "./StuckModal";
 import AIHelpModal from "./AIHelp";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
-
+import { useCheckIn } from "@/app/providers/checkin-provider";
 const icons = [
   { src: "/dashboard.png", alt: "Home", href: "/dashboard" },
   { src: "/timer.png", alt: "Timer", href: "/timer" },
   { src: "/pencil.png", alt: "stuck" },
   { src: "/mask.png", alt: "Focus", href: "/ticTacToe" },
+  { src: "/Thumbs_white.png", alt: "CheckIn" },
   { src: "/sleep.png", alt: "breaks", href: "/break" },
   { src: "/profits.png", alt: "sessionsummary", href: "/summary" },
   { src: "/question.png", alt: "Help" },
@@ -54,7 +55,7 @@ export default function SideBar({ hidden, setHidden }: Props) {
   const [stuckOpen, setStuckOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const { openAssistant } = useStuckAssistant();
-const [checkInWaiting, setCheckInWaiting] = useState(true);
+const { checkInWaiting, submitCheckIn, triggerCheckIn } = useCheckIn();
   useEffect(() => {
     async function loadDashboardData() {
       if (!API_BASE_URL) return;
@@ -104,14 +105,14 @@ const [checkInWaiting, setCheckInWaiting] = useState(true);
           const isHelp = icon.alt === "Help";
 const isCheckInIcon = icon.alt === "Focus";
           const showDividerAbove = icon.alt === "Settings";
-
+const isCheckIn = icon.alt === "CheckIn";
 const content = (
   <>
     {showDividerAbove && (
       <div className="absolute top-0 left-1/2 h-px w-6 -translate-x-1/2 bg-white/25" />
     )}
 
-    <div className="relative">
+    <div className="relative flex items-center justify-center">
       <Image
         src={icon.src}
         alt={icon.alt}
@@ -120,18 +121,41 @@ const content = (
         className={iconClass}
       />
 
-      {isCheckInIcon && checkInWaiting && (
-        <span
+      {isCheckIn && checkInWaiting && (
+        <div
           className="
-            absolute -right-1 -top-1
-            h-2.5 w-2.5
-            rounded-full
-            bg-[#f4d35e]
-            ring-2 ring-[#235937]
-            animate-pulse
-            dark:ring-[#23314c]
+            absolute left-full top-1/2 ml-3
+            flex -translate-y-1/2 items-center gap-2
+            rounded-xl border border-white/20
+            bg-[#235937] px-3 py-2
+            text-white shadow-lg
+            dark:bg-[#23314c]
           "
-        />
+        >
+<button
+  type="button"
+onClick={async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  await submitCheckIn("up");
+}}
+  className="rounded-full bg-white/10 px-2 py-1 hover:bg-white/20"
+>
+  👍
+</button>
+
+<button
+  type="button"
+onClick={async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  await submitCheckIn("down");
+}}
+  className="rounded-full bg-white/10 px-2 py-1 hover:bg-white/20"
+>
+  👎
+</button>
+        </div>
       )}
     </div>
   </>
@@ -164,7 +188,72 @@ const content = (
               </button>
             );
           }
+if (isCheckInIcon && checkInWaiting) {
+  return (
+    <div key={icon.src} className={cellClass}>
+      {content}
+    </div>
+  );
+}
+if (isCheckIn) {
+  return (
+    <div key={icon.src} className={cellClass} title="Check in">
+      <button
+        type="button"
+        onClick={() => triggerCheckIn()}
+        className="flex h-full w-full items-center justify-center"
+        aria-label="Open check-in"
+      >
+        <Image
+          src={icon.src}
+          alt={icon.alt}
+          width={24}
+          height={24}
+          className={iconClass}
+        />
+      </button>
 
+      {checkInWaiting && (
+        <div
+          className="
+            absolute left-full top-1/2 ml-3
+            flex -translate-y-1/2 items-center gap-2
+            rounded-xl border border-white/20
+            bg-[#235937] px-3 py-2
+            text-white shadow-lg
+            dark:bg-[#23314c]
+          "
+        >
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await submitCheckIn("up");
+            }}
+            className="rounded-full bg-white/10 px-2 py-1 hover:bg-white/20"
+          >
+            👍
+          </button>
+
+<button
+  type="button"
+  onClick={async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    await submitCheckIn("down");
+    setStuckOpen(true);
+  }}
+  className="rounded-full bg-white/10 px-2 py-1 hover:bg-white/20"
+>
+  👎
+</button>
+        </div>
+      )}
+    </div>
+  );
+}
           return icon.href ? (
             <Link key={icon.src} href={icon.href} className={cellClass}>
               {content}

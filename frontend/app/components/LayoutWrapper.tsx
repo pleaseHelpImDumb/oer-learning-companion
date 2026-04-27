@@ -15,6 +15,7 @@ import CheckInController from "./CheckInController";
 import SessionResumeModalController from "./SessionResumeModalController";
 import { PopupProvider } from "../providers/popup-provider";
 import { UserProvider } from "../providers/user-provider";
+import { CheckInProvider } from "../providers/checkin-provider";
 export default function LayoutWrapper({
   children,
 }: {
@@ -124,10 +125,12 @@ return (
       <RecentSessionsProvider shouldFetch={!hideLayout}>
         <UserProvider>
           <StuckAssistantProvider>
-            <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
-            {!hideLayout && <CheckInController />}
-            {!hideLayout && <SessionResumeModalController />}
-            {!hideLayout && <PopupRenderer />}
+            <CheckInProvider>
+              <LayoutInner hideLayout={hideLayout}>{children}</LayoutInner>
+              {!hideLayout && <CheckInController />}
+              {!hideLayout && <SessionResumeModalController />}
+              {!hideLayout && <PopupRenderer />}
+            </CheckInProvider>
           </StuckAssistantProvider>
         </UserProvider>
       </RecentSessionsProvider>
