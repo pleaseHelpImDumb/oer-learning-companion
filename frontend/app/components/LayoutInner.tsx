@@ -39,8 +39,8 @@ export default function LayoutInner({
       <SiteHeader />
       <StuckAssistantProvider>
         <AppShell>
-
-          {children}
+<div className="mx-auto w-[95vw] max-w-[1800px] px-4">{children}</div>
+          
         </AppShell>
         <Robot />
       </StuckAssistantProvider>
