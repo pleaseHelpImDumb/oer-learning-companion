@@ -33,7 +33,6 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
   onClick={() => {
     localStorage.setItem("freeGameTokens", "4");
     onSelect?.("down");
-    onClose();
   }}
   className="transition transform hover:scale-110"
 >
@@ -50,7 +49,6 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
           <button
             onClick={() => {
               onSelect?.("up");
-              onClose();
             }}
             className="transition transform hover:scale-110"
           >
@@ -67,7 +65,6 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
           <button
             onClick={() => {
               onSelect?.("skip");
-              onClose();
             }}
             className="rounded-full border border-green-400 px-6 py-2 text-green-400 transition hover:bg-green-400 hover:text-black"
           >

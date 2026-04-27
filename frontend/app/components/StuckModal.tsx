@@ -80,13 +80,19 @@ const actions = [
               {actions.map((action) => (
                 <button
                   key={action.label}
-                  onClick={() => {
-                    if (action.label === "Just Breathe" || action.label === "Break") {
-                      action.onClick();
-                    } else {
-                      handle(action.onClick);
-                    }
-                  }}
+onClick={() => {
+  if (action.label === "Help") {
+    action.onClick();
+    return;
+  }
+
+  if (action.label === "Just Breathe" || action.label === "Break") {
+    action.onClick();
+    return;
+  }
+
+  handle(action.onClick);
+}}
                   className={`min-w-[9.5rem] rounded-full border-2 px-4 py-2 text-[clamp(0.9rem,1.4vw,1.25rem)] font-semibold sm:min-w-[10.5rem] ${
                     action.label === "Break" && showBreak
                       ? "border-[#57ba5c] bg-[#57ba5c]/10 text-[#57ba5c]"

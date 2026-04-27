@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import QuickCheckInModal from "./QuickCheckInModal";
 import StuckModal from "./StuckModal";
 import { useStuckAssistant } from "../providers/stuck-assistance-provider";
 import { useSession } from "../providers/session-provider";
-import CheckInBrowserAlert from "./CheckInBrowserAlert";
-
+//import CheckInBrowserAlert from "./CheckInBrowserAlert";
+import { useRouter } from "next/navigation";
+import AIHelpModal from "./AIHelp";
 export default function CheckInController() {
   const [open, setOpen] = useState(false);
+  const savedCheckInRef = useRef(false);
   const [stuckOpen, setStuckOpen] = useState(false);
   const [intervalMs, setIntervalMs] = useState<number | null>(null);
 
@@ -16,10 +18,11 @@ export default function CheckInController() {
   const { activeSession } = useSession();
 
   useEffect(() => {
-    (window as any).triggerCheckIn = () => {
-      setOpen(true);
-      return "Check-in opened";
-    };
+(window as any).triggerCheckIn = () => {
+  savedCheckInRef.current = false;
+  setOpen(true);
+  return "Check-in opened";
+};
 
     return () => {
       delete (window as any).triggerCheckIn;
@@ -70,8 +73,14 @@ export default function CheckInController() {
   }, [intervalMs]);
 
   async function saveWellnessCheck(value: "up" | "down", helpChosen: boolean) {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (savedCheckInRef.current) {
+    console.log("[CHECK-IN] Already saved, skipping duplicate");
+    return;
+  }
 
+  savedCheckInRef.current = true;
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!API_BASE_URL || !activeSession) {
       console.log("[CHECK-IN] No active session, skipping DB save");
       return;
@@ -94,7 +103,7 @@ export default function CheckInController() {
           },
 body: JSON.stringify({
   feelingGood,
-  helpChosen: helpChosen ? "true" : "false",
+  helpChosen: helpChosen ? "yes" : "no",
 }),
         }
       );
@@ -112,7 +121,7 @@ body: JSON.stringify({
 
 return (
   <>
-    <CheckInBrowserAlert active={open || stuckOpen} />
+{/*<CheckInBrowserAlert active={open} />*/}
 
     <QuickCheckInModal
       open={open}
@@ -126,25 +135,36 @@ return (
           return;
         }
 
-        if (value === "down") {
-          setOpen(false);
-          setStuckOpen(true);
-        }
+if (value === "down") {
+  setOpen(false);
+
+  requestAnimationFrame(() => {
+    setStuckOpen(true);
+  });
+
+  return;
+}
       }}
     />
 
-    <StuckModal
-      open={stuckOpen}
-      onClose={async () => {
-        await saveWellnessCheck("down", false);
-        setStuckOpen(false);
-      }}
-      onHelp={async () => {
-        await saveWellnessCheck("down", true);
-        setStuckOpen(false);
-        openAssistant();
-      }}
-    />
+<StuckModal
+  open={stuckOpen}
+  onClose={() => {
+    setStuckOpen(false);
+  }}
+onHelp={() => {
+  console.log("[CHECK-IN] Help clicked");
+
+  setStuckOpen(false);
+  void saveWellnessCheck("down", true);
+
+  setTimeout(() => {
+    console.log("[CHECK-IN] Opening AI assistant");
+    openAssistant();
+  }, 50);
+}}
+/>
+<AIHelpModal />
   </>
 );
 }
