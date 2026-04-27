@@ -54,7 +54,7 @@ export default function SideBar({ hidden, setHidden }: Props) {
   const [stuckOpen, setStuckOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const { openAssistant } = useStuckAssistant();
-
+const [checkInWaiting, setCheckInWaiting] = useState(true);
   useEffect(() => {
     async function loadDashboardData() {
       if (!API_BASE_URL) return;
@@ -102,24 +102,40 @@ export default function SideBar({ hidden, setHidden }: Props) {
         {icons.map((icon) => {
           const isStuck = icon.alt === "stuck";
           const isHelp = icon.alt === "Help";
-
+const isCheckInIcon = icon.alt === "Focus";
           const showDividerAbove = icon.alt === "Settings";
 
-          const content = (
-            <>
-              {showDividerAbove && (
-                <div className="absolute top-0 left-1/2 h-px w-6 -translate-x-1/2 bg-white/25" />
-              )}
+const content = (
+  <>
+    {showDividerAbove && (
+      <div className="absolute top-0 left-1/2 h-px w-6 -translate-x-1/2 bg-white/25" />
+    )}
 
-              <Image
-                src={icon.src}
-                alt={icon.alt}
-                width={24}
-                height={24}
-                className={iconClass}
-              />
-            </>
-          );
+    <div className="relative">
+      <Image
+        src={icon.src}
+        alt={icon.alt}
+        width={24}
+        height={24}
+        className={iconClass}
+      />
+
+      {isCheckInIcon && checkInWaiting && (
+        <span
+          className="
+            absolute -right-1 -top-1
+            h-2.5 w-2.5
+            rounded-full
+            bg-[#f4d35e]
+            ring-2 ring-[#235937]
+            animate-pulse
+            dark:ring-[#23314c]
+          "
+        />
+      )}
+    </div>
+  </>
+);
 
           if (isStuck) {
             return (
