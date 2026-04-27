@@ -140,18 +140,6 @@ const resolvedUsername = username || "username";
     ? Math.min(100, (liveStudySeconds / SESSION_GOAL_SECONDS) * 100)
     : 0;
 
-  const progressImagePercent =
-    progressPercent >= 100
-      ? 100
-      : progressPercent >= 80
-        ? 80
-        : progressPercent >= 50
-          ? 50
-          : progressPercent >= 30
-            ? 30
-            : progressPercent >= 10
-              ? 10
-              : 0;
   return (
     <header className="w-full border-b border-black bg-[#0E0C32] dark:border-white dark:bg-[#000d2a] text-white">
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-3 sm:px-6 items-center lg:grid lg:grid-cols-[220px_minmax(0,1fr)_220px] lg:items-center lg:gap-6">
@@ -241,13 +229,32 @@ const resolvedUsername = username || "username";
             <span className="whitespace-nowrap text-sm font-semibold sm:text-base">
               My Goals
             </span>
-            <Image
-              src={`/assets/progress_header/${resolvedTrack}/${progressImagePercent}.png`}
-              alt={`Progress: ${progressImagePercent}%`}
-              width={260}
-              height={52}
-              className="h-auto w-[200px] sm:w-[260px] lg:w-[220px]"
-            />
+<div className="flex flex-col items-center translate-y-[19px]">
+  {/* Progress bar */}
+  <div className="relative h-[40px] w-[200px] overflow-hidden sm:w-[260px] lg:w-[220px]">
+    <div className="absolute inset-0 z-0 flex items-center px-[10px] -translate-y-[8px] -translate-x-[5px]">
+      <div className="h-[50%] w-full overflow-hidden rounded-full">
+        <div
+          className="h-full bg-[#4ade80] transition-all duration-500"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+    </div>
+
+    <Image
+      src={`/assets/progress_header/${resolvedTrack}/0.png`}
+      alt="Progress Meter"
+      width={260}
+      height={52}
+      className="relative z-10 h-auto w-full"
+    />
+  </div>
+
+  {/* Percent text */}
+  <span className="mt-1 text-xs font-semibold text-gray-300 -translate-y-[15px]">
+    {Math.floor(progressPercent)}%
+  </span>
+</div>
           </div>
 
           <div className="col-span-2 flex items-center gap-2 rounded-md bg-white/5 px-2 py-2 sm:col-span-3 lg:col-span-1 lg:bg-transparent lg:p-0">
