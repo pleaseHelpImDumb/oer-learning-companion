@@ -1,3 +1,6 @@
+/*
+This file handles an AI-related endpoints. At the moment, it only has the /chat endpoint
+*/
 require("dotenv").config();
 const { StatusCodes } = require("http-status-codes"); // Status codes
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -18,7 +21,7 @@ const prisma = new PrismaClient(opts);
 const Joi = require("joi");
 const { chatSchema } = require("../validation/aiSchema");
 
-// Sets the model (Gemini) system instructions based on specifications
+// Sets the model (Gemini) system instructions based on specifications and support level
 function getTutorModel(user, supportLevel) {
   let systemInstruction = `
 You are an AI Study Assistant embedded in an OER learning platform (Lumen OHM).

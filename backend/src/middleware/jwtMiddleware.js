@@ -7,13 +7,13 @@ const send401 = (res) => {
   });
 };
 
+// Authentication for each protected route with JWT
+
 const authMiddleware = async (req, res, next) => {
   const token = req.cookies?.jwt;
-
   if (!token) {
     return send401(res);
   }
-
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
       return send401(res);

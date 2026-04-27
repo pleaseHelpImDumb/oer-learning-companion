@@ -99,6 +99,7 @@ const login = async (req, res, next) => {
     next(err);
   }
 };
+
 // REGISTER
 const register = async (req, res, next) => {
   try {
@@ -178,6 +179,7 @@ const register = async (req, res, next) => {
     next(err);
   }
 };
+
 // LOGOUT (Clear Cookie)
 const logout = (req, res) => {
   res.clearCookie("jwt", {
@@ -240,6 +242,7 @@ const forgotPassword = async (req, res, next) => {
     next(err);
   }
 };
+
 // RESET-PASSWORD (If tokens and dates are good, update password with new hashed password)
 const resetPassword = async (req, res, next) => {
   try {
@@ -805,6 +808,7 @@ const getUserStats = async (req, res, next) => {
     next(err);
   }
 };
+
 module.exports = {
   login,
   register,

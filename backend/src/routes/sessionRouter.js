@@ -16,10 +16,10 @@ const {
 } = require("../controllers/sessionController.js");
 
 // routes/sessionRoutes.js
-router.post("/start", startSession);
-router.get("/active", getActiveSession);
-router.post("/:id/pause", pauseSession);
-router.post("/:id/resume", resumeSession);
+router.post("/start", startSession); // start a session
+router.get("/active", getActiveSession); // get active session (called when going to dashboard) (also cancels any old >12hr sessions)
+router.post("/:id/pause", pauseSession); // pause session
+router.post("/:id/resume", resumeSession); // resume session
 router.post("/:id/complete", completeSession); // finish with rewards
 router.post("/:id/cancel", cancelSession); // end early, no rewards
 

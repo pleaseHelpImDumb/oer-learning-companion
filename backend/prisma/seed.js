@@ -1,3 +1,7 @@
+/*
+This seed file runs when the DB is set up to statically define the Badge and HobbyTrack tables.
+More badges and hobby tracks can be added here.
+*/
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
