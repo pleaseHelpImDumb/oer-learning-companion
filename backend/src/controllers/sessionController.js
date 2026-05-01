@@ -1,9 +1,7 @@
 const { StatusCodes } = require("http-status-codes"); // Status codes
 
-// GLOBALS
 const COST_PER_GAME = 1;
 const MINUTES_PER_TOKEN = 5;
-
 const { sessionSchema } = require("../validation/sessionSchema.js");
 // Database setup
 const { PrismaClient } = require("@prisma/client");
@@ -15,7 +13,7 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
 }
 const prisma = new PrismaClient(opts);
 
-// Start Session Endpoint
+// Start Session
 const startSession = async (req, res, next) => {
   try {
     const userId = req.user.id; // get from auth middleware
@@ -57,7 +55,6 @@ const startSession = async (req, res, next) => {
 };
 
 // Get Active Session
-// ALSO: ends sessions older than 12 hours, returning NO session
 const getActiveSession = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -98,33 +95,6 @@ const getActiveSession = async (req, res, next) => {
 
     // Calculate current elapsed time
     const now = new Date();
-    const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 1000 / 60,
-    );
-    const tokensEarned = Math.floor(totalElapsed / MINUTES_PER_TOKEN); // <- 1 token per 5 minutes
-    const tokensAvailable = tokensEarned - session.tokensSpent;
-
-    let currentPauseDuration = 0;
-    if (session.status === "PAUSED" && session.lastPauseTime) {
-      currentPauseDuration = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000 / 60,
-      );
-    }
-
-    const studyMinutes =
-      totalElapsed - session.totalPausedMinutes - currentPauseDuration;
-
-<<<<<<< HEAD
-
-     return res.json({
-       session: null,
-       message: "Previous session was automatically ended due to inactivity",
-     });
-   }
-
-
-   // Calculate current elapsed time
-    const now = new Date();
     const totalElapsedSeconds = Math.floor(
       (now - new Date(session.startTime)) / 1000,
     );
@@ -148,24 +118,6 @@ const getActiveSession = async (req, res, next) => {
     const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
     const tokensAvailable = Math.max(0, tokensEarned - session.tokensSpent);
 
-
-   res.json({
-     session: {
-       sessionId: session.sessionId,
-       status: session.status,
-       startTime: session.startTime,
-       lastPauseTime: session.lastPauseTime,
-       totalPausedMinutes: session.totalPausedMinutes,
-       currentStudyMinutes: studyMinutes,
-       currentStudySeconds: studySeconds,
-       tokensAvailable: tokensAvailable,
-       sessionGoalMinutes: session.sessionGoalMinutes,
-     },
-   });
- } catch (err) {
-   next(err);
- }
-=======
     res.json({
       session: {
         sessionId: session.sessionId,
@@ -174,6 +126,7 @@ const getActiveSession = async (req, res, next) => {
         lastPauseTime: session.lastPauseTime,
         totalPausedMinutes: session.totalPausedMinutes,
         currentStudyMinutes: studyMinutes,
+        currentStudySeconds: studySeconds,
         tokensAvailable: tokensAvailable,
         sessionGoalMinutes: session.sessionGoalMinutes,
       },
@@ -181,7 +134,6 @@ const getActiveSession = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
->>>>>>> b5049e4 (Add some documentation)
 };
 
 // Spend Token -- Endpoint for currently spending 1 token (for playing a mini-game)
@@ -208,18 +160,20 @@ const spendToken = async (req, res, next) => {
     });
 
     if (!session) {
-      return res.status(404).json({ message: "No matching active session found" });
+      return res
+        .status(404)
+        .json({ message: "No matching active session found" });
     }
 
     const now = new Date();
     const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 1000 / 60
+      (now - new Date(session.startTime)) / 1000 / 60,
     );
 
     let currentPauseDuration = 0;
     if (session.status === "PAUSED" && session.lastPauseTime) {
       currentPauseDuration = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000 / 60
+        (now - new Date(session.lastPauseTime)) / 1000 / 60,
       );
     }
 
