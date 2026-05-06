@@ -7,6 +7,8 @@ import StuckModal from "./StuckModal";
 import AIHelpModal from "./AIHelp";
 import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
 import { useCheckIn } from "@/app/providers/checkin-provider";
+import { useSession } from "../providers/session-provider";
+
 const icons = [
   { src: "/dashboard.png", alt: "Home", href: "/dashboard" },
   { src: "/timer.png", alt: "Timer", href: "/timer" },
@@ -52,10 +54,21 @@ type Props = {
 };
 
 export default function SideBar({ hidden, setHidden }: Props) {
+function hasActiveSession() {
+  if (!activeSession?.sessionId) {
+    setSessionWarning("Start a study session before submitting a check-in.");
+    return false;
+  }
+
+  setSessionWarning(null);
+  return true;
+}
+  const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [stuckOpen, setStuckOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const { openAssistant } = useStuckAssistant();
-const { checkInWaiting, submitCheckIn, triggerCheckIn } = useCheckIn();
+  const { checkInWaiting, submitCheckIn, triggerCheckIn } = useCheckIn();
+const { activeSession } = useSession();
   useEffect(() => {
     async function loadDashboardData() {
       if (!API_BASE_URL) return;
@@ -304,6 +317,7 @@ if (isCheckIn) {
   open={stuckOpen}
   onClose={() => {
     setStuckOpen(false);
+    setSessionWarning(null);
   }}
   onHelp={() => {
     console.log("[CHECK-IN] Help clicked");
@@ -316,8 +330,12 @@ if (isCheckIn) {
     }, 50);
   }}
   onChooseHelp={async (helpChosen) => {
-    console.log("[CHECK-IN] Saving help choice:", helpChosen);
+    if (!hasActiveSession()) {
+      setStuckOpen(false);
+      return;
+    }
 
+    console.log("[CHECK-IN] Saving help choice:", helpChosen);
     await submitCheckIn("down", helpChosen);
   }}
 />

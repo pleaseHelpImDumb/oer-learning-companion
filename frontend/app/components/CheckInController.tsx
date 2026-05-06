@@ -11,8 +11,17 @@ import AIHelpModal from "./AIHelp";
 import { useCheckIn } from "@/app/providers/checkin-provider";
 
 export default function CheckInController() {
+  function hasActiveSession() {
+  if (!activeSession?.sessionId) {
+    setSessionWarning("Start a study session before submitting a check-in.");
+    return false;
+  }
+
+  setSessionWarning(null);
+  return true;
+}
     const { checkInOpen, setCheckInOpen, submitCheckIn } = useCheckIn();
-  
+  const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const savedCheckInRef = useRef(false);
   const [stuckOpen, setStuckOpen] = useState(false);
@@ -127,34 +136,41 @@ return (
   <>
 {/*<CheckInBrowserAlert active={open} />*/}
 
-    <QuickCheckInModal
-      open={open}
-      onClose={() => setOpen(false)}
-      onSelect={async (value) => {
-        console.log("Check-in value:", value);
+<QuickCheckInModal
+  open={open}
+  onClose={() => {
+    setOpen(false);
+    setSessionWarning(null);
+  }}
+  warning={sessionWarning}
+  onSelect={async (value) => {
+    if (!hasActiveSession()) return;
 
-        if (value === "up") {
-          await saveWellnessCheck("up", false);
-          setOpen(false);
-          return;
-        }
+    console.log("Check-in value:", value);
 
-if (value === "down") {
-  setOpen(false);
+    if (value === "up") {
+      await submitCheckIn("up", "None");
+      setOpen(false);
+      return;
+    }
 
-  requestAnimationFrame(() => {
-    setStuckOpen(true);
-  });
+    if (value === "down") {
+      setOpen(false);
 
-  return;
-}
-      }}
-    />
+      requestAnimationFrame(() => {
+        setStuckOpen(true);
+      });
+
+      return;
+    }
+  }}
+/>
 
 <StuckModal
   open={stuckOpen}
   onClose={() => {
     setStuckOpen(false);
+    setSessionWarning(null);
   }}
   onHelp={() => {
     console.log("[CHECK-IN] Help clicked");
@@ -167,8 +183,13 @@ if (value === "down") {
     }, 50);
   }}
   onChooseHelp={async (helpChosen) => {
-    console.log("[CHECK-IN] Saving help choice:", helpChosen);
+    if (!hasActiveSession()) {
+      setStuckOpen(false);
+      setOpen(true);
+      return;
+    }
 
+    console.log("[CHECK-IN] Saving help choice:", helpChosen);
     await submitCheckIn("down", helpChosen);
   }}
 />
