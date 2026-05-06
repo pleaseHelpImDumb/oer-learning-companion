@@ -31,13 +31,13 @@ export default function QuickCheckInModal({ open, onClose, onSelect }: Props) {
 
           {/* Thumbs Down */}
 <button
-onClick={async () => {
-  localStorage.setItem("freeGameTokens", "4");
-  await submitCheckIn("down");
+  onClick={() => {
+    localStorage.setItem("freeGameTokens", "4");
 
-  // whatever opened stuck before needs to happen here now
-  onSelect?.("down");
-}}
+    setCheckInOpen(false); // close quick check-in modal
+
+    onSelect?.("down"); // open stuck modal upstream
+  }}
   className="transition transform hover:scale-110"
 >
             <Image
@@ -52,7 +52,7 @@ onClick={async () => {
           {/* Thumbs Up */}
           <button
 onClick={async () => {
-  await submitCheckIn("up");
+await submitCheckIn("up", "None");
 }}
             className="transition transform hover:scale-110"
           >

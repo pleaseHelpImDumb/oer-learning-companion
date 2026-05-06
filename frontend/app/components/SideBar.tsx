@@ -300,14 +300,27 @@ if (isCheckIn) {
         </button>
       </aside>
 
-      <StuckModal
-        open={stuckOpen}
-        onClose={() => setStuckOpen(false)}
-        onHelp={() => {
-          setStuckOpen(false);
-          openAssistant();
-        }}
-      />
+<StuckModal
+  open={stuckOpen}
+  onClose={() => {
+    setStuckOpen(false);
+  }}
+  onHelp={() => {
+    console.log("[CHECK-IN] Help clicked");
+
+    setStuckOpen(false);
+
+    setTimeout(() => {
+      console.log("[CHECK-IN] Opening AI assistant");
+      openAssistant();
+    }, 50);
+  }}
+  onChooseHelp={async (helpChosen) => {
+    console.log("[CHECK-IN] Saving help choice:", helpChosen);
+
+    await submitCheckIn("down", helpChosen);
+  }}
+/>
 
       <AIHelpModal />
     </>

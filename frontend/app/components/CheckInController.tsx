@@ -8,7 +8,11 @@ import { useSession } from "../providers/session-provider";
 //import CheckInBrowserAlert from "./CheckInBrowserAlert";
 import { useRouter } from "next/navigation";
 import AIHelpModal from "./AIHelp";
+import { useCheckIn } from "@/app/providers/checkin-provider";
+
 export default function CheckInController() {
+    const { checkInOpen, setCheckInOpen, submitCheckIn } = useCheckIn();
+  
   const [open, setOpen] = useState(false);
   const savedCheckInRef = useRef(false);
   const [stuckOpen, setStuckOpen] = useState(false);
@@ -152,17 +156,21 @@ if (value === "down") {
   onClose={() => {
     setStuckOpen(false);
   }}
-onHelp={() => {
-  console.log("[CHECK-IN] Help clicked");
+  onHelp={() => {
+    console.log("[CHECK-IN] Help clicked");
 
-  setStuckOpen(false);
-  void saveWellnessCheck("down", true);
+    setStuckOpen(false);
 
-  setTimeout(() => {
-    console.log("[CHECK-IN] Opening AI assistant");
-    openAssistant();
-  }, 50);
-}}
+    setTimeout(() => {
+      console.log("[CHECK-IN] Opening AI assistant");
+      openAssistant();
+    }, 50);
+  }}
+  onChooseHelp={async (helpChosen) => {
+    console.log("[CHECK-IN] Saving help choice:", helpChosen);
+
+    await submitCheckIn("down", helpChosen);
+  }}
 />
 <AIHelpModal />
   </>

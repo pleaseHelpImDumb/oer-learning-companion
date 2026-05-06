@@ -9,10 +9,16 @@ type StuckModalProps = {
   open: boolean;
   onClose: () => void;
   onHelp: () => void;
-};
+onChooseHelp: (
+  helpChosen: "Help" | "Break" | "Silly Activity" | "Just Breathe"
+) => Promise<void>;};
 
-export default function StuckModal({ open, onClose, onHelp }: StuckModalProps) {
-  const router = useRouter();
+export default function StuckModal({
+  open,
+  onClose,
+  onHelp,
+  onChooseHelp,
+}: StuckModalProps) {  const router = useRouter();
   const [breathe, setBreathe] = useState(false);
   const [showBreak, setShowBreak] = useState(false);
 
@@ -80,7 +86,9 @@ const actions = [
               {actions.map((action) => (
                 <button
                   key={action.label}
-onClick={() => {
+onClick={async () => {
+  await onChooseHelp(action.label);
+
   if (action.label === "Help") {
     action.onClick();
     return;
