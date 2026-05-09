@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "@/app/providers/session-provider";
 type StudyTimerProps = {
   /** total duration in seconds */
   durationSec?: number;
@@ -29,6 +30,14 @@ function formatEndTime(endTs: number) {
 
 export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }: StudyTimerProps) {
   const [isRunning, setIsRunning] = useState(autoStart);
+  const {
+  activeSession,
+  pauseSession,
+  resumeSession,
+  sessionActionLoading,
+} = useSession();
+
+const breakTimeoutRef = useRef<number | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState(durationSec / 60);
   const [remainingMs, setRemainingMs] = useState(selectedMinutes * 60 * 1000);
   // store absolute end timestamp when running
@@ -51,45 +60,76 @@ export default function StudyTimer({ durationSec = 60 * 60, autoStart = false }:
   }, [remainingMs, totalMs]);
 
   // animation loop
-  useEffect(() => {
-    if (!isRunning) return;
+useEffect(() => {
+  if (!isRunning) return;
 
-    if (!endRef.current) {
-      endRef.current = Date.now() + remainingMs;
-    }
+  const tick = () => {
+    if (!endRef.current) return;
 
-    const tick = () => {
-      const end = endRef.current!;
-      const msLeft = Math.max(0, end - Date.now());
-      setRemainingMs(msLeft);
+    const msLeft = Math.max(0, endRef.current - Date.now());
+    setRemainingMs(msLeft);
 
-      if (msLeft <= 0) {
-        setIsRunning(false);
-        endRef.current = null;
-        return;
+    if (msLeft <= 0) {
+      endRef.current = null;
+      setIsRunning(false);
+
+      if (activeSession?.status === "PAUSED") {
+        void resumeSession();
       }
-      rafRef.current = requestAnimationFrame(tick);
-    };
+
+      return;
+    }
 
     rafRef.current = requestAnimationFrame(tick);
+  };
 
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [isRunning, remainingMs]);
+  rafRef.current = requestAnimationFrame(tick);
 
-  const start = () => {
-    if (remainingMs <= 0) {
-      setRemainingMs(totalMs);
+  return () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
-    setIsRunning(true);
   };
+}, [isRunning, activeSession?.status, resumeSession]);
 
-  const pause = () => {
-    setIsRunning(false);
-    // keep remainingMs, but clear end timestamp so resume recalculates
-    endRef.current = null;
-  };
+const start = async () => {
+  let nextRemainingMs = remainingMs;
+
+  // If the timer fully finished previously, reset it
+  if (nextRemainingMs <= 0) {
+    nextRemainingMs = totalMs;
+    setRemainingMs(totalMs);
+  }
+
+  // Pause the real study session if needed
+  if (activeSession?.status === "ACTIVE") {
+    await pauseSession();
+  }
+
+  endRef.current = Date.now() + nextRemainingMs;
+  setIsRunning(true);
+};
+
+const pause = async () => {
+  if (endRef.current) {
+    const msLeft = Math.max(0, endRef.current - Date.now());
+    setRemainingMs(msLeft);
+  }
+
+  setIsRunning(false);
+  endRef.current = null;
+
+  if (rafRef.current !== null) {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+  }
+
+  // Since the break is paused, resume the actual study session
+  if (activeSession?.status === "PAUSED") {
+    await resumeSession();
+  }
+};
 
   const reset = () => {
     setIsRunning(false);
@@ -160,19 +200,20 @@ return (
       {/* Buttons */}
       <div className="flex gap-3 mt-2">
         {!isRunning ? (
-          <button
-            onClick={start}
-            className="px-6 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow transition"
-          >
-            Start
-          </button>
+        <button
+          onClick={start}
+          disabled={!activeSession || sessionActionLoading}
+          className="px-6 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold shadow transition"
+        >
+          Start Break
+        </button>
         ) : (
-          <button
-            onClick={pause}
-            className="px-6 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow transition"
-          >
-            Pause
-          </button>
+        <button
+          onClick={() => void pause()}
+          className="px-6 py-2 rounded-full bg-amber-500/90 hover:bg-amber-500 text-black font-semibold shadow transition"
+        >
+          Pause Break
+        </button>
         )}
       </div>
 

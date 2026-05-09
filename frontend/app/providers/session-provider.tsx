@@ -382,20 +382,22 @@ if (!res.ok) {
   throw new Error(data?.error || data?.message || "Failed to pause session");
 }
 
-    setActiveSession((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "PAUSED",
-            lastPauseTime: new Date().toISOString(),
-          }
-        : prev
-    );
-    if (activeSession) {
-  const key = `${PAUSED_SECONDS_KEY}:${buildSessionClockKey(activeSession)}`;
-  localStorage.setItem(key, String(liveStudySeconds));
-}
-    setClockAnchorMs(null);
+const frozenStudySeconds = liveStudySeconds;
+
+setActiveSession((prev) =>
+  prev
+    ? {
+        ...prev,
+        status: "PAUSED",
+        lastPauseTime: new Date().toISOString(),
+        currentStudySeconds: frozenStudySeconds,
+        currentStudyMinutes: Math.floor(frozenStudySeconds / 60),
+      }
+    : prev
+);
+
+setLiveStudySeconds(frozenStudySeconds);
+setClockAnchorMs(null);
 
     //await refreshSession();
   } catch (error) {
