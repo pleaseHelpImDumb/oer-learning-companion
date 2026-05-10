@@ -62,8 +62,8 @@ Copy the example env file and fill in your values:
 ### Running Locally
 
 ```bash
-# Run database migrations
-npm run migrate
+# Generate prisma client
+npx prisma generate
 
 # Start the dev server
 npm run dev
