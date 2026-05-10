@@ -81,7 +81,7 @@ npx prisma generate
 npm run dev
 ```
 
-The API will be available at `http://localhost:3001`.
+The API will be available at `http://localhost:3000`.
 
 #### Frontend
 
@@ -91,7 +91,7 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`.
+The app will be available at `http://localhost:3001`.
 
 ---
 
