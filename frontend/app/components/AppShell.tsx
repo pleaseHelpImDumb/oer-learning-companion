@@ -24,7 +24,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("resize", update);
     };
   }, []);
-
+{/**Separate the sidebar from the rest of the page. This lets us manipulate the layout easier! */}
   return (
     <div
       className={

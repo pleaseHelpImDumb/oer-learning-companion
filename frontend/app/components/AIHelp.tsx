@@ -16,7 +16,7 @@ const [supportMenuOpen, setSupportMenuOpen] = useState(false);
 const [selectedSupport, setSelectedSupport] = useState<"1" | "2" | "3">("1");
 const [history, setHistory] = useState<any[]>([]);
 const [historyLoading, setHistoryLoading] = useState(false);
-const supportOptions = [
+const supportOptions = [ //The levels of support a student may choose from
   { level: "1", base: "hint" },
   { level: "2", base: "stuck" },
   { level: "3", base: "struggle" },
@@ -28,7 +28,7 @@ const selectedOption = supportOptions.find(
 
   if (!state.open) return null;
 
-  const cleanAssistantText = (text: string) => {
+  const cleanAssistantText = (text: string) => { //Formats the text from the AI! No long blobs of text
     return text
       .replace(/\\n/g, "\n")
       .replace(/\\'/g, "'")
@@ -45,7 +45,7 @@ const selectedOption = supportOptions.find(
       .replace(/[ \t]+/g, " ")
       .trim();
   };
-async function loadHistory() {
+async function loadHistory() {//Fetches the chat history from the backend
   try {
     setHistoryLoading(true);
 
@@ -91,7 +91,7 @@ async function loadHistory() {
         >
           <span className="text-lg font-semibold">×</span>
         </button>
-
+        {/**Beginning of AI chat box header */}
         <p className="pl-1 font-semibold text-[clamp(1rem,2vw,1.5rem)] dark:text-white/80">
           🟧 Study Assistant
         </p>
@@ -128,6 +128,7 @@ onClick={() => {
 {state.tab === "history" ? (
   <div className="flex-1 overflow-y-auto py-4">
     <div className="space-y-3">
+      {/**AI chat history display */}
       {historyLoading ? (
         <div className="text-sm opacity-70">Loading history...</div>
       ) : history.length === 0 ? (
@@ -144,7 +145,7 @@ onClick={() => {
           >
             <div className="mb-1 text-[10px] uppercase opacity-50">
               {m.role === "USER" ? "You" : "AI"}
-            </div>
+            </div>{/**Save whether each message was sent by the user of the AI. This is used on the backend */}
             <div>{m.message}</div>
           </div>
         ))
@@ -245,6 +246,7 @@ onClick={() => {
         </button>
 
         <div className="relative">
+          {/**Dropdown for the user to select their desired support level */}
           <button
             type="button"
             onClick={() => setSupportMenuOpen((prev) => !prev)}
