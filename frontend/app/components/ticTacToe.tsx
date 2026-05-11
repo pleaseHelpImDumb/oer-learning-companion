@@ -37,7 +37,8 @@ const [isProcessingReset, setIsProcessingReset] = useState(false);
 const lastResetAtRef = useRef(0);
 
 const RESET_COOLDOWN_MS = 1000;
-  const freeTokens =
+  const freeTokens = // If a user navigates to tictactoe from a "stuck" modal "activity" press, then give them free tokens.
+  //It may frustrate a user if their help is gated by resource management
   typeof window !== "undefined"
     ? Number(localStorage.getItem("freeGameTokens") || "0")
     : 0;

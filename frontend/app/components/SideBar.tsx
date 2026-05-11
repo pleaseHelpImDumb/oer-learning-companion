@@ -133,7 +133,7 @@ const content = (
         height={24}
         className={iconClass}
       />
-
+{/**If the user has a quick check in, create a popup on the side bar */}
       {isCheckIn && checkInWaiting && (
         <div
           className="
@@ -156,7 +156,7 @@ onClick={async (e) => {
 >
   👍
 </button>
-
+{/**User is happy :D */}
 <button
   type="button"
 onClick={async (e) => {
@@ -168,6 +168,7 @@ onClick={async (e) => {
 >
   👎
 </button>
+{/**User needs help */}
         </div>
       )}
     </div>
@@ -211,6 +212,7 @@ if (isCheckInIcon && checkInWaiting) {
 if (isCheckIn) {
   return (
     <div key={icon.src} className={cellClass} title="Check in">
+      {/**Manual user checkin */}
       <button
         type="button"
         onClick={() => triggerCheckIn()}
@@ -291,7 +293,7 @@ if (isCheckIn) {
             </div>
           );
         })}
-
+{/**Hides or reveals the side bar */}
         <button
           type="button"
           onClick={() => setHidden(!hidden)}
@@ -309,6 +311,7 @@ if (isCheckIn) {
         >
           <span className="text-lg font-bold leading-none">
             {hidden ? "▶" : "◀"}
+            {/**Pullout section of side bar */}
           </span>
         </button>
       </aside>

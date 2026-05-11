@@ -12,7 +12,7 @@ export default function SessionResumeModalController() {
     cancelSession,
     sessionActionLoading,
   } = useSession();
-
+//Allows the user to resume a session should they leave and return
   const [open, setOpen] = useState(false);
   const hasCheckedInitialSession = useRef(false);
 
@@ -29,7 +29,7 @@ export default function SessionResumeModalController() {
   if (!open || !activeSession) return null;
 
   const isPaused = activeSession.status === "PAUSED";
-
+//Save paused status
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
