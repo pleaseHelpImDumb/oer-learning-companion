@@ -20,7 +20,7 @@ export default function CheckInController() {
   setSessionWarning(null);
   return true;
 }
-    const { checkInOpen, setCheckInOpen, submitCheckIn } = useCheckIn();
+  const { checkInOpen, setCheckInOpen, submitCheckIn } = useCheckIn();
   const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const savedCheckInRef = useRef(false);
@@ -135,7 +135,7 @@ body: JSON.stringify({
 return (
   <>
 {/*<CheckInBrowserAlert active={open} />*/}
-
+{/**Display the checkin to the user */}
 <QuickCheckInModal
   open={open}
   onClose={() => {
@@ -165,7 +165,7 @@ return (
     }
   }}
 />
-
+{/**Display the stuck modal if applicable */}
 <StuckModal
   open={stuckOpen}
   onClose={() => {
@@ -193,6 +193,7 @@ return (
     await submitCheckIn("down", helpChosen);
   }}
 />
+{/**Display the AI Help modal if applicable */}
 <AIHelpModal />
   </>
 );

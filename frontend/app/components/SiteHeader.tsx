@@ -24,11 +24,11 @@ const { sessions24hrs, tokensAvailable24hrs, refreshSessions24hrs } =
 const currentSessionSpent =
   sessions24hrs.find(
     (s) => s.status === "ACTIVE" || s.status === "PAUSED"
-  )?.tokensSpent ?? 0;
+  )?.tokensSpent ?? 0;//Find if session is active or not
 
 const liveCurrentSessionTokens = activeSession
   ? Math.max(0, Math.floor(liveStudySeconds / 300) - currentSessionSpent)
-  : 0;
+  : 0; //This calculates how many tokens the user has earned in the given session
 
 const completed24hrTokens = sessions24hrs
   .filter((s) => s.status === "COMPLETED")
@@ -40,7 +40,7 @@ const completed24hrTokens = sessions24hrs
 
 const sessionTokensAvailable = completed24hrTokens + liveCurrentSessionTokens;
   const liveTokenBucket = Math.floor(liveStudySeconds / 300);
-
+//This calculates how many tokens the user may spend on the game
   useEffect(() => {
   if (!activeSession) return;
 
@@ -60,7 +60,7 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
       return;
 
     headerActionLockRef.current = true;
-
+//toggle between start/pause based on session state
     try {
       if (activeSession.status === "ACTIVE") {
         await pauseSession();
@@ -76,10 +76,13 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
     } finally {
       window.setTimeout(() => {
         headerActionLockRef.current = false;
-      }, 1000);
+      }, 1000);//<--1000 = "Don't let the user spam this!"
+      //Too many button presses too quick can lead to the backend blocking the request, which can make the GUI bug out!
+      //This shouldn't be too pressing now? But if things get weird with concurrent requests, check the logs for CORS
+      //or "too many requests" messages
     }
   };
-  const handleCancelClick = async () => {
+  const handleCancelClick = async () => {//This cancels a session. This is the big red x
     if (!activeSession || sessionActionLoading || headerActionLockRef.current)
       return;
 
@@ -96,12 +99,12 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
       }, 1000);
     }
   };
-  const timerIcon = !activeSession
+  const timerIcon = !activeSession//toggle session state
     ? "/assets/start_button/inactive.png"
     : activeSession.status === "PAUSED"
       ? "/assets/start_button/start.png"
       : "/assets/start_button/pause.png";
-  const TRACKS = {
+  const TRACKS = {//Track emojis
     Art: ["🎨", "🖋️", "🖼️", "🧑‍🎨"],
     Gaming: ["🕹️", "🎮", "🎲", "♟️"],
     Music: ["🎧", "🎺", "🎸", "🥁"],
@@ -113,7 +116,7 @@ console.log("HEADER 24HR TOKENS:", tokensAvailable24hrs);
   const [open, setOpen] = useState(false);
   const headerActionLockRef = useRef(false);
 
-  function formatElapsedSeconds(totalSeconds: number) {
+  function formatElapsedSeconds(totalSeconds: number) {//Format the elapsed seconds for a clock-like display
     const safe = Math.max(0, Math.floor(totalSeconds));
     const hours = Math.floor(safe / 3600);
     const minutes = Math.floor((safe % 3600) / 60);

@@ -4,7 +4,7 @@ import { useStuckAssistant } from "@/app/providers/stuck-assistance-provider";
 
 export default function Robot() {
   const { openAssistant } = useStuckAssistant();
-
+//This button opens the AI companion!
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <button

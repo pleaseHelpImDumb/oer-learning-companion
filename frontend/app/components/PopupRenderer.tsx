@@ -10,7 +10,8 @@ const TRACK_POPUP_IMAGES: Record<string, string> = {
   space: "/changes/space.png",
   sports: "/changes/sports.png",
 };
-
+//This is the overall handler for popups.
+//These occur on session complete, settings updated, etc.
 function getPopupImage(popup: {
   imageSrc?: string;
   trackName?: string;
@@ -32,7 +33,7 @@ export default function PopupRenderer() {
 
   const resolvedImage = getPopupImage(popup);
   const backgroundClass = popup.dimBackground ? "bg-black/30" : "bg-transparent";
-
+//Dim the background slightly
   if (popup.type === "sessionCelebration") {
     return (
       <div className="fixed inset-0 z-[9999] overflow-hidden">
