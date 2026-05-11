@@ -14,6 +14,8 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
 const prisma = new PrismaClient(opts);
 
 // Start Session
+// 409 conflict if ACTIVE session exists
+// Response: { session-details }
 const startSession = async (req, res, next) => {
   try {
     const userId = req.user.id; // get from auth middleware
@@ -55,6 +57,8 @@ const startSession = async (req, res, next) => {
 };
 
 // Get Active Session
+// Also cancels sessions older than 12 hours
+// Response: { session-deatils }
 const getActiveSession = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -136,7 +140,10 @@ const getActiveSession = async (req, res, next) => {
   }
 };
 
-// Spend Token -- Endpoint for currently spending 1 token (for playing a mini-game)
+// Spend Tokens
+// Spends a requested number of tokens
+// Request: { requestedCost }
+// Response: { session-deatils }
 const spendToken = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -327,7 +334,9 @@ const resumeSession = async (req, res, next) => {
   }
 };
 
-// Complete Session - User Finishes Session
+// Complete Session
+// Updates user's stats and awards any badges
+// Response: { session-details, badges-earned[] }
 const completeSession = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
@@ -461,7 +470,7 @@ async function updateUserStats(tx, userId, studyMinutes, session) {
   });
 }
 
-// badge award-er helper function
+// badge awarder helper function
 async function checkAndAwardBadges(tx, userId, stats, session) {
   // get all badges
   const userBadges = await tx.userBadge.findMany({
@@ -531,6 +540,7 @@ async function checkAndAwardBadges(tx, userId, stats, session) {
 }
 
 // Cancel Session - App cancels the session
+// User stats are not updated
 const cancelSession = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
@@ -603,6 +613,8 @@ const cancelSession = async (req, res, next) => {
 };
 
 // Set Session Notes - Sets note attribute for any session, no restrictions
+// Request: { session-notes } No validation is done on this atm
+// Response: { session-details }
 const setSessionNotes = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);

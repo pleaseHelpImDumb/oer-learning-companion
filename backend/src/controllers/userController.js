@@ -1,5 +1,7 @@
 const { StatusCodes } = require("http-status-codes"); // Status codes
 
+const MINUTES_PER_TOKEN = 5;
+
 // Validation
 const Joi = require("joi");
 const {
@@ -33,7 +35,9 @@ const { sendPasswordResetEmail } = require("../utils/emailService");
 
 // FUNCTIONS ************************************************************************************************
 
-// LOGIN
+// LOGIN FUNCTION
+// Request: { identity(email/username), password }
+// Response: { user-details, csrf-token }
 const login = async (req, res, next) => {
   try {
     // Validation - Name OR email and password
@@ -101,6 +105,8 @@ const login = async (req, res, next) => {
 };
 
 // REGISTER
+// Request: { account-detals }
+// Response: { user-details, csrf-token }
 const register = async (req, res, next) => {
   try {
     // Validation
@@ -113,12 +119,26 @@ const register = async (req, res, next) => {
 
     const { username, email, password } = value;
 
-    // check if already registered? via email
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser)
-      return res
-        .status(StatusCodes.CONFLICT)
-        .json({ error: "User already exists!" });
+    // check if already registered? via email and username for security
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { username }],
+      },
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res
+          .status(StatusCodes.CONFLICT)
+          .json({ error: "Email already in use!" });
+      }
+
+      if (existingUser.username === username) {
+        return res
+          .status(StatusCodes.CONFLICT)
+          .json({ error: "Username already in use!" });
+      }
+    }
 
     // If not, create the new user
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -528,20 +548,20 @@ const consumeToken24hrs = async (req, res, next) => {
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-const sessions = await prisma.studySession.findMany({
-  where: {
-    userId,
-    startTime: {
-      gte: oneDayAgo,
-    },
-    status: {
-      in: ["ACTIVE", "PAUSED", "COMPLETED"],
-    },
-  },
-  orderBy: {
-    startTime: "desc",
-  },
-});
+    const sessions = await prisma.studySession.findMany({
+      where: {
+        userId,
+        startTime: {
+          gte: oneDayAgo,
+        },
+        status: {
+          in: ["ACTIVE", "PAUSED", "COMPLETED"],
+        },
+      },
+      orderBy: {
+        startTime: "desc",
+      },
+    });
 
     const sessionTokenData = sessions.map((session) => {
       const tokenData = calculateSessionTokenData(session);
@@ -554,7 +574,7 @@ const sessions = await prisma.studySession.findMany({
 
     const totalAvailable = sessionTokenData.reduce(
       (sum, item) => sum + item.tokensAvailable,
-      0
+      0,
     );
 
     if (totalAvailable < cost) {
@@ -571,7 +591,7 @@ const sessions = await prisma.studySession.findMany({
 
       const spendFromThisSession = Math.min(
         item.tokensAvailable,
-        remainingCost
+        remainingCost,
       );
 
       if (spendFromThisSession <= 0) continue;
@@ -629,8 +649,6 @@ const getUserSessions = async (req, res, next) => {
   }
 };
 
-const MINUTES_PER_TOKEN = 5; // or whatever you're using
-
 const calculateSessionTokenData = (session) => {
   console.log("calculateSessionTokenData input:", {
     sessionId: session.sessionId,
@@ -648,14 +666,14 @@ const calculateSessionTokenData = (session) => {
     const now = new Date();
 
     const totalElapsedSeconds = Math.floor(
-      (now - new Date(session.startTime)) / 1000
+      (now - new Date(session.startTime)) / 1000,
     );
 
     let currentPauseSeconds = 0;
 
     if (session.status === "PAUSED" && session.lastPauseTime) {
       currentPauseSeconds = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000
+        (now - new Date(session.lastPauseTime)) / 1000,
       );
     }
 
@@ -663,7 +681,7 @@ const calculateSessionTokenData = (session) => {
 
     const studySeconds = Math.max(
       0,
-      totalElapsedSeconds - totalPausedSeconds - currentPauseSeconds
+      totalElapsedSeconds - totalPausedSeconds - currentPauseSeconds,
     );
 
     studyMinutes = Math.floor(studySeconds / 60);
@@ -705,8 +723,8 @@ const getUserSessionsEOD = async (req, res, next) => {
       where: {
         userId,
         status: {
-  in: ["ACTIVE", "PAUSED", "COMPLETED"],
-},
+          in: ["ACTIVE", "PAUSED", "COMPLETED"],
+        },
         startTime: {
           gte: oneDayAgo,
         },
@@ -716,49 +734,51 @@ const getUserSessionsEOD = async (req, res, next) => {
       },
     });
 
-const formatted = sessions.map((s) => {
-  let tokensEarned = 0;
+    const formatted = sessions.map((s) => {
+      let tokensEarned = 0;
 
-  if (s.status === "COMPLETED") {
-    tokensEarned = s.tokensEarned ?? Math.floor((s.durationMinutes || 0) / MINUTES_PER_TOKEN);
-  }
+      if (s.status === "COMPLETED") {
+        tokensEarned =
+          s.tokensEarned ??
+          Math.floor((s.durationMinutes || 0) / MINUTES_PER_TOKEN);
+      }
 
-  if (s.status === "ACTIVE" || s.status === "PAUSED") {
-    const tokenData = calculateSessionTokenData(s);
-    tokensEarned = tokenData.tokensEarned;
-  }
+      if (s.status === "ACTIVE" || s.status === "PAUSED") {
+        const tokenData = calculateSessionTokenData(s);
+        tokensEarned = tokenData.tokensEarned;
+      }
 
-  const tokensSpent = s.tokensSpent || 0;
-  const tokensAvailable = Math.max(0, tokensEarned - tokensSpent);
+      const tokensSpent = s.tokensSpent || 0;
+      const tokensAvailable = Math.max(0, tokensEarned - tokensSpent);
 
-  return {
-    sessionId: s.sessionId,
-    status: s.status,
-    startTime: s.startTime,
-    endTime: s.endTime,
-    durationMinutes: s.durationMinutes,
-    sessionGoalMinutes: s.sessionGoalMinutes,
-    tokensEarned,
-    tokensSpent,
-    tokensAvailable,
-    numAiInteractions: s.numAiInteractions,
-    notes: s.notes,
-  };
-});
+      return {
+        sessionId: s.sessionId,
+        status: s.status,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        durationMinutes: s.durationMinutes,
+        sessionGoalMinutes: s.sessionGoalMinutes,
+        tokensEarned,
+        tokensSpent,
+        tokensAvailable,
+        numAiInteractions: s.numAiInteractions,
+        notes: s.notes,
+      };
+    });
 
     const tokensEarned24hrs = formatted.reduce(
       (sum, s) => sum + s.tokensEarned,
-      0
+      0,
     );
 
     const tokensSpent24hrs = formatted.reduce(
       (sum, s) => sum + s.tokensSpent,
-      0
+      0,
     );
 
     const tokensAvailable24hrs = Math.max(
       0,
-      tokensEarned24hrs - tokensSpent24hrs
+      tokensEarned24hrs - tokensSpent24hrs,
     );
 
     return res.status(StatusCodes.OK).json({

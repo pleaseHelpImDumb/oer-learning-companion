@@ -118,6 +118,8 @@ This student needs significant help. Provide a thorough, step-by-step teaching r
 }
 
 // Main Chat Endpoint
+// Request: { message, supportLevel }
+// Response: { ai-response }
 const chat = async (req, res, next) => {
   try {
     const { error, value } = chatSchema.validate(req.body);
@@ -229,6 +231,7 @@ const chat = async (req, res, next) => {
     res.status(500).json({ error: "AI request failed" });
   }
 };
+
 const getChatHistory = async (req, res, next) => {
   try {
     const userId = req.user.id;
