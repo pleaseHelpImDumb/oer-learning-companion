@@ -545,26 +545,17 @@ const cancelSession = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.id);
     const userId = req.user.id;
+
     const session = await prisma.studySession.findFirst({
-      where: {
-        sessionId: sessionId,
-        userId: userId,
-      },
+      where: { sessionId, userId },
     });
     if (!session) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        error: "Session not found",
-      });
+      return res.status(StatusCodes.NOT_FOUND).json({ error: "Session not found" });
     }
-
-    // validate session is active
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        error: "Session already ended",
-      });
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: "Session already ended" });
     }
 
-    // time calculations
     const endTime = new Date();
     let finalPausedMinutes = session.totalPausedMinutes;
     if (session.status === "PAUSED" && session.lastPauseTime) {
@@ -573,31 +564,17 @@ const cancelSession = async (req, res, next) => {
       );
       finalPausedMinutes += lastPauseDuration;
     }
-    const totalMinutes = Math.floor(
-      (endTime - new Date(session.startTime)) / 1000 / 60,
-    );
+    const totalMinutes = Math.floor((endTime - new Date(session.startTime)) / 1000 / 60);
     const studyMinutes = totalMinutes - finalPausedMinutes;
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedSession = await tx.studySession.update({
-        where: { sessionId: sessionId },
-        data: {
-          status: "CANCELLED",
-          endTime: endTime,
-          durationMinutes: studyMinutes,
-          totalPausedMinutes: finalPausedMinutes,
-        },
-      });
-
-      // update only total time studied
-      await tx.userStats.update({
-        where: { userId },
-        data: {
-          totalStudyMinutes: { increment: studyMinutes },
-        },
-      });
-
-      return updatedSession;
+    const result = await prisma.studySession.update({
+      where: { sessionId },
+      data: {
+        status: "CANCELLED",
+        endTime,
+        durationMinutes: studyMinutes,
+        totalPausedMinutes: finalPausedMinutes,
+      },
     });
 
     res.json({
