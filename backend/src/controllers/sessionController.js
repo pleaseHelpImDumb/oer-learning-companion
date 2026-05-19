@@ -13,6 +13,27 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV == "development") {
 }
 const prisma = new PrismaClient(opts);
 
+// Helper Function for getActiveSession and spendtOKEN
+function calcStudyTime(session, now = new Date()) {
+  const totalElapsedMinutes = Math.floor(
+    (now - new Date(session.startTime)) / 1000 / 60,
+  );
+
+  const currentPauseMinutes =
+    session.status === "PAUSED" && session.lastPauseTime
+      ? Math.floor((now - new Date(session.lastPauseTime)) / 1000 / 60)
+      : 0;
+
+  const studyMinutes = Math.max(
+    0,
+    totalElapsedMinutes - session.totalPausedMinutes - currentPauseMinutes,
+  );
+  const studySeconds = studyMinutes * 60; // consistent with minute-resolution storage
+  const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
+
+  return { studyMinutes, studySeconds, tokensEarned };
+}
+
 // Start Session
 // 409 conflict if ACTIVE session exists
 // Response: { session-details }
@@ -77,17 +98,14 @@ const getActiveSession = async (req, res, next) => {
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
     if (new Date(session.startTime) < twelveHoursAgo) {
-      // Auto-end abandoned session
-      const totalMinutes = Math.floor(
-        (new Date() - new Date(session.startTime)) / 1000 / 60,
-      );
+      const { studyMinutes } = calcStudyTime(session);
 
       await prisma.studySession.update({
         where: { sessionId: session.sessionId },
         data: {
           status: "CANCELLED",
           endTime: new Date(),
-          durationMinutes: totalMinutes - session.totalPausedMinutes,
+          durationMinutes: studyMinutes,
         },
       });
 
@@ -99,27 +117,10 @@ const getActiveSession = async (req, res, next) => {
 
     // Calculate current elapsed time
     const now = new Date();
-    const totalElapsedSeconds = Math.floor(
-      (now - new Date(session.startTime)) / 1000,
+    const { studyMinutes, studySeconds, tokensEarned } = calcStudyTime(
+      session,
+      now,
     );
-
-    let currentPauseSeconds = 0;
-    if (session.status === "PAUSED" && session.lastPauseTime) {
-      currentPauseSeconds = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000,
-      );
-    }
-
-    const totalPausedSeconds = (session.totalPausedMinutes || 0) * 60;
-
-    const studySeconds = Math.max(
-      0,
-      totalElapsedSeconds - totalPausedSeconds - currentPauseSeconds,
-    );
-
-    const studyMinutes = Math.floor(studySeconds / 60);
-
-    const tokensEarned = Math.floor(studyMinutes / MINUTES_PER_TOKEN);
     const tokensAvailable = Math.max(0, tokensEarned - session.tokensSpent);
 
     res.json({
@@ -172,22 +173,7 @@ const spendToken = async (req, res, next) => {
         .json({ message: "No matching active session found" });
     }
 
-    const now = new Date();
-    const totalElapsed = Math.floor(
-      (now - new Date(session.startTime)) / 1000 / 60,
-    );
-
-    let currentPauseDuration = 0;
-    if (session.status === "PAUSED" && session.lastPauseTime) {
-      currentPauseDuration = Math.floor(
-        (now - new Date(session.lastPauseTime)) / 1000 / 60,
-      );
-    }
-
-    const studyMinutes =
-      totalElapsed - session.totalPausedMinutes - currentPauseDuration;
-
-    const tokensEarned = Math.floor(studyMinutes / 5);
+    const { tokensEarned } = calcStudyTime(session);
     const tokensAvailable = Math.max(0, tokensEarned - session.tokensSpent);
 
     if (tokensAvailable < requestedCost) {
@@ -260,7 +246,7 @@ const pauseSession = async (req, res, next) => {
     res.json({
       message: "Session paused",
       session: {
-        sessionId: updated.id,
+        sessionId: updated.sessionId,
         status: updated.status,
         lastPauseTime: updated.lastPauseTime,
       },
@@ -324,7 +310,7 @@ const resumeSession = async (req, res, next) => {
     res.json({
       message: "Session resumed",
       session: {
-        sessionId: updated.id,
+        sessionId: updated.sessionId,
         status: updated.status,
         totalPausedMinutes: updated.totalPausedMinutes,
       },
@@ -550,10 +536,14 @@ const cancelSession = async (req, res, next) => {
       where: { sessionId, userId },
     });
     if (!session) {
-      return res.status(StatusCodes.NOT_FOUND).json({ error: "Session not found" });
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "Session not found" });
     }
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
-      return res.status(StatusCodes.BAD_REQUEST).json({ error: "Session already ended" });
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: "Session already ended" });
     }
 
     const endTime = new Date();
@@ -564,7 +554,9 @@ const cancelSession = async (req, res, next) => {
       );
       finalPausedMinutes += lastPauseDuration;
     }
-    const totalMinutes = Math.floor((endTime - new Date(session.startTime)) / 1000 / 60);
+    const totalMinutes = Math.floor(
+      (endTime - new Date(session.startTime)) / 1000 / 60,
+    );
     const studyMinutes = totalMinutes - finalPausedMinutes;
 
     const result = await prisma.studySession.update({
@@ -624,7 +616,7 @@ const setSessionNotes = async (req, res, next) => {
     res.json({
       message: "Session notes updated!",
       session: {
-        sessionId: updated.id,
+        sessionId: updated.sessionId,
         sessionNotes: updated.notes,
       },
     });
